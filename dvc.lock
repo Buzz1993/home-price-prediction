@@ -9,10 +9,34 @@ stages:
       size: 49763296
     - path: src/data/data_cleaning.py
       hash: md5
-      md5: e42986ce022be82ae38b98db43ae47cf
-      size: 80146
+      md5: 24b90b46b0b49541b0da4789591f7246
+      size: 79876
     outs:
     - path: data/cleaned/property_cleaned.csv
       hash: md5
-      md5: 0f3c1728e6056ce4aa745af81525e567
-      size: 6395336
+      md5: 8841017466596042142b06cdc4920db4
+      size: 5455200
+  data_preparation:
+    cmd: python src/data/data_preparation.py
+    deps:
+    - path: data/cleaned/property_cleaned.csv
+      hash: md5
+      md5: 8841017466596042142b06cdc4920db4
+      size: 5455200
+    - path: src/data/data_preparation.py
+      hash: md5
+      md5: 76cee536e2486eb077bacb5494020569
+      size: 3115
+    params:
+      params.yaml:
+        Data_Preparation.random_state: 42
+        Data_Preparation.test_size: 0.2
+    outs:
+    - path: data/interim/test.csv
+      hash: md5
+      md5: 3b1ad425b61f728f57c32f2645e39798
+      size: 1069397
+    - path: data/interim/train.csv
+      hash: md5
+      md5: 9e3b46867117c215ab742fe0a4fa3ee0
+      size: 4289892

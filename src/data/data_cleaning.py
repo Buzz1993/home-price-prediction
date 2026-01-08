@@ -1575,7 +1575,8 @@ def basic_cleaning(data : pd.DataFrame):
              'transportation hub_4','transportation hub_5','shopping centre_1','shopping centre_2','shopping centre_3','shopping centre_4','shopping centre_5',
              'commercial hub_1','commercial hub_2','commercial hub_3','commercial hub_4','commercial hub_5','hospital_1','hospital_2','hospital_3','hospital_4','hospital_5',
              'tourist spot_1','tourist spot_2','tourist spot_3','tourist spot_4','education', 'transport', 'shopping_centre', 'commercial_hub', 'hospital', 'tourist',
-             'url','image','image_urls','name','wholeaddress','address','powercut_hours'
+             'url','image','image_urls','name','wholeaddress','address','powercut_hours','id','price_category','costpersqft','emi', 'authority_approval_clean','rera_id_grouped',
+             'nearby_landmarks'
             ],axis=1,inplace=True) # 'locality_rank', 'locality_url_rating'
     print(df.shape)
     
@@ -1593,6 +1594,7 @@ def property_missingness_identification(data: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+
 def perform_property_data_cleaning(data: pd.DataFrame, saved_data_path: Path) -> None:
     logger.info("Starting full property data cleaning pipeline")
     cleaned_data = (
@@ -1602,13 +1604,6 @@ def perform_property_data_cleaning(data: pd.DataFrame, saved_data_path: Path) ->
     )
     cleaned_data.to_csv(saved_data_path, index=False)
 
-# if __name__ == "__main__":
-#     root_path = Path(__file__).parent.parent.parent
-#     data_load_path = root_path / "data" / "f_original magicbricks cleaned 12022 data.csv"
-#     cleaned_data_save_path = root_path / "files_vscode" / "data" / "py_cleaned_data.csv"
-
-#     df = load_data(data_load_path)
-#     perform_property_data_cleaning(df, saved_data_path = cleaned_data_save_path)
 
 if __name__ == "__main__":
     # root path

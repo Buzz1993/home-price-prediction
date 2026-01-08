@@ -1,0 +1,18 @@
+schema: '2.0'
+stages:
+  property_data_cleaning:
+    cmd: python src/data/data_cleaning.py
+    deps:
+    - path: data/raw/f_original magicbricks cleaned 12022 data.csv
+      hash: md5
+      md5: 7cbbb4d92e3abeff61adf4cc440fa06a
+      size: 49763296
+    - path: src/data/data_cleaning.py
+      hash: md5
+      md5: e42986ce022be82ae38b98db43ae47cf
+      size: 80146
+    outs:
+    - path: data/cleaned/property_cleaned.csv
+      hash: md5
+      md5: 0f3c1728e6056ce4aa745af81525e567
+      size: 6395336

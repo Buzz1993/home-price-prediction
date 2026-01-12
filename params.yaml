@@ -1,3 +1,12 @@
 Data_Preparation:
   test_size: 0.2
   random_state: 42
+
+
+Train:
+  target_col: price
+  n_trials: 30
+  cv_folds: 5
+  random_state: 42
+  early_stopping_rounds: 50
+  knn_neighbors: 5

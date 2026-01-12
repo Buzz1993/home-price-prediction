@@ -19,43 +19,39 @@ stages:
       - data/interim/train.csv
       - data/interim/test.csv
 
-  data_preprocessing:
-    cmd: python src/features/data_preprocessing.py
+  preprocessing_and_train:
+    cmd: python src/models/preprocess_train.py
+    params:
+      - Train.target_col
+      - Train.n_trials
+      - Train.cv_folds
+      - Train.random_state
+      - Train.early_stopping_rounds
+      - Train.knn_neighbors
     deps:
       - data/interim/train.csv
       - data/interim/test.csv
-      - src/features/data_preprocessing.py
+      - src/models/preprocess_train.py
     outs:
-      - data/processed/train_trans.csv
-      - data/processed/test_trans.csv
-      - models/preprocessor.joblib
+      - cache/artifacts_auto/best_trial_params_auto.pkl
+      - cache/artifacts_auto/best_per_family_summary_auto.pkl
+      - cache/artifacts_auto/optuna_study_auto.pkl
+      - cache/predictions/oof_preds_log_baseline.pkl
+      - cache/predictions/test_preds_avg_log_baseline.pkl
 
-  # train:
-  #   cmd: python src/models/train.py
-  #   params:
-  #     - Train.Random_Forest
-  #     - Train.LightGBM
-  #     - Train.XGBoost
-  #   deps:
-  #     - src/models/train.py
-  #     - data/processed/train_trans.csv
-  #   outs:
-  #     - models/model.joblib
-  #     - models/power_transformer.joblib
-  #     - models/stacking_regressor.joblib
 
-  # evaluation:
-  #   cmd: python src/models/evaluation.py
-  #   deps:
-  #     - src/models/evaluation.py
-  #     - data/processed/train_trans.csv
-  #     - data/processed/test_trans.csv
-  #     - models/model.joblib
-  #   outs:
-  #     - reports/run_information.json
-
-  # register_model:
-  #   cmd: python src/models/register_model.py
-  #   deps:
-  #     - src/models/register_model.py
-  #     - reports/run_information.json
+  evaluation:
+    cmd: python src/models/evaluation.py
+    params:
+      - Train.target_col
+    deps:
+      - data/interim/train.csv
+      - data/interim/test.csv
+      - src/models/evaluation.py
+      - cache/artifacts_auto/final_pipeline_best.pkl
+      - cache/artifacts_auto/cleaner_full_for_te.pkl
+      - cache/artifacts_auto/te_full.pkl
+    outs:
+      - cache/evaluation/eval_metrics.json
+      - cache/evaluation/predictions_train.csv
+      - cache/evaluation/predictions_test.csv

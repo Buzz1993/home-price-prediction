@@ -68,3 +68,47 @@ stages:
       hash: md5
       md5: 72cd0bb98efd17f0b9837a7d1b9541a2
       size: 3931759
+  preprocessing_and_train:
+    cmd: python src/models/preprocess_train.py
+    deps:
+    - path: data/interim/test.csv
+      hash: md5
+      md5: 3b1ad425b61f728f57c32f2645e39798
+      size: 1069397
+    - path: data/interim/train.csv
+      hash: md5
+      md5: 9e3b46867117c215ab742fe0a4fa3ee0
+      size: 4289892
+    - path: src/models/preprocess_train.py
+      hash: md5
+      md5: d4196e9f2feb8c296ff57aeb3ab153e0
+      size: 29406
+    params:
+      params.yaml:
+        Train.cv_folds: 5
+        Train.early_stopping_rounds: 50
+        Train.knn_neighbors: 5
+        Train.n_trials: 30
+        Train.random_state: 42
+        Train.target_col: price
+    outs:
+    - path: cache/artifacts_auto/best_per_family_summary_auto.pkl
+      hash: md5
+      md5: 49a04273404ae504199ae41fa1be4038
+      size: 516
+    - path: cache/artifacts_auto/best_trial_params_auto.pkl
+      hash: md5
+      md5: 768a07d57b3b6d5c5a9ded82fea1c21e
+      size: 179
+    - path: cache/artifacts_auto/optuna_study_auto.pkl
+      hash: md5
+      md5: bb8d2b9d046acdfb8e2875074dd232a3
+      size: 25486
+    - path: cache/predictions/oof_preds_log_baseline.pkl
+      hash: md5
+      md5: 27ff792a820c32bc88640e6f3422c0b6
+      size: 75817
+    - path: cache/predictions/test_preds_avg_log_baseline.pkl
+      hash: md5
+      md5: 7d4c850b1782af69f5700818e2208dad
+      size: 19129

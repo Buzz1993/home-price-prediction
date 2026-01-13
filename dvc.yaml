@@ -48,10 +48,14 @@ stages:
       - data/interim/train.csv
       - data/interim/test.csv
       - src/models/evaluation.py
+      - cache/artifacts_auto/best_trial_params_auto.pkl
+    metrics:
+      - cache/evaluation/eval_metrics.json
+    outs:
       - cache/artifacts_auto/final_pipeline_best.pkl
       - cache/artifacts_auto/cleaner_full_for_te.pkl
       - cache/artifacts_auto/te_full.pkl
-    outs:
-      - cache/evaluation/eval_metrics.json
       - cache/evaluation/predictions_train.csv
       - cache/evaluation/predictions_test.csv
+
+

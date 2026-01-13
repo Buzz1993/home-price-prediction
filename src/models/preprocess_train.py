@@ -641,7 +641,7 @@ if __name__ == "__main__":
     artifacts_dir = os.path.join(CACHE_DIR, "artifacts_auto")
     os.makedirs(artifacts_dir, exist_ok=True)
 
-    joblib.dump(best_trial.params, os.path.join(artifacts_dir, "best_trial_params_auto.pkl"))
+    joblib.dump(best_trial.params, os.path.join(artifacts_dir, "best_trial_params_auto.pkl"))  
     joblib.dump(best_per_family, os.path.join(artifacts_dir, "best_per_family_summary_auto.pkl"))
     joblib.dump(study, os.path.join(artifacts_dir, "optuna_study_auto.pkl"))
 

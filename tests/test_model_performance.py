@@ -1,4 +1,9 @@
-#test_model_performance.py
+# ============================================================
+# test_model_performance.py 2
+# ------------------------------------------------------------
+# Validates the model marked with the '@staging' alias.
+# ============================================================
+
 import os
 import json
 import joblib
@@ -10,9 +15,8 @@ import pandas as pd
 from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
-from mlflow import MlflowClient
-
 from sklearn import set_config
+
 set_config(transform_output="pandas")
 
 # ============================================================
@@ -21,7 +25,9 @@ set_config(transform_output="pandas")
 REPO_OWNER = "bowlekarbhushan88"
 REPO_NAME = "home-price-prediction"
 TRACKING_URI = f"https://dagshub.com/{REPO_OWNER}/{REPO_NAME}.mlflow"
-STAGE = "Staging"
+
+# ✅ UPDATED: Use Alias instead of Stage
+MODEL_ALIAS = "staging" 
 
 # Thresholds
 THRESHOLD_MAE = 0.50   # 50 Lakhs
@@ -39,7 +45,6 @@ os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"] = "5"
 
 dagshub.init(repo_owner=REPO_OWNER, repo_name=REPO_NAME, mlflow=True)
 mlflow.set_tracking_uri(TRACKING_URI)
-mlflow.set_registry_uri(TRACKING_URI)
 
 # ============================================================
 # LOAD METADATA & ARTIFACTS
@@ -52,21 +57,23 @@ run_info = load_run_info()
 MODEL_NAME = run_info["model_name"]
 TARGET_COL = "price"
 
-# Load local supporting artifacts (Cleaner, TE, Preprocessor)
+# Load local supporting artifacts
 cleaner = joblib.load(ARTIFACTS_DIR / "cleaner_full_for_te.pkl")
 te_full = joblib.load(ARTIFACTS_DIR / "te_full.pkl")
 preprocessor = joblib.load(ARTIFACTS_DIR / "preprocessor.joblib")
 
 # ============================================================
-# HELPER: LOAD MODEL (With Fallback)
+# HELPER: LOAD MODEL (Using Alias)
 # ============================================================
 def get_model():
-    model_uri = f"models:/{MODEL_NAME}/{STAGE}"
+    # ✅ UPDATED: The URI format for aliases is 'models:/<name>@<alias>'
+    model_uri = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
     try:
         print(f"Attempting to load model from Registry: {model_uri}")
         return mlflow.sklearn.load_model(model_uri)
     except Exception as e:
-        print(f"Remote load failed (DagsHub 500), using local backup.")
+        print(f"Remote load failed: {e}")
+        print("Using local backup from artifacts directory.")
         return joblib.load(ARTIFACTS_DIR / "final_model.joblib")
 
 # ============================================================
@@ -79,7 +86,7 @@ def test_model_performance():
     # 1. Load Model
     model = get_model()
     
-    # 2. Build Pipeline (Preprocessor + Estimator)
+    # 2. Build Pipeline
     model_pipe = Pipeline(steps=[
         ("preprocessor", preprocessor),
         ("regressor", model)
@@ -93,7 +100,7 @@ def test_model_performance():
     X = df.drop(columns=[TARGET_COL])
     y_true = df[TARGET_COL]
 
-    # 4. Apply Target Encoding (Must match app.py logic)
+    # 4. Apply Target Encoding
     X_te_cols = ["builder", "project_name", "location"]
     X_clean = cleaner.transform(X[X_te_cols].copy())
     X_te_df = te_full.transform(X_clean)
@@ -109,12 +116,13 @@ def test_model_performance():
 
     # 6. Calculate Metrics
     mae = mean_absolute_error(y_true, y_pred)
-    # MAPE calculation (multiplying by 100 for percentage)
     mape = mean_absolute_percentage_error(y_true, y_pred) * 100
     
     print(f"\n--- Performance Summary ---")
-    print(f"MAE : {mae:.4f} Cr")
-    print(f"MAPE: {mape:.2f} %")
+    print(f"Model Name : {MODEL_NAME}")
+    print(f"Alias      : @{MODEL_ALIAS}")
+    print(f"MAE        : {mae:.4f} Cr")
+    print(f"MAPE       : {mape:.2f} %")
     
     # 7. Assertions
     assert mae <= THRESHOLD_MAE, f"Model MAE {mae:.4f} exceeds threshold {THRESHOLD_MAE} Cr"

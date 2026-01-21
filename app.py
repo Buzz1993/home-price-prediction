@@ -1,4 +1,4 @@
-#app.py
+#app.py 2
 import os
 import json
 import joblib
@@ -162,33 +162,32 @@ def apply_te(X: pd.DataFrame) -> pd.DataFrame:
 # =====================================================
 run_info = load_json(RUN_INFO_PATH)
 model_name = run_info["model_name"]
-run_id = run_info["run_id"]
-artifact_path = run_info["artifact_path"]
 
-stage = "Staging"
-registry_uri = f"models:/{model_name}/{stage}"
+# ✅ UPDATED: Use Alias instead of Stage
+MODEL_ALIAS = "staging" 
+# Format: models:/name@alias
+registry_uri = f"models:/{model_name}@{MODEL_ALIAS}"
 
 
 def load_model_safely():
     """
-    Correct order for DagsHub reliability:
-    1) Registry model (models:/name/stage)
-    2) Model absolute URI from registered_model_info.json (model_source)
-    3) Local joblib fallback
+    1) Try Registry via Alias (@staging)
+    2) Try Absolute Model Source (from cache)
+    3) Local Fallback
     """
     print("Tracking URI:", mlflow.get_tracking_uri())
-    print("Registry URI :", mlflow.get_registry_uri())
 
     # -------------------------------
     # 1) TRY REGISTRY
     # -------------------------------
     try:
-        print("\n[1] Trying REGISTRY:", registry_uri)
+        print(f"\n[1] Trying REGISTRY (Alias: @{MODEL_ALIAS}):", registry_uri)
+        # MLflow 2.10+ automatically resolves @aliases in the URI
         model_ = mlflow.sklearn.load_model(registry_uri)
-        print("Loaded model from registry")
+        print(f"✅ Loaded model from registry (Alias: @{MODEL_ALIAS})")
         return model_
     except Exception as e:
-        print("Registry load failed:", repr(e))
+        print(f"Registry load failed (@{MODEL_ALIAS}):", repr(e))
 
     # -------------------------------
     # 2) TRY ABSOLUTE MODEL SOURCE
@@ -196,13 +195,12 @@ def load_model_safely():
     try:
         registry_info = load_json(REGISTRY_INFO_PATH)
         model_source = registry_info.get("model_source")
-
         if not model_source:
             raise ValueError("model_source missing in registered_model_info.json")
 
         print("\n[2] Trying MODEL SOURCE:", model_source)
         model_ = mlflow.sklearn.load_model(model_source)
-        print("Loaded model from model_source")
+        print("✅ Loaded model from model_source")
         return model_
     except Exception as e:
         print("model_source load failed:", repr(e))
@@ -213,12 +211,11 @@ def load_model_safely():
     try:
         print("\n[3] Loading LOCAL backup:", LOCAL_MODEL_PATH)
         model_ = joblib.load(LOCAL_MODEL_PATH)
-        print("Loaded local model backup")
+        print("✅ Loaded local model backup")
         return model_
     except Exception as e:
         print("Local model load failed:", repr(e))
-        raise RuntimeError("Model loading failed from Registry, model_source, and Local backup.")
-
+        raise RuntimeError("CRITICAL: All model loading attempts failed.")
 
 model = load_model_safely()
 
@@ -650,14 +647,15 @@ def predict(data: Data):
         # ---------------------------------------------------------
         pred_log = model_pipe.predict(X_te)[0]
         pred_log = float(pred_log)
-
-        # Convert to original scale
         pred_price = float(np.expm1(pred_log))
 
         return {
             "predicted_price": round(pred_price, 2),
-            "model_stage": stage,
-            "model_name": model_name
+            "model_metadata": {
+                "name": model_name,
+                "alias": MODEL_ALIAS,  # Changed from stage
+                "unit": "Cr"
+            }
         }
 
     except Exception as e:

@@ -5,8 +5,8 @@ Data_Preparation:
 
 Train:
   target_col: price
-  n_trials: 30
-  cv_folds: 5
+  n_trials: 3 #30
+  cv_folds: 2 #5
   random_state: 42
   early_stopping_rounds: 50
   knn_neighbors: 5

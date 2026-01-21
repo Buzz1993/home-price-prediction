@@ -4,3 +4,5 @@
 /final_pipeline_best.pkl
 /cleaner_full_for_te.pkl
 /te_full.pkl
+/preprocessor.joblib
+/final_model.joblib

@@ -1,6 +1,6 @@
 stages:
   property_data_cleaning:
-    cmd: python src/data/data_cleaning.py
+    cmd: python -m src.data.data_cleaning
     deps:
       - data/raw/f_original magicbricks cleaned 12022 data.csv
       - src/data/data_cleaning.py
@@ -8,7 +8,7 @@ stages:
       - data/cleaned/property_cleaned.csv
 
   data_preparation:
-    cmd: python src/data/data_preparation.py
+    cmd: python -m src.data.data_preparation
     params:
       - Data_Preparation.test_size
       - Data_Preparation.random_state
@@ -20,7 +20,7 @@ stages:
       - data/interim/test.csv
 
   preprocessing_and_train:
-    cmd: python src/models/preprocess_train.py
+    cmd: python -m src.models.preprocess_train
     params:
       - Train.target_col
       - Train.n_trials
@@ -39,9 +39,8 @@ stages:
       - cache/predictions/oof_preds_log_baseline.pkl
       - cache/predictions/test_preds_avg_log_baseline.pkl
 
-
   evaluation:
-    cmd: python src/models/evaluation.py
+    cmd: python -m src.models.evaluation
     params:
       - Train.target_col
     deps:
@@ -52,10 +51,19 @@ stages:
     metrics:
       - cache/evaluation/eval_metrics.json
     outs:
-      - cache/artifacts_auto/final_pipeline_best.pkl
+      - cache/artifacts_auto/preprocessor.joblib
+      - cache/artifacts_auto/final_model.joblib
       - cache/artifacts_auto/cleaner_full_for_te.pkl
       - cache/artifacts_auto/te_full.pkl
       - cache/evaluation/predictions_train.csv
       - cache/evaluation/predictions_test.csv
+      - cache/run_information.json
 
 
+  register_model:
+    cmd: python -m src.models.register_model
+    deps:
+      - src/models/register_model.py
+      - cache/run_information.json
+    outs:
+      - cache/model_registry/registered_model_info.json

@@ -12,3 +12,6 @@ tqdm
 mlflow
 joblib
 dagshub
+statsmodels
+pytest
+python-dotenv

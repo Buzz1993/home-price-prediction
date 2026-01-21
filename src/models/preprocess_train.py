@@ -108,158 +108,15 @@ def read_params(file_path: Path) -> dict:
 # ============================================================
 # CUSTOM TRANSFORMERS
 # ============================================================
-class MultiLabelBinarizerTransformer(BaseEstimator, TransformerMixin):
-    def fit(self, X, y=None):
-        from sklearn.preprocessing import MultiLabelBinarizer
-        self.mlb_ = {}
-        self.columns_ = X.columns.tolist()
-
-        for col in self.columns_:
-            mlb = MultiLabelBinarizer()
-            mlb.fit(X[col].fillna("").str.split(", "))
-            self.mlb_[col] = mlb
-
-        self.fitted_ = True
-        return self
-
-    def transform(self, X):
-        from sklearn.utils.validation import check_is_fitted
-        check_is_fitted(self, attributes=["fitted_"])
-
-        dfs = []
-        for col, mlb in self.mlb_.items():
-            arr = mlb.transform(X[col].fillna("").str.split(", "))
-            cols = [f"{col}_{c}" for c in mlb.classes_]
-            dfs.append(pd.DataFrame(arr, columns=cols, index=X.index))
-
-        return pd.concat(dfs, axis=1)
-
-
-class FrequencyThresholdCategoriesTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, thresholds=None, default_threshold=20, other_label="__other__"):
-        self.thresholds = thresholds or {}
-        self.default_threshold = default_threshold
-        self.other_label = other_label
-
-    def fit(self, X, y=None):
-        self.columns_ = X.columns.tolist()
-        self.valid_categories_ = {}
-
-        for col in self.columns_:
-            min_count = self.thresholds.get(col, self.default_threshold)
-            counts = X[col].value_counts(dropna=True)
-            self.valid_categories_[col] = set(counts[counts >= min_count].index)
-
-        self.fitted_ = True
-        return self
-
-    def transform(self, X):
-        from sklearn.utils.validation import check_is_fitted
-        check_is_fitted(self, attributes=["fitted_"])
-
-        X = X.copy()
-        for col in self.columns_:
-            valid = self.valid_categories_[col]
-            X[col] = X[col].where(
-                X[col].isna() | X[col].isin(valid),
-                other=self.other_label
-            )
-        return X
-
-
-class MissingIndicatorAdder(BaseEstimator, TransformerMixin):
-    def __init__(self, column):
-        self.column = column
-
-    def fit(self, X, y=None):
-        self.feature_names_in_ = X.columns.tolist()
-        self.fitted_ = True
-        return self
-
-    def transform(self, X):
-        from sklearn.utils.validation import check_is_fitted
-        check_is_fitted(self, attributes=["fitted_"])
-
-        X = X.copy()
-        X[f"{self.column}_missing"] = X[self.column].isna().astype(int)
-        return X
-
-
-class ImputeAndScaleAmenity(BaseEstimator, TransformerMixin):
-    def __init__(self, column='assigned_amenities_score', n_neighbors=5):
-
-        self.column = column
-        self.n_neighbors = n_neighbors
-        self.imputer = KNNImputer(n_neighbors=n_neighbors)
-        self.scaler = StandardScaler()
-
-    def fit(self, X, y=None):
-        self.imputer.fit(X[[self.column]])
-        imputed = self.imputer.transform(X[[self.column]])
-        self.scaler.fit(imputed)
-
-        self.fitted_ = True
-        return self
-
-    def transform(self, X):
-        from sklearn.utils.validation import check_is_fitted
-        check_is_fitted(self, attributes=["fitted_"])
-
-        X = X.copy()
-        imputed = self.imputer.transform(X[[self.column]])
-        X[self.column] = self.scaler.transform(imputed)
-        return X
-
-
-class ConstructionOrdinalEncoder(BaseEstimator, TransformerMixin):
-    def __init__(self, column='construction', categories=None):
-        from sklearn.preprocessing import OrdinalEncoder
-
-        self.column = column
-        self.categories = categories
-        self.encoder = OrdinalEncoder(
-            categories=self.categories,
-            handle_unknown='use_encoded_value',
-            unknown_value=-1
-        )
-
-    def fit(self, X, y=None):
-        self.encoder.fit(X[[self.column]])
-        self.fitted_ = True
-        return self
-
-    def transform(self, X):
-        from sklearn.utils.validation import check_is_fitted
-        check_is_fitted(self, attributes=["fitted_"])
-
-        X = X.copy()
-        X[self.column] = self.encoder.transform(X[[self.column]])
-        return X
-
-
-class CategoryCleaner(BaseEstimator, TransformerMixin):
-    def __init__(self, cols=None):
-        self.cols = cols
-
-    def fit(self, X, y=None):
-        if self.cols is None:
-            self.cols = [c for c, dt in X.dtypes.items() if dt == "object"]
-
-        self.fitted_ = True
-        return self
-
-    def transform(self, X):
-        from sklearn.utils.validation import check_is_fitted
-        check_is_fitted(self, attributes=["fitted_"])
-
-        X = X.copy()
-        for c in self.cols:
-            s = X[c].fillna("missing").astype(str).str.strip().str.lower()
-            s = s.str.replace(r"[ \/\-]+", "_", regex=True)
-            s = s.str.replace(r"[^0-9a-z_]", "", regex=True)
-            s = s.str.replace(r"_+", "_", regex=True).str.strip("_")
-            X[c] = s.replace("", "missing")
-        return X
+from src.models.custom_transformers import (
+    MultiLabelBinarizerTransformer,
+    FrequencyThresholdCategoriesTransformer,
+    MissingIndicatorAdder,
+    ImputeAndScaleAmenity,
+    ConstructionOrdinalEncoder,
+    CategoryCleaner,
+    #ToDataFrame
+)
 
 
 # ============================================================
@@ -314,8 +171,10 @@ knn_impute_scaling = ['distance_to_center_km']
 builder_location_project_name_pipeline = Pipeline([
     ("cat_clean", CategoryCleaner(cols=["builder", "project_name", "location"])),
     ("imputer", SimpleImputer(strategy="constant", fill_value="missing")),
+    #("to_df", ToDataFrame(columns=["builder", "project_name", "location"])),  
     ("clip", FrequencyThresholdCategoriesTransformer(thresholds=freq_thresholds)),
 ])
+
 
 property_type_pipeline = Pipeline([
     ('impute', SimpleImputer(strategy="most_frequent")),
@@ -336,10 +195,11 @@ ownership_facing_pipeline = Pipeline([
     ('OHE', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
 ])
 
-overlooking_extra_rooms_flooring_pipeline = Pipeline([
-    ('impute', SimpleImputer(strategy="constant", fill_value="missing")),
-    ('multilable', MultiLabelBinarizerTransformer())
+overlooking_extra_rooms_flooring_pipeline = Pipeline(steps=[
+    ("impute", SimpleImputer(strategy="constant", fill_value="missing")),
+    ("multilable", MultiLabelBinarizerTransformer())   
 ])
+
 
 assigned_amenities_pipeline = Pipeline([
     ('add_missing_indicator', MissingIndicatorAdder(column='assigned_amenities_score')),

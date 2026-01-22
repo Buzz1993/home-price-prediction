@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements-dockers.txt
 # --- Project Structure ---
 # app.py resides in the root
 COPY app.py .
-COPY run_information.json .
+COPY cache/run_information.json .
 
 # Copy internal packages/scripts
 COPY ./scripts/ ./scripts/
@@ -24,7 +24,7 @@ COPY ./src/ ./src/
 COPY ./cache/ ./cache/
 
 # Ensure 'src' and 'scripts' are discoverable by Python
-ENV PYTHONPATH="${PYTHONPATH}:/app"
+ENV PYTHONPATH="/app"
 
 # Expose FastAPI port
 EXPOSE 8000

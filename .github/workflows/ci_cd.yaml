@@ -45,6 +45,12 @@ jobs:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           pytest tests/test_model_performance.py
+      
+      - name: Upload Run Info
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-metadata
+          path: cache/run_information.json
 
   Continuous-Deployment:
     needs: Continuous-Integration
@@ -53,6 +59,12 @@ jobs:
     steps:
       - name: Code Checkout
         uses: actions/checkout@v4
+
+      - name: Download Run Info
+        uses: actions/download-artifact@v4
+        with:
+          name: model-metadata
+          path: cache/  
 
       - name: Setup Python 
         uses: actions/setup-python@v5

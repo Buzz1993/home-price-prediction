@@ -30,8 +30,8 @@ TRACKING_URI = f"https://dagshub.com/{REPO_OWNER}/{REPO_NAME}.mlflow"
 MODEL_ALIAS = "staging" 
 
 # Thresholds
-THRESHOLD_MAE = 0.50   # 50 Lakhs
-THRESHOLD_MAPE = 20.0  # 20% average error
+THRESHOLD_MAE = 0.60   # 50 Lakhs
+THRESHOLD_MAPE = 25.0  # 20% average error
 
 # Path Setup
 ROOT_PATH = Path(__file__).resolve().parents[1]

@@ -34,7 +34,7 @@ def main():
 
     sample_row = df.sample(1)
 
-    # print actual target always
+    #print actual target always 
     target_val = float(sample_row[TARGET_COL].values.item())
     print(f"\nTarget value (cleaned, in Cr): {target_val}")
 

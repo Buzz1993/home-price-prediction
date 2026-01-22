@@ -1,10 +1,10 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='src',
+    name="home-price-prediction",
+    version="0.1.0",
+    description="Build ML project that predicts property prices in rupees",
+    author="bhushan",
     packages=find_packages(),
-    version='0.1.0',
-    description='Build ML project that predicts property prices in rupees',
-    author='bhushan',
-    license='',
+    install_requires=[], # You can leave this empty since you use requirements.txt
 )

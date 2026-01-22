@@ -118,4 +118,4 @@ jobs:
           --deployment-group-name homepricepredictiondeploymentgroup \
           --s3-location bucket=homepricepredictiondeployment,key=deployment.zip,bundleType=zip \
           --file-exists-behavior OVERWRITE \
-          --region ap-south-1
+          --region us-east-1

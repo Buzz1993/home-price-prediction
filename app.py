@@ -164,10 +164,10 @@ run_info = load_json(RUN_INFO_PATH)
 model_name = run_info["model_name"]
 
 # ✅ UPDATED: Use Alias instead of Stage
-MODEL_ALIAS = "Production" 
+MODEL_ALIAS = "production" 
 # Format: models:/name@alias
 registry_uri = f"models:/{model_name}@{MODEL_ALIAS}"
-
+    
 
 def load_model_safely():
     """

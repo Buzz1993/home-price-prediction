@@ -83,9 +83,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      # - name: Promote Model to Production
+      #   env:
+      #     DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      #   run: |
+      #     python scripts/promote_model_to_prod.py
+
       - name: Promote Model to Production
         env:
-          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          MLFLOW_TRACKING_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }} 
         run: |
           python scripts/promote_model_to_prod.py
 

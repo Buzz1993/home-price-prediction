@@ -1,0 +1,3 @@
+!cache/artifacts_auto/*.pkl
+!cache/artifacts_auto/*.joblib
+!cache/run_information.json

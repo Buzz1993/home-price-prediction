@@ -29,17 +29,17 @@ stages:
       size: 3134
     params:
       params.yaml:
-        Data_Preparation.random_state: 36
+        Data_Preparation.random_state: 37
         Data_Preparation.test_size: 0.2
     outs:
     - path: data/interim/test.csv
       hash: md5
-      md5: 393315bdd8cad32a213c788460a4f807
-      size: 1074540
+      md5: c89fddaa0cac509c0ae26d9174cc2d89
+      size: 1064636
     - path: data/interim/train.csv
       hash: md5
-      md5: a20b46178f25b459bcbeae322b07ed8c
-      size: 4284749
+      md5: 7741490aff5e0035d423fe812c278e06
+      size: 4294653
   preprocessing_and_train:
     cmd: python -m src.models.preprocess_train
     deps:

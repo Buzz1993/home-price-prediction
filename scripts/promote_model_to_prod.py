@@ -1,3 +1,4 @@
+#changes done here
 # #promote_model_to_prod.py 2
 # import mlflow
 # import dagshub
@@ -86,12 +87,26 @@ def load_model_information(file_path):
         return json.load(f)
 
 if __name__ == "__main__":
+    #changes done here
     # 1. Initialize DagsHub (Automatically handles authentication)
+    # dagshub.init(
+    #     repo_owner=REPO_OWNER,
+    #     repo_name=REPO_NAME,
+    #     mlflow=True
+    # )
+
+    dagshub_token = os.getenv("DAGSHUB_USER_TOKEN")
+
+    if not dagshub_token:
+        raise RuntimeError("DAGSHUB_USER_TOKEN not found in environment")
+
     dagshub.init(
         repo_owner=REPO_OWNER,
         repo_name=REPO_NAME,
-        mlflow=True
+        mlflow=True,
+        token=dagshub_token
     )
+
 
     # 2. Set the MLflow tracking server URI
     TRACKING_URI = f"https://dagshub.com/{REPO_OWNER}/{REPO_NAME}.mlflow"

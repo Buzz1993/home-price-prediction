@@ -45,6 +45,7 @@ os.environ["MLFLOW_HTTP_REQUEST_MAX_RETRIES"] = "5"
 
 dagshub.init(repo_owner=REPO_OWNER, repo_name=REPO_NAME, mlflow=True)
 mlflow.set_tracking_uri(TRACKING_URI)
+mlflow.set_registry_uri(TRACKING_URI)
 
 # ============================================================
 # LOAD METADATA & ARTIFACTS

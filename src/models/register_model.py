@@ -29,6 +29,8 @@ if not logger.handlers:
 dagshub.init(repo_owner="bowlekarbhushan88", repo_name="home-price-prediction", mlflow=True)
 TRACKING_URI = "https://dagshub.com/bowlekarbhushan88/home-price-prediction.mlflow"
 mlflow.set_tracking_uri(TRACKING_URI)
+mlflow.set_registry_uri(TRACKING_URI)   
+
 
 # =====================================================
 # HELPERS

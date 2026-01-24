@@ -1,3 +1,4 @@
+#ci_cd.yaml
 name: CI-CD
 
 on:
@@ -123,22 +124,20 @@ jobs:
           docker push $REPOSITORY_URI:$IMAGE_TAG
 
 
+      - name: Zip files for deployment
+        run: |
+          zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
 
+      - name: Upload ZIP to S3
+        run: |
+          aws s3 cp deployment.zip s3://homepricepredictiondeployment/deployment.zip
 
-      # - name: Zip files for deployment
-      #   run: |
-      #     zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
-
-      # - name: Upload ZIP to S3
-      #   run: |
-      #     aws s3 cp deployment.zip s3://homepricepredictiondeployment/deployment.zip
-
-      # - name: Deploy to AWS CodeDeploy
-      #   run: |
-      #     aws deploy create-deployment \
-      #     --application-name homepriceprediction \
-      #     --deployment-config-name CodeDeployDefault.OneAtATime \
-      #     --deployment-group-name homepricepredictiondeploymentgroup \
-      #     --s3-location bucket=homepricepredictiondeployment,key=deployment.zip,bundleType=zip \
-      #     --file-exists-behavior OVERWRITE \
-      #     --region ap-south-1
+      - name: Deploy to AWS CodeDeploy
+        run: |
+          aws deploy create-deployment \
+          --application-name homepriceprediction \
+          --deployment-config-name CodeDeployDefault.OneAtATime \
+          --deployment-group-name homepricepredictiondeploymentgroup \
+          --s3-location bucket=homepricepredictiondeployment,key=deployment.zip,bundleType=zip \
+          --file-exists-behavior OVERWRITE \
+          --region ap-south-1

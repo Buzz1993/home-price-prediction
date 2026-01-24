@@ -130,12 +130,12 @@ jobs:
 
       - name: Upload ZIP to S3
         run: |
-          aws s3 cp deployment.zip s3://homepricepredictiondeployment/deployment.zip
+          aws s3 cp deployment.zip s3://homepricepredictiondeployment/deployment.zip --region ap-south-1
 
       - name: Deploy to AWS CodeDeploy
         run: |
           aws deploy create-deployment \
-          --application-name homepriceprediction \
+          --application-name homepricepredictionapp \
           --deployment-config-name CodeDeployDefault.OneAtATime \
           --deployment-group-name homepricepredictiondeploymentgroup \
           --s3-location bucket=homepricepredictiondeployment,key=deployment.zip,bundleType=zip \

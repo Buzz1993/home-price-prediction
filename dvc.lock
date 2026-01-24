@@ -29,28 +29,28 @@ stages:
       size: 3134
     params:
       params.yaml:
-        Data_Preparation.random_state: 49
+        Data_Preparation.random_state: 50
         Data_Preparation.test_size: 0.2
     outs:
     - path: data/interim/test.csv
       hash: md5
-      md5: 403aa107a205ce11e6c81bef37cdff98
-      size: 1074594
+      md5: 4ea8625af7df27071b82ace5c7139432
+      size: 1073810
     - path: data/interim/train.csv
       hash: md5
-      md5: e447e09e320b06b7375504e9406c0362
-      size: 4284695
+      md5: 92c304543cfcdfb2b7913087dbffaf4b
+      size: 4285479
   preprocessing_and_train:
     cmd: python -m src.models.preprocess_train
     deps:
     - path: data/interim/test.csv
       hash: md5
-      md5: 403aa107a205ce11e6c81bef37cdff98
-      size: 1074594
+      md5: 4ea8625af7df27071b82ace5c7139432
+      size: 1073810
     - path: data/interim/train.csv
       hash: md5
-      md5: e447e09e320b06b7375504e9406c0362
-      size: 4284695
+      md5: 92c304543cfcdfb2b7913087dbffaf4b
+      size: 4285479
     - path: src/models/preprocess_train.py
       hash: md5
       md5: 9d904a93b4fc6c01f7b4e359bb0cd31c
@@ -61,44 +61,44 @@ stages:
         Train.early_stopping_rounds: 50
         Train.knn_neighbors: 5
         Train.n_trials: 3
-        Train.random_state: 49
+        Train.random_state: 50
         Train.target_col: price
     outs:
     - path: cache/artifacts_auto/best_per_family_summary_auto.pkl
       hash: md5
-      md5: 701d617b375ce9b477735abc6873f8de
-      size: 387
+      md5: dfcb99f2d16e718fc27713bc97090658
+      size: 494
     - path: cache/artifacts_auto/best_trial_params_auto.pkl
       hash: md5
-      md5: ff194f222c89ccde1910fcb7efc3a788
-      size: 179
+      md5: 1937d2c3f59a043228104217bbab0d07
+      size: 217
     - path: cache/artifacts_auto/optuna_study_auto.pkl
       hash: md5
-      md5: 4cefde735f94398b04cd92fd135b428f
-      size: 8834
+      md5: 6fba03ba5fa5d2ea593e3dafc9239c2d
+      size: 9106
     - path: cache/predictions/oof_preds_log_baseline.pkl
       hash: md5
-      md5: 3fc4536279b0e7bbe99a4fd1763d89ba
+      md5: 4acf63c9ee00047c261aa70acf654f73
       size: 75817
     - path: cache/predictions/test_preds_avg_log_baseline.pkl
       hash: md5
-      md5: 198d2a0d03e3de253ecb690f32612914
+      md5: b4161d5d596f87b8bacd18c6856e94f8
       size: 19129
   evaluation:
     cmd: python -m src.models.evaluation
     deps:
     - path: cache/artifacts_auto/best_trial_params_auto.pkl
       hash: md5
-      md5: ff194f222c89ccde1910fcb7efc3a788
-      size: 179
+      md5: 1937d2c3f59a043228104217bbab0d07
+      size: 217
     - path: data/interim/test.csv
       hash: md5
-      md5: 403aa107a205ce11e6c81bef37cdff98
-      size: 1074594
+      md5: 4ea8625af7df27071b82ace5c7139432
+      size: 1073810
     - path: data/interim/train.csv
       hash: md5
-      md5: e447e09e320b06b7375504e9406c0362
-      size: 4284695
+      md5: 92c304543cfcdfb2b7913087dbffaf4b
+      size: 4285479
     - path: src/models/evaluation.py
       hash: md5
       md5: 2ec5ebe6577ec9c86f4e753b7f268b18
@@ -109,43 +109,43 @@ stages:
     outs:
     - path: cache/artifacts_auto/cleaner_full_for_te.pkl
       hash: md5
-      md5: 86fcaeca31c1cbe0783d9433f0063933
-      size: 3870
+      md5: 70b1dd25ccd83975fd243d14c5379cc2
+      size: 3821
     - path: cache/artifacts_auto/final_model.joblib
       hash: md5
-      md5: ec97cdb5d34096f61c20eec1da75883f
-      size: 2017811
+      md5: e426192152293138680a86054bbff255
+      size: 2031506
     - path: cache/artifacts_auto/preprocessor.joblib
       hash: md5
-      md5: 48fff397463e0b6e54d93ad24315fa94
+      md5: 14f0beaf022048f72b4d3645f29fdf34
       size: 3932821
     - path: cache/artifacts_auto/te_full.pkl
       hash: md5
-      md5: 9af95efa12d49c0321d8bda1e5f47d11
-      size: 17277
+      md5: d124353f0bf715e5fff5080a836f0658
+      size: 17141
     - path: cache/evaluation/eval_metrics.json
       hash: md5
-      md5: d3b5dad3ed797cfdc9d7cc73f1af1e56
-      size: 484
+      md5: 62c7e6028356af341440606ce8f70772
+      size: 483
     - path: cache/evaluation/predictions_test.csv
       hash: md5
-      md5: cebde6908362adeea1335b73d7df9d3c
-      size: 37058
+      md5: 81164e6920bd034e11811b430de54a2f
+      size: 57792
     - path: cache/evaluation/predictions_train.csv
       hash: md5
-      md5: 98d16a7f9590cf4cdae52c5d63382c4f
-      size: 148394
+      md5: 17ad9671267d33042f41604ed5e0c43c
+      size: 230791
     - path: cache/run_information.json
       hash: md5
-      md5: c1b3466062c1bf5daed0f2f9ac0de258
-      size: 121
+      md5: 1e6ee739f37124fcb0de0b3aac73b1e6
+      size: 122
   register_model:
     cmd: python -m src.models.register_model
     deps:
     - path: cache/run_information.json
       hash: md5
-      md5: c1b3466062c1bf5daed0f2f9ac0de258
-      size: 121
+      md5: 1e6ee739f37124fcb0de0b3aac73b1e6
+      size: 122
     - path: src/models/register_model.py
       hash: md5
       md5: 74f49e972eb06fad511001eab59d525e
@@ -153,5 +153,5 @@ stages:
     outs:
     - path: cache/model_registry/registered_model_info.json
       hash: md5
-      md5: ec023dc9ff69cb118fc0de4a40b57fc6
-      size: 266
+      md5: b474d262a95fdb825d81cb2cff858cda
+      size: 267

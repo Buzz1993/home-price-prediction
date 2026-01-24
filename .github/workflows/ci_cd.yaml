@@ -34,6 +34,12 @@ jobs:
         run: |
           dvc pull
 
+      - name: Register Model in DagsHub Registry
+        env:
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          python scripts/register_model.py
+
       - name: Test Model Registry
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
@@ -90,10 +96,11 @@ jobs:
       #   run: |
       #     python scripts/promote_model_to_prod.py
 
+      # 🔁 Promote @staging → @production
       - name: Promote Model to Production
         env:
           MLFLOW_TRACKING_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }} 
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           python scripts/promote_model_to_prod.py
 

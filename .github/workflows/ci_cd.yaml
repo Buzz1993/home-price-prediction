@@ -38,7 +38,8 @@ jobs:
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          python scripts/register_model.py
+          python src/models/register_model.py
+
 
       - name: Test Model Registry
         env:

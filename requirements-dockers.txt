@@ -6,7 +6,7 @@ pandas
 scikit-learn
 joblib
 mlflow
-dagshub>=0.3.9
+dagshub
 lightgbm
 xgboost
 category-encoders

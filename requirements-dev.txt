@@ -11,7 +11,7 @@ optuna
 tqdm
 mlflow
 joblib
-dagshub
+dagshub>=0.3.8
 statsmodels
 pytest
 python-dotenv

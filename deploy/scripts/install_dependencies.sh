@@ -1,28 +1,23 @@
 #!/bin/bash
-
-# Ensure that the script runs in non-interactive mode
+set -e
 export DEBIAN_FRONTEND=noninteractive
 
-# Update the package lists
+echo "Updating packages..."
 sudo apt-get update -y
 
-# Install Docker
+echo "Installing Docker..."
 sudo apt-get install -y docker.io
 
-# Start and enable Docker service
+echo "Starting Docker..."
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# Install necessary utilities
+echo "Installing utilities..."
 sudo apt-get install -y unzip curl
 
-# Download and install AWS CLI
+echo "Installing AWS CLI..."
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/home/ubuntu/awscliv2.zip"
 unzip -o /home/ubuntu/awscliv2.zip -d /home/ubuntu/
 sudo /home/ubuntu/aws/install
 
-# Add 'ubuntu' user to the 'docker' group to run Docker commands without 'sudo'
-sudo usermod -aG docker ubuntu
-
-# Clean up the AWS CLI installation files
-rm -rf /home/ubuntu/awscliv2.zip /home/ubuntu/aws
+echo "Done."

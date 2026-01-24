@@ -114,9 +114,14 @@ jobs:
           REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI }}
           IMAGE_TAG: latest
         run: |
-          echo "Building image: $REPOSITORY_URI:$IMAGE_TAG"
-          docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+          docker build \
+            --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            --build-arg AWS_DEFAULT_REGION=ap-south-1 \
+            -t $REPOSITORY_URI:$IMAGE_TAG .
+
           docker push $REPOSITORY_URI:$IMAGE_TAG
+
 
 
 

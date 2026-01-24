@@ -57,8 +57,17 @@ RUN pip install --no-cache-dir dvc[s3]
 # Copy Full Project (including .dvc files)
 COPY . .
 
+# ---- Accept AWS credentials as build arguments ----
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+ARG AWS_DEFAULT_REGION
+
+# Set them as environment variables for DVC/S3
+ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+ENV AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+
 # Pull ML Artifacts from DVC Remote
-# AWS credentials will be passed from GitHub Actions during build
 RUN dvc pull
 
 # Ensure 'src' and 'scripts' are discoverable by Python

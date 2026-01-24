@@ -95,16 +95,17 @@ if __name__ == "__main__":
     #     mlflow=True
     # )
 
+    # Auth via environment variable (works in CI)
     dagshub_token = os.getenv("DAGSHUB_USER_TOKEN")
-
     if not dagshub_token:
         raise RuntimeError("DAGSHUB_USER_TOKEN not found in environment")
+
+    os.environ["DAGSHUB_TOKEN"] = dagshub_token  # 👈 THIS is the correct way
 
     dagshub.init(
         repo_owner=REPO_OWNER,
         repo_name=REPO_NAME,
-        mlflow=True,
-        token=dagshub_token
+        mlflow=True
     )
 
 

@@ -1,3 +1,4 @@
+#start_docker.sh
 #!/bin/bash
 set -e
 exec > /home/ubuntu/start_docker.log 2>&1

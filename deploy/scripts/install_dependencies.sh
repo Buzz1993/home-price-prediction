@@ -1,3 +1,4 @@
+#install_dependencies.sh
 #!/bin/bash
 set -e
 export DEBIAN_FRONTEND=noninteractive

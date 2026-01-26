@@ -1,7 +1,11 @@
 #start_docker.sh
 #!/bin/bash
+
 set -e
 exec > /home/ubuntu/start_docker.log 2>&1
+
+echo "Cleaning old Docker data..."
+sudo docker system prune -a -f --volumes
 
 echo "Logging in to correct ECR..."
 aws ecr get-login-password --region ap-south-1 | sudo docker login --username AWS --password-stdin 546327345928.dkr.ecr.ap-south-1.amazonaws.com

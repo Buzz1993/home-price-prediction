@@ -43,16 +43,28 @@ os.environ["MLFLOW_HTTP_REQUEST_RETRY_DELAY"] = "1"
 
 dagshub_token = os.getenv("DAGSHUB_USER_TOKEN")
 
+# if dagshub_token:
+#     dagshub.init(
+#         repo_owner="bowlekarbhushan88",
+#         repo_name="home-price-prediction",
+#         mlflow=True,
+#         token=dagshub_token
+#     )
+#     print("✅ DagsHub authenticated via token")
+# else:
+#     print("⚠️ No DAGSHUB_USER_TOKEN found — running without remote logging")
+
 if dagshub_token:
+    os.environ["DAGSHUB_USER_TOKEN"] = dagshub_token  # ensure SDK reads it
     dagshub.init(
         repo_owner="bowlekarbhushan88",
         repo_name="home-price-prediction",
-        mlflow=True,
-        token=dagshub_token
+        mlflow=True
     )
-    print("✅ DagsHub authenticated via token")
+    print("✅ DagsHub initialized using environment token")
 else:
     print("⚠️ No DAGSHUB_USER_TOKEN found — running without remote logging")
+
 
 
 

@@ -2,7 +2,7 @@
 #!/bin/bash
 
 set -e
-exec > /home/ubuntu/start_docker.log 2>&1
+exec > /tmp/start_docker.log 2>&1
 
 echo "Cleaning old Docker data..."
 sudo docker system prune -a -f --volumes

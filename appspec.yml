@@ -1,4 +1,4 @@
-#appspec.yml
+# #appspec.yml
 # version: 0.0
 # os: linux
 # files:
@@ -23,18 +23,19 @@ files:
     destination: /home/ubuntu/app
 
 hooks:
+  ApplicationStop:
+    - location: deploy/scripts/stop_docker.sh
+      timeout: 120
+      runas: ubuntu
+
   BeforeInstall:
     - location: deploy/scripts/install_dependencies.sh
       timeout: 300
-      runas: root
-
-  ApplicationStop:
-    - location: deploy/scripts/start_docker.sh
-      timeout: 300
-      runas: root
+      runas: ubuntu
 
   ApplicationStart:
     - location: deploy/scripts/start_docker.sh
       timeout: 300
-      runas: root
+      runas: ubuntu
+
 

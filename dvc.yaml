@@ -1,0 +1,96 @@
+#dvc.yaml
+stages:
+  # ============================================================
+  # PREDICTION PIPELINE
+  # ============================================================
+  property_data_cleaning:
+    cmd: python -m src.data.data_cleaning
+    deps:
+      - data/raw/f_original magicbricks cleaned 12022 data.csv
+      - src/data/data_cleaning.py
+    outs:
+      - data/cleaned/property_cleaned.csv
+
+  data_preparation:
+    cmd: python -m src.data.data_preparation
+    params:
+      - Data_Preparation.test_size
+      - Data_Preparation.random_state
+    deps:
+      - data/cleaned/property_cleaned.csv
+      - src/data/data_preparation.py
+    outs:
+      - data/interim/train.csv
+      - data/interim/test.csv
+
+  preprocessing_and_train:
+    cmd: python -m src.models.preprocess_train
+    params:
+      - Train.target_col
+      - Train.n_trials
+      - Train.cv_folds
+      - Train.random_state
+      - Train.early_stopping_rounds
+      - Train.knn_neighbors
+    deps:
+      - data/interim/train.csv
+      - data/interim/test.csv
+      - src/models/preprocess_train.py
+    outs:
+      - cache/artifacts_auto/best_trial_params_auto.pkl
+      - cache/artifacts_auto/best_per_family_summary_auto.pkl
+      - cache/artifacts_auto/optuna_study_auto.pkl
+      - cache/predictions/oof_preds_log_baseline.pkl
+      - cache/predictions/test_preds_avg_log_baseline.pkl
+
+  evaluation:
+    cmd: python -m src.models.evaluation
+    params:
+      - Train.target_col
+    deps:
+      - data/interim/train.csv
+      - data/interim/test.csv
+      - src/models/evaluation.py
+      - cache/artifacts_auto/best_trial_params_auto.pkl
+    metrics:
+      - cache/evaluation/eval_metrics.json
+    outs:
+      - cache/artifacts_auto/preprocessor.joblib
+      - cache/artifacts_auto/final_model.joblib
+      - cache/artifacts_auto/cleaner_full_for_te.pkl
+      - cache/artifacts_auto/te_full.pkl
+      - cache/evaluation/predictions_train.csv
+      - cache/evaluation/predictions_test.csv
+      - cache/run_information.json
+
+
+  register_model:
+    cmd: python -m src.models.register_model
+    deps:
+      - src/models/register_model.py
+      - cache/run_information.json
+    outs:
+      - cache/model_registry/registered_model_info.json
+
+
+  # ============================================================
+  # RECOMMENDATION PIPELINE
+  # ============================================================
+
+  property_data_cleaning_rec:
+    cmd: python -m src.data.data_cleaning_rec
+    deps:
+      - data/raw/f_original magicbricks cleaned 12022 data.csv
+      - src/data/data_cleaning_rec.py
+    outs:
+      - data/cleaned/final_cleaned_rec_data.csv
+
+  
+  recommender_build:
+    cmd: python -m src.data.content_based_filtering
+    deps:
+      - data/cleaned/final_cleaned_rec_data.csv
+      - src/data/content_based_filtering.py
+    outs:
+      - cache/recommender/pipeline.joblib
+      - cache/recommender/features.npz

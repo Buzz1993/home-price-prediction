@@ -1,0 +1,291 @@
+# #ci_cd.yaml
+# name: CI-CD
+
+# on:
+#   push:
+#     branches: [ master ]
+
+# jobs:
+#   Continuous-Integration:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Code Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.11'
+#           cache: 'pip'
+
+#       - name: Install Packages
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements-dev.txt
+#           pip install -e .  
+
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ap-south-1
+
+#       - name: DVC Pull
+#         run: |
+#           dvc pull
+
+#       - name: Register Model in DagsHub Registry
+#         env:
+#           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#         run: |
+#           python src/models/register_model.py
+
+
+#       - name: Test Model Registry
+#         env:
+#           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#         run: |
+#           pytest tests/test_model_registry.py
+
+#       - name: Test Model Performance
+#         env:
+#           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#         run: |
+#           pytest tests/test_model_performance.py
+      
+#       - name: Upload Run Info
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: model-metadata
+#           path: cache/run_information.json
+
+#   Continuous-Deployment:
+#     needs: Continuous-Integration
+#     runs-on: ubuntu-latest
+#     if: success()
+#     steps:
+#       - name: Code Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Download Run Info
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: model-metadata
+#           path: cache/  
+
+#       - name: Setup Python 
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.11'
+
+#       - name: Install Packages
+#         run: |
+#           pip install -r requirements-dev.txt
+#           pip install -e . # Ensure scripts can find 'src' here too
+
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ap-south-1
+
+#       #changes done here
+#       # - name: Promote Model to Production
+#       #   env:
+#       #     DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#       #   run: |
+#       #     python scripts/promote_model_to_prod.py
+
+#       # 🔁 Promote @staging → @production
+#       - name: Promote Model to Production
+#         env:
+#           MLFLOW_TRACKING_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+#         run: |
+#           python scripts/promote_model_to_prod.py
+
+#       - name: Login to Amazon ECR
+#         id: login-ecr
+#         uses: aws-actions/amazon-ecr-login@v2
+
+#       - name: Build, tag, and push docker image to Amazon ECR
+#         env:
+#           REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI }}
+#           IMAGE_TAG: latest
+#         run: |
+#           docker build \
+#             --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+#             --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+#             --build-arg AWS_DEFAULT_REGION=ap-south-1 \
+#             -t $REPOSITORY_URI:$IMAGE_TAG .
+
+#           docker push $REPOSITORY_URI:$IMAGE_TAG
+
+
+#       - name: Zip files for deployment
+#         run: |
+#           zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
+
+#       - name: Upload ZIP to S3
+#         run: |
+#           aws s3 cp deployment.zip s3://homepricepredictiondeployment/deployment.zip --region ap-south-1
+
+#       - name: Deploy to AWS CodeDeploy
+#         run: |
+#           aws deploy create-deployment \
+#           --application-name homepricepredictionapp \
+#           --deployment-config-name CodeDeployDefault.OneAtATime \
+#           --deployment-group-name homepricepredictiondeploymentgroup \
+#           --s3-location bucket=homepricepredictiondeployment,key=deployment.zip,bundleType=zip \
+#           --file-exists-behavior OVERWRITE \
+#           --region ap-south-1
+
+#------------------------------------------------------------------------------------------------------
+
+#changes in code for ON/OFF AWS toggle
+name: CI-CD
+
+on:
+  push:
+    branches: [ master ]
+
+# 🔥 GLOBAL SWITCH (CHANGE ONLY THIS)
+env:
+  ENABLE_AWS: "false"   # 👉 "true" when you want deployment
+
+jobs:
+
+  Continuous-Integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -e .  
+
+      # 🔁 Only runs if AWS enabled
+      - name: Configure AWS Credentials
+        if: env.ENABLE_AWS == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: DVC Pull
+        if: env.ENABLE_AWS == 'true'
+        run: |
+          dvc pull
+
+      - name: Register Model in DagsHub Registry
+        env:
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          python src/models/register_model.py
+
+      - name: Test Model Registry
+        env:
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          pytest tests/test_model_registry.py
+
+      - name: Test Model Performance
+        env:
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          pytest tests/test_model_performance.py
+      
+      - name: Upload Run Info
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-metadata
+          path: cache/run_information.json
+
+
+  Continuous-Deployment:
+    needs: Continuous-Integration
+    runs-on: ubuntu-latest
+
+    # 🔥 FULL DEPLOYMENT CONTROL
+    if: env.ENABLE_AWS == 'true'
+
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Run Info
+        uses: actions/download-artifact@v4
+        with:
+          name: model-metadata
+          path: cache/  
+
+      - name: Setup Python 
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Packages
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Promote Model to Production
+        env:
+          MLFLOW_TRACKING_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        run: |
+          python scripts/promote_model_to_prod.py
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI }}
+          IMAGE_TAG: latest
+        run: |
+          docker build \
+            --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            --build-arg AWS_DEFAULT_REGION=ap-south-1 \
+            -t $REPOSITORY_URI:$IMAGE_TAG .
+
+          docker push $REPOSITORY_URI:$IMAGE_TAG
+
+      - name: Zip files for deployment
+        run: |
+          zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
+
+      - name: Upload ZIP to S3
+        run: |
+          aws s3 cp deployment.zip s3://homepricepredictiondeployment/deployment.zip --region ap-south-1
+
+      - name: Deploy to AWS CodeDeploy
+        run: |
+          aws deploy create-deployment \
+          --application-name homepricepredictionapp \
+          --deployment-config-name CodeDeployDefault.OneAtATime \
+          --deployment-group-name homepricepredictiondeploymentgroup \
+          --s3-location bucket=homepricepredictiondeployment,key=deployment.zip,bundleType=zip \
+          --file-exists-behavior OVERWRITE \
+          --region ap-south-1

@@ -1,0 +1,191 @@
+# ===============================
+# comparison_ui.py (FINAL FIXED)
+# ===============================
+
+import streamlit as st
+import pydeck as pdk
+
+from src.services.comparison_service import (
+    run_comparison,
+    prepare_map_data
+)
+
+from src.agents.explanation_agent import generate_comparison_explanation
+from src.llm.deepseek_client import ask_deepseek_stream
+
+from src.graph.workflow import comparison_graph
+
+
+# =============================
+# CACHE FUNCTION (ONLY ONCE)
+# =============================
+@st.cache_data(show_spinner=False)
+def cached_run_comparison(df, thread_id):
+    """
+    Cache comparison results, so Comparison Result and
+    Rental Estimate tables get cached and do not recompute again.
+    AI explanation is not cached.
+    """
+    return run_comparison(df)
+
+
+# =============================
+# MAIN UI FUNCTION
+# =============================
+def render_comparison(df, edited_selected):
+
+    # -----------------------------
+    # VALIDATION
+    # -----------------------------
+    if edited_selected is None:
+        st.warning("No properties selected.")
+        return
+
+    selected_compare = edited_selected[
+        edited_selected["Compare"] == True
+    ].copy()
+
+    if len(selected_compare) < 2:
+        st.warning("Select at least 2 properties to compare")
+        return
+
+    # -----------------------------
+    # RUN COMPARISON
+    # -----------------------------
+    active_thread = st.session_state.get("active_thread")
+
+    # 🔥 DO NOT recompute if already exists
+    if active_thread:
+        thread = st.session_state.threads[active_thread]
+
+        if thread.get("comparison_result") is not None:
+            raw_df = thread["comparison_raw"]
+            compare_df = thread["comparison_result"]
+        else:
+            initial_state = {
+
+                "filters": {},
+                "intent": {},
+                "slider_weights": {},
+                "mode": "dynamic",
+
+                "recommendations": None,
+
+                "selected_properties": selected_compare,
+
+                "comparison_raw": None,
+                "comparison_result": None,
+
+                "explanation": None
+            }
+
+            final_state = comparison_graph.invoke(initial_state)
+
+            raw_df = final_state["comparison_raw"]
+
+            compare_df = final_state["comparison_result"]
+
+            explanation = final_state["explanation"]
+
+            # SAVE
+            thread["comparison_result"] = compare_df
+            thread["comparison_raw"] = raw_df
+            thread["selected"] = selected_compare.copy()
+
+            thread["last_explanation"] = explanation
+            thread["explanation_done"] = True
+
+    # -----------------------------
+    # SAVE TO SESSION
+    # -----------------------------
+    if active_thread:
+        thread = st.session_state.threads[active_thread]
+
+        thread["comparison_result"] = compare_df
+        thread["comparison_raw"] = raw_df
+        thread["selected"] = selected_compare.copy()
+
+        thread["auto_compare_explain"] = True
+        thread["explanation_done"] = False
+
+    # -----------------------------
+    # 📊 RESULT TABLE
+    # -----------------------------
+    st.subheader("📊 Comparison Result")
+    st.dataframe(compare_df, use_container_width=True)
+
+    # ==============================
+    # 🗺️ MAP
+    # ==============================
+    st.subheader("🗺️ Property Map")
+
+    # ✅ FIXED (NO cached_map bug)
+    map_df = prepare_map_data(raw_df, df)
+    map_df = map_df.dropna(subset=["latitude", "longitude"]).copy()
+
+    if not map_df.empty:
+
+        map_df["price_str"] = map_df["price"].apply(
+            lambda x: f"₹{x} Cr"
+        )
+
+        layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=map_df,
+            get_position=["longitude", "latitude"],
+            get_radius=120,
+            get_fill_color=[255, 0, 0, 160],
+            pickable=True
+        )
+
+        view_state = pdk.ViewState(
+            latitude=map_df["latitude"].mean(),
+            longitude=map_df["longitude"].mean(),
+            zoom=11
+        )
+
+        tooltip = {
+            "html": "<b>ID:</b> {id} <br/> <b>Price:</b> {price_str}",
+            "style": {"backgroundColor": "black", "color": "white"}
+        }
+
+        st.pydeck_chart(
+            pdk.Deck(
+                layers=[layer],
+                initial_view_state=view_state,
+                tooltip=tooltip
+            )
+        )
+
+    else:
+        st.warning("No valid coordinates available")
+
+    # ==============================
+    # 💰 RENT TABLE
+    # ==============================
+    st.subheader("💰 Rental Estimate")
+
+    rent_view = raw_df.loc[:, ["id", "area", "min_rent", "max_rent"]].copy()
+    st.dataframe(rent_view, use_container_width=True)
+
+    # ==============================
+    # 🧠 AI INSIGHTS
+    # ==============================
+    st.subheader("🧠 Property Insights")
+
+    active_thread = st.session_state.get("active_thread")
+
+    if active_thread:
+        thread = st.session_state.threads[active_thread]
+
+        # FIRST TIME → GENERATE
+        if (
+            thread.get("comparison_result") is not None
+            and not thread.get("explanation_done")
+        ):
+            st.markdown(thread["last_explanation"])
+
+        # SHOW EXISTING (NO REPEAT)
+        elif thread.get("explanation_done"):
+            if thread.get("last_explanation"):
+                st.markdown(thread["last_explanation"])

@@ -1,0 +1,22 @@
+#requirements-dockers.txt
+fastapi
+uvicorn
+pydantic
+numpy
+pandas
+scikit-learn
+joblib
+mlflow
+dagshub
+lightgbm
+xgboost
+category-encoders
+scipy
+boto3
+# Needed for your regex and date logic in data_clean_utils
+python-dateutil
+streamlit
+plotly
+wordcloud
+requests
+ddgs

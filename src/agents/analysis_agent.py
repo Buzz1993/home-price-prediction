@@ -50,9 +50,9 @@ def run_analysis(df):
 
         results.append({
             "id": row.get("id"),
-            "analysis_flag": analysis["flag"] if analysis else None,
-            "analysis_msg": analysis["message"] if analysis else None,
-            "analysis_severity": analysis["severity"] if analysis else None
+            "analysis_flag": analysis["flag"] if analysis else None,   # create new column "analysis_flag" in results with value as analysis["flag"] (overpriced, undervalued, fair) if analysis exists else None
+            "analysis_msg": analysis["message"] if analysis else None, # create new column "analysis_msg" in results with value as analysis["message"] (overpriced by x%, underpriced by x%, within fair price range) if analysis exists else None
+            "analysis_severity": analysis["severity"] if analysis else None # create new column "analysis_severity" in results with value as analysis["severity"] (high, medium, low) if analysis exists else None
         })
 
     return results

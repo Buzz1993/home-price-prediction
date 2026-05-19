@@ -3,6 +3,18 @@
 import pandas as pd
 
 def run_rental_agent(df: pd.DataFrame):
+    """
+    Analyze rental potential of properties
+    using:
+    - rent estimation
+    - rental yield
+    - demand level
+    - investment quality
+
+    Returns:
+    - dataframe containing rental analysis
+      for each property.
+    """
 
     results = []
 
@@ -91,6 +103,6 @@ def run_rental_agent(df: pd.DataFrame):
             "demand_level": demand,
             "investment_rating": rating,
             "rental_strategy": strategy
-        })
+        }) #create new columns in results for rental analysis including "monthly_rent_estimate", "annual_rent", "rental_yield_percent", "demand_level", "investment_rating", "rental_strategy" based on the calculations and classifications done above
 
     return pd.DataFrame(results)

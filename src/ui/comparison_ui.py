@@ -22,9 +22,11 @@ from src.graph.workflow import comparison_graph
 @st.cache_data(show_spinner=False)
 def cached_run_comparison(df, thread_id):
     """
-    Cache comparison results, so Comparison Result and
-    Rental Estimate tables get cached and do not recompute again.
-    AI explanation is not cached.
+    Cache comparison results to avoid
+    recomputing comparison tables.
+
+    Returns:
+    - comparison results from run_comparison()
     """
     return run_comparison(df)
 
@@ -33,6 +35,16 @@ def cached_run_comparison(df, thread_id):
 # MAIN UI FUNCTION
 # =============================
 def render_comparison(df, edited_selected):
+    """
+    Render full property comparison UI including:
+    - comparison table
+    - property map
+    - rental estimate
+    - AI insights
+
+    Returns:
+    - None
+    """
 
     # -----------------------------
     # VALIDATION
@@ -54,13 +66,15 @@ def render_comparison(df, edited_selected):
     # -----------------------------
     active_thread = st.session_state.get("active_thread")
 
-    # 🔥 DO NOT recompute if already exists
+    
     if active_thread:
         thread = st.session_state.threads[active_thread]
 
+        # 🔥 DO NOT recompute if already exists
         if thread.get("comparison_result") is not None:
-            raw_df = thread["comparison_raw"]
-            compare_df = thread["comparison_result"]
+            raw_df = thread["comparison_raw"] #Selected Properties (Comparison Tray) dataframe (same as compare_df but without the "Compare" column and only the original columns of the properties)
+            compare_df = thread["comparison_result"] #Comparison Result dataframe
+        #At the FIRST comparison run this will aways run
         else:
             initial_state = {
 
@@ -101,9 +115,7 @@ def render_comparison(df, edited_selected):
     if active_thread:
         thread = st.session_state.threads[active_thread]
 
-        thread["comparison_result"] = compare_df
-        thread["comparison_raw"] = raw_df
-        thread["selected"] = selected_compare.copy()
+        thread["selected"] = selected_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected) 
 
         thread["auto_compare_explain"] = True
         thread["explanation_done"] = False

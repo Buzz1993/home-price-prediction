@@ -3,6 +3,19 @@
 import pandas as pd
 
 def run_negotiation_agent(df: pd.DataFrame):
+    """
+    Analyze selected properties and generate
+    negotiation insights such as:
+    - negotiation power
+    - expected discount range
+    - target buying price
+    - negotiation strategy
+    - talking points
+
+    Returns:
+    - dataframe containing negotiation analysis
+      for each property.
+    """
 
     results = []
 

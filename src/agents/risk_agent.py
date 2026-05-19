@@ -197,6 +197,6 @@ def run_risk_agent(df):
             "risk_categories": ", ".join(risks),
             "risk_score": score,
             "risk_label": label
-        })
+        }) #create new columns "risk_categories" (comma separated risk categories), "risk_score" (numerical score), "risk_label" (Low, Medium, High) in results
 
     return results

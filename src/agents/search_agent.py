@@ -20,46 +20,49 @@ def add_rent_columns(df):
 
 def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
 
-    recs = recommend_with_constraints(df, X_processed, filters, mode)
+    recs = recommend_with_constraints(df, X_processed, filters, mode) #get "input" and "similar" properties based on filters and mode
 
     if not recs:
         return None
 
     # Ranking
-    recs["similar"] = apply_hybrid_ranking(
-        recs["similar"], intent, slider_weights
-    )
+    recs["similar"] = apply_hybrid_ranking(recs["similar"], intent, slider_weights) #rank similar properties based on hybrid score (cosine similarity + weighted business score) and 
+                                                                                    #add column as "hybrid_score" to Similar Properties dataframe
 
-    recs["similar"] = add_rent_columns(recs["similar"])
+    recs["similar"] = add_rent_columns(recs["similar"]) #add min_rent and max_rent columns to Similar Properties dataframe by applying calculate_rent function on each row
 
     # Agents
-    analysis_results = run_analysis(recs["similar"])
-    risk_results = run_risk_agent(recs["similar"])
-    future_results = run_future_agent(recs["similar"])
+    analysis_results = run_analysis(recs["similar"]) #run analysis agent on similar properties to get analysis results with columns "id", "analysis_flag", "analysis_msg", "analysis_severity"
+    risk_results = run_risk_agent(recs["similar"]) #run risk agent on similar properties to get risk results with columns "id", "risk_categories", "risk_score", "risk_label"
+    future_results = run_future_agent(recs["similar"]) #run future agent on similar properties to get future results with columns "id", "growth_label", "growth_reason"
 
 
     # Merge future
-    if future_results and len(future_results) > 0:
+    #check if future_results exists and is not empty, then create future_df from future_results and merge with recs["similar"] on "id" column to add future agent results to Similar Properties dataframe
+    if future_results and len(future_results) > 0: 
         future_df = pd.DataFrame(future_results)
-        recs["similar"] = recs["similar"].merge(future_df, on="id", how="left")
+        recs["similar"] = recs["similar"].merge(future_df, on="id", how="left") #future_df has columns "id", "growth_label", "growth_reason", "growth_score" which will be added to Similar Properties dataframe based on matching "id" values 
 
     # Merge risk
     if risk_results:
         risk_df = pd.DataFrame(risk_results)
-        recs["similar"] = recs["similar"].merge(risk_df, on="id", how="left")
+        recs["similar"] = recs["similar"].merge(risk_df, on="id", how="left") #risk_df has columns "id", "risk_categories", "risk_score", "risk_label" which will be added to Similar Properties dataframe based on matching "id" values
 
     # Safety
-    for col in ["growth_label", "growth_reason"]:
+    for col in ["growth_label", "growth_reason"]: #check if growth_label and growth_reason columns exist in recs["similar"] dataframe, if not, then create them with None values to ensure these columns are always present for downstream processing
         if col not in recs["similar"].columns:
-            recs["similar"][col] = None
+            recs["similar"][col] = None 
 
     # Analysis mapping
-    analysis_map = {a["id"]: a for a in analysis_results}
+    analysis_map = {a["id"]: a for a in analysis_results} #create a dictionary analysis_map where keys are property "id" from analysis_results and values are the corresponding analysis result dictionaries, this allows for easy lookup of analysis results by property id
+    
+    #Merge analysis results into Similar Properties dataframe by mapping "id" column to analysis_map to get corresponding 
+    #"analysis_flag", "analysis_msg", "analysis_severity" values for each property, if id does not exist in analysis_map then set these columns to None
 
-    recs["similar"]["analysis_flag"] = recs["similar"]["id"].map(
+    recs["similar"]["analysis_flag"] = recs["similar"]["id"].map(  
         lambda x: analysis_map.get(x, {}).get("analysis_flag")
     )
-
+    
     recs["similar"]["analysis_msg"] = recs["similar"]["id"].map(
         lambda x: analysis_map.get(x, {}).get("analysis_msg")
     )
@@ -71,6 +74,7 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
     # -----------------------------
     # NEGOTIATION AGENT (ADD HERE)
     # -----------------------------
+    # Run negotiation agent on similar properties to get negotiation results with columns "id", "negotiation_tips", "negotiation_score"
     negotiation_df = run_negotiation_agent(recs["similar"])
 
     if negotiation_df is not None and len(negotiation_df) > 0:
@@ -83,6 +87,7 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
     # -----------------------------
     # RENTAL AGENT (NEW)
     # -----------------------------
+    # Run rental agent on similar properties to get rental results with columns "id", "rent_estimate", "rent_reasoning"
     rental_df = run_rental_agent(recs["similar"])
 
     if rental_df is not None and len(rental_df) > 0:

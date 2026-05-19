@@ -123,6 +123,12 @@ import pandas as pd
 # NORMALIZATION
 # -----------------------------
 def normalize(series):
+    """
+    Normalize values between 0 and 1.
+
+    Used to bring different feature scales
+    into a common range for scoring.
+    """
     if series.max() == series.min():
         return pd.Series([0] * len(series), index=series.index)
     return (series - series.min()) / (series.max() - series.min())
@@ -132,6 +138,13 @@ def normalize(series):
 # INTENT WEIGHTS
 # -----------------------------
 def get_dynamic_weights(intent):
+    """
+    Generate recommendation weights
+    based on user preferences like:
+    luxury, low budget, spacious, etc.
+
+    Returns normalized weights.
+    """
 
     weights = {
         "price": 0.30,
@@ -180,6 +193,13 @@ def get_dynamic_weights(intent):
 # FINAL WEIGHT COMBINATION
 # -----------------------------
 def combine_weights(intent, slider_weights):
+    """
+    Combine:
+    - AI intent weights
+    - User slider weights
+
+    Returns final normalized weights.
+    """
 
     intent_w = get_dynamic_weights(intent)
 
@@ -208,6 +228,13 @@ def combine_weights(intent, slider_weights):
 # EXPLANATION
 # -----------------------------
 def explain(row):
+    """
+    Generate short explanation for why
+    a property was recommended.
+
+    Example:
+    good price, spacious, great location
+    """
 
     reasons = []
 
@@ -230,6 +257,11 @@ def explain(row):
 # COMPUTE SCORE
 # -----------------------------
 def compute_weighted_score(df, weights):
+    """
+    Compute feature scores and final
+    weighted recommendation score
+    for each property.
+    """
 
     temp = df.copy()
 
@@ -271,6 +303,13 @@ def compute_weighted_score(df, weights):
 # HYBRID RANKING
 # -----------------------------
 def apply_hybrid_ranking(similar_df, intent, slider_weights=None, alpha=0.6):
+    """
+    Combine:
+    - cosine similarity
+    - weighted business score
+
+    Returns final ranked properties as sorted hybrid_score column
+    """
 
     weights = combine_weights(intent, slider_weights)
 

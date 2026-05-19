@@ -135,6 +135,7 @@ def run_future_agent(df):
             "growth_label": label,
             "growth_reason": reason,
             "growth_score": score   # optional but useful
-        })
+        }) #create new columns "future_signals" (comma separated future words found), "infra_detected" (comma separated infrastructure categories detected), -
+           #"growth_label" (High Growth, Mature Area, No Growth Signal), "growth_reason" (text explanation of growth label), "growth_score" (numerical score for growth label) in results
 
     return results

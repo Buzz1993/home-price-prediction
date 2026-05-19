@@ -100,6 +100,14 @@ def filter_data(df, filters):
 # RECOMMEND
 # -----------------------------
 def recommend_with_constraints(df, X, filters, mode="static", k=10):
+    """
+    Generate similar property recommendations
+    using filters + cosine similarity.
+
+    Returns:
+    - input property
+    - top similar properties
+    """
 
     temp = filter_data(df, filters)
 

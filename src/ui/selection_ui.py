@@ -2,6 +2,12 @@
 # ===============================
 # selection_ui.py
 # ===============================
+#These functions in selection_ui.py mainly help create and manage the Streamlit UI for property selection.
+#How the property tables look
+#How checkboxes work
+#How selected properties appear
+#How compare/delete actions behave
+    
 
 import streamlit as st
 import pandas as pd
@@ -13,6 +19,11 @@ from src.utils.selection_utils import update_selection
 # ADD PROPERTY TO GLOBAL SELECTION
 # =============================
 def add_to_selected(df_row):
+    """
+    Add selected property rows to the global
+    selected properties dataframe and
+    sync them with the active thread.
+    """
     if df_row is None or len(df_row) == 0:
         return
 
@@ -36,6 +47,10 @@ def add_to_selected(df_row):
 # CLEAR SELECTED
 # =============================
 def clear_selected():
+    """
+    Clear all selected properties from
+    global session state and active thread.
+    """
     st.session_state.selected_properties = pd.DataFrame()
 
     # 🔥 SYNC THREAD
@@ -52,8 +67,12 @@ def render_selected_panel():
     # Display selected properties tray
     # =============================
     """
-    Renders selected properties with compare & delete options.
-    Returns edited dataframe for comparison usage.
+    Render selected properties tray with:
+    - compare option
+    - delete option
+    - clear selection option
+
+    Returns edited selected dataframe.
     """
 
     st.subheader("📌 Selected Properties (Comparison Tray)")
@@ -121,13 +140,11 @@ def render_selected_panel():
 # GENERIC SELECTION HANDLER
 # =============================
 def handle_selection(df, selected_keys_state_key, editor_key):
-    # =============================
-    # Sync checkbox selection state
-    # =============================
     """
-    Handles add/remove selection logic for a dataframe.
+    Handle property selection and
+    synchronize checkbox selection state
+    with session storage.
     """
-
     df = df.copy()
 
     # restore selection state
@@ -179,13 +196,10 @@ def handle_selection(df, selected_keys_state_key, editor_key):
 # RENDER INPUT PROPERTIES
 # =============================
 def render_input_properties(input_df, thread_id):
-    # =============================
-    # Render input property table
-    # =============================
     """
-    Displays input properties with selection capability.
+    Display input property table
+    with property selection support.
     """
-
     st.subheader("🏠 Input Property")
 
     handle_selection(
@@ -199,13 +213,10 @@ def render_input_properties(input_df, thread_id):
 # RENDER SIMILAR PROPERTIES
 # =============================
 def render_similar_properties(sim_df, thread_id):
-    # =============================
-    # Render similar property table
-    # =============================
     """
-    Displays similar properties with selection capability.
+    Display similar properties table
+    with property selection support.
     """
-
     st.subheader("✨ Similar Properties")
 
     handle_selection(

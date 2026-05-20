@@ -56,7 +56,7 @@ def render_comparison(df, edited_selected):
 
     selected_compare = edited_selected[
         edited_selected["Compare"] == True
-    ].copy()
+    ].copy()  #edited_selected["Compare"] - selected properties dataframe with only rows where Compare column is True (checkbox selected)
 
     if len(selected_compare) < 2:
         st.warning("Select at least 2 properties to compare")
@@ -75,7 +75,7 @@ def render_comparison(df, edited_selected):
         if thread.get("comparison_result") is not None:
             raw_df = thread["comparison_raw"] #Selected Properties (Comparison Tray) dataframe (same as compare_df but without the "Compare" column and only the original columns of the properties)
             compare_df = thread["comparison_result"] #Comparison Result dataframe
-        #At the FIRST comparison run this will aways run
+        #At the FIRST comparison run, this will aways run
         else:
             initial_state = {
 

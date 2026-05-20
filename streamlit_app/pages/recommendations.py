@@ -2,6 +2,8 @@
 # recommendations.py (REFACTORED)
 # ===============================
 
+from concurrent.futures import thread
+
 import streamlit as st
 import pandas as pd
 import sys
@@ -298,7 +300,8 @@ def main():
     # -----------------------------
     # THREAD DISPLAY + CHAT (FIXED)
     # -----------------------------
-    if st.session_state.active_thread:
+    if st.session_state.active_thread: # Streamlit session_state is used to store values across app reruns so this if st.session_state.active_thread means - Checks whether an active thread currently exists
+    #active thread id example:f7c11cb2
 
         # Stores complete thread/session data including: recommendation results, selected properties,comparison results, chat messages, explanation state, thread name and UI flags
         # Example: thread["data"], thread["selected"], thread["comparison_result"], thread["messages"]
@@ -339,8 +342,12 @@ def main():
                     if st.button("⚖️ Compare Selected Properties"):
 
                         active_thread = st.session_state.active_thread 
-                        thread = st.session_state.threads[active_thread] # get current active thread data example: thread["data"], thread["selected"], thread["comparison_result"], thread["messages"]
-                        
+                        thread = st.session_state.threads[active_thread] # get current active thread data example: thread["data"], thread["selected"]
+                        # print("==============================")
+                        # print("data", thread.get("data")) #recommendation results including input_df and similar_df
+                        # print("==============================")
+                        # print("selected", thread.get("selected")) #Selected Properties (Comparison Tray) 
+                        # print("==============================")
 
                         # ✅ UPDATE CURRENT THREAD (NO NEW THREAD)
                         thread["selected"] = selected_for_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected) 
@@ -349,11 +356,10 @@ def main():
                         thread["auto_compare_explain"] = False
                         thread["explanation_done"] = False
 
-                        # ✅ RENAME THREAD
-                        id1 = selected_for_compare["id"].iloc[0]
-                        id2 = selected_for_compare["id"].iloc[1]
+                        #rename thread
+                        selected_ids = selected_for_compare["id"].astype(str).tolist()
 
-                        thread["name"] = f"Compare: {id1} vs {id2}" 
+                        thread["name"] = "Compare: " + " vs ".join(selected_ids) #gives thread name 
 
                         # ✅ TRIGGER COMPARISON
                         st.session_state.run_comparison_now = True #trigger when we click the Compare Selected Properties button
@@ -361,15 +367,14 @@ def main():
                         st.rerun()
 
         
-
         # ==============================
         # 🔥 RUN COMPARISON ONLY WHEN TRIGGERED
         # ==============================
-        if st.session_state.get("run_comparison_now"):
+        if st.session_state.get("run_comparison_now"):     
+            st.session_state.run_comparison_now = False # Once comparison is completed, we turn OFF the trigger
+                                                        # to prevent comparison from running again on future Streamlit reruns.
 
-            st.session_state.run_comparison_now = False 
-
-            selected_df = thread.get("selected")
+            selected_df = thread.get("selected") #Selected Properties (Comparison Tray) dataframe
 
             # ✅ ONLY compared rows
             if selected_df is not None and not selected_df.empty and len(selected_df) >= 2:
@@ -388,10 +393,10 @@ def main():
         else:
             if thread.get("comparison_result") is not None:
 
-                selected_df = thread.get("selected")   # ✅ ADD THIS LINE
+                selected_df = thread.get("selected")  #Selected Properties (Comparison Tray) dataframe
 
                 render_comparison(
-                    thread.get("comparison_raw"),   # ✅ use thread data
+                    thread.get("comparison_raw"),   
                     selected_df
                 )  
 

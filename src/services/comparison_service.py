@@ -80,9 +80,14 @@ def run_comparison(selected_df):
     Runs comparison agent on prepared data.
     """
 
-    prepared_df = prepare_comparison_data(selected_df)
+    prepared_df = prepare_comparison_data(selected_df) # prepared_df is the enriched dataframe of selected properties with calculated rent, risk_score, growth_score, and development summary. This is the input to the comparison agent. 
+    # print("prepared_df", prepared_df) 
+    # print("===============================")
 
-    compare_df = run_comparison_agent(prepared_df)
+
+    compare_df = run_comparison_agent(prepared_df) # Comparison Result dataframe : includes the original selected property data along with new columns like price_score, risk_score_norm, growth_score_norm, overall_score, verdict, and explanation_msg
+    # print("compare_df", compare_df) 
+    # print("===============================")    
 
     return prepared_df, compare_df
 

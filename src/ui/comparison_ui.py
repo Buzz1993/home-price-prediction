@@ -2,6 +2,7 @@
 # comparison_ui.py (FINAL FIXED)
 # ===============================
 
+from networkx import display
 import streamlit as st
 import pydeck as pdk
 
@@ -96,7 +97,6 @@ def render_comparison(df, edited_selected):
             final_state = comparison_graph.invoke(initial_state)
 
             raw_df = final_state["comparison_raw"]
-
             compare_df = final_state["comparison_result"]
 
             explanation = final_state["explanation"]
@@ -107,7 +107,7 @@ def render_comparison(df, edited_selected):
             thread["selected"] = selected_compare.copy()
 
             thread["last_explanation"] = explanation
-            thread["explanation_done"] = True
+            thread["show_explanation"] = False # Explanation generated but not shown yet, hence set to False.
 
     # -----------------------------
     # SAVE TO SESSION
@@ -118,7 +118,7 @@ def render_comparison(df, edited_selected):
         thread["selected"] = selected_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected) 
 
         thread["auto_compare_explain"] = True
-        thread["explanation_done"] = False
+        thread["show_explanation"] = True # Allow stored explanation to be displayed.
 
     # -----------------------------
     # 📊 RESULT TABLE
@@ -190,14 +190,11 @@ def render_comparison(df, edited_selected):
     if active_thread:
         thread = st.session_state.threads[active_thread]
 
-        # FIRST TIME → GENERATE
-        if (
-            thread.get("comparison_result") is not None
-            and not thread.get("explanation_done")
-        ):
-            st.markdown(thread["last_explanation"])
-
-        # SHOW EXISTING (NO REPEAT)
-        elif thread.get("explanation_done"):
+        # Show stored explanation only when UI display is enabled
+        if thread.get("show_explanation"):  
             if thread.get("last_explanation"):
                 st.markdown(thread["last_explanation"])
+
+
+
+

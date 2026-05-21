@@ -130,7 +130,7 @@ def recommend_with_constraints(df, X, filters, mode="static", k=10):
     sim_df = compare_df.iloc[top].copy() # Get real property details for top 10 recommended properties
     sim_df["cosine_similarity"] = sims[top] #add cosine similarity column in sim_df real property details dataframe with cosine similarity values
 
-    inp = df.loc[[idx]].copy() # Get real property details for input selected property
+    inp = df.loc[[idx]].copy() # Get real property details for selected input property
     inp["cosine_similarity"] = 1.0 # Assign cosine similarity 1.0 always because property is compared with itself
 
     return {"input": inp, "similar": sim_df}

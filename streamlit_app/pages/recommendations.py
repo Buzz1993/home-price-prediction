@@ -261,11 +261,12 @@ def main():
     # -----------------------------
     # FILTER UI
     # -----------------------------
+    # Filter helper functions used to initialize state, render UI, and reset filter values.
     from src.ui.filters import (
-        get_default_filters,
-        init_filter_state,  
-        render_filter_ui,
-        reset_filters
+        get_default_filters,  # Provides default values for all filters.
+        init_filter_state,  # If filter does not exist in memory, create it with default value    
+        render_filter_ui,  # Renders the top filter/input layer of the UI with static/dynamic mode and dropdown filters for city, location, bed, furnish, price range, transportation hubs, and builder selection.
+        reset_filters  # resets filter state values back to defaults
     )
 
     default_filters = get_default_filters() 

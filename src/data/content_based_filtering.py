@@ -71,15 +71,7 @@ def train(df):
 # -----------------------------
 def filter_data(df, filters):
     """
-    Filters the input DataFrame based on user-selected criteria.
-
-    - Ignores filters with value "Any" or None
-    - Uses partial matching (str.contains) for text fields like
-      location, builder, and transportation_hubs
-    - Uses exact matching (==) for all other fields
-
-    Returns:
-        Filtered DataFrame containing only matching rows
+    Returns only matching properties from the dataframe based on filters.
     """
     
     temp = df.copy()
@@ -88,10 +80,10 @@ def filter_data(df, filters):
         if v == "Any" or v is None:
             continue
 
-        if k in ["location", "transportation_hubs", "builder"]:
+        if k in ["location", "transportation_hubs", "builder"]: # Not exact but Partial matching for text fields also allow - eg: for builder lodha as - Lodha Group,Lodha Builders,Lodha Crown
             temp = temp[temp[k].str.contains(str(v), case=False, na=False)]
         else:
-            temp = temp[temp[k] == v]
+            temp = temp[temp[k] == v] #Exact matching for normal columns
 
     return temp
 
@@ -109,35 +101,36 @@ def recommend_with_constraints(df, X, filters, mode="static", k=10):
     - top similar properties
     """
 
-    temp = filter_data(df, filters)
+    temp = filter_data(df, filters) #using filters select the matching properties for that filters, from the main entire dataframe
 
     if len(temp) == 0:
         return None
 
-    idx = np.random.choice(temp.index)
-    vec = X[idx]
+    idx = np.random.choice(temp.index) # Pick one random property from matching properties
+    vec = X[idx]  # get the vector for the chosen input property from the transformed matrix
 
+    # if use _X means it contain numberic vectors dataframe and _df means dataframe containing real property details
     if mode == "static":
-        compare_X = X[temp.index]
+        compare_X = X[temp.index] # Take only matching property vectors from full feature matrix
         compare_df = temp
     else:
-        compare_X = X
+        compare_X = X # In dynamic mode, compare with all property vectors from full dataset
         compare_df = df
 
     sims = cosine_similarity(vec, compare_X).ravel()
-    order = np.argsort(sims)[::-1]
+    order = np.argsort(sims)[::-1] # Sort similarity scores from highest to lowest
 
     if mode == "static":
-        order = order[1:]
+        order = order[1:] # Remove input property itself from recommendations
     else:
-        order = order[order != idx]
+        order = order[order != idx]  # In dynamic mode, find and remove input property index
 
-    top = order[:k]
+    top = order[:k]  # Select top 10 most similar property indexes
 
-    sim_df = compare_df.iloc[top].copy()
-    sim_df["cosine_similarity"] = sims[top]
+    sim_df = compare_df.iloc[top].copy() # Get real property details for top 10 recommended properties
+    sim_df["cosine_similarity"] = sims[top] #add cosine similarity column in sim_df real property details dataframe with cosine similarity values
 
-    inp = df.loc[[idx]].copy()
-    inp["cosine_similarity"] = 1.0
+    inp = df.loc[[idx]].copy() # Get real property details for input selected property
+    inp["cosine_similarity"] = 1.0 # Assign cosine similarity 1.0 always because property is compared with itself
 
     return {"input": inp, "similar": sim_df}

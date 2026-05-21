@@ -50,7 +50,7 @@ def load_system():
     """
     df = pd.read_csv(ROOT_DIR / "data" / "cleaned" / "final_cleaned_rec_data.csv")
     pipe, X = train(df)
-    return df, X
+    return df, X # returning both the original dataframe and the processed feature matrix after training the model
 
 
 # =============================
@@ -61,7 +61,7 @@ def init_session_state():
     # Initialize all session variables
     # =============================
     """
-    Ensures all required session state variables exist.
+    This function is used in Streamlit to make sure all required variables exist inside st.session_state.
     """
     # THREAD SYSTEM
     if "threads" not in st.session_state:  #Creates a dictionary to store: different chat/search threads
@@ -263,12 +263,12 @@ def main():
     # -----------------------------
     from src.ui.filters import (
         get_default_filters,
-        init_filter_state,
+        init_filter_state,  
         render_filter_ui,
         reset_filters
     )
 
-    default_filters = get_default_filters()
+    default_filters = get_default_filters() 
     init_filter_state(default_filters)
 
     filters, mode = render_filter_ui(df, default_filters)

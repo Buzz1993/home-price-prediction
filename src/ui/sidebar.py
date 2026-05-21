@@ -6,7 +6,7 @@ import pandas as pd
 # =============================
 # USER INTENT + SLIDERS
 # =============================
-def get_user_intent_and_weights():
+def get_user_intent_and_weights(): 
     # =============================
     # Capture user preferences + weights
     # =============================
@@ -64,9 +64,9 @@ def render_thread_sidebar():
     # -----------------------------
     if st.sidebar.button("➕ New Chat"):
         import uuid
-        tid = str(uuid.uuid4())[:8]
+        tid = str(uuid.uuid4())[:8] #generate short unique thread ID example: 'a1b2c3d4' for each new chat thread
 
-        st.session_state.threads[tid] = {                       #storing complete thread state here.
+        st.session_state.threads[tid] = {                       #each thread id and its corresponding data like "messages","data" etc we store in the session_state as session_state is a storage 
             "messages": [],                                     #Stores chatbot conversation
             "data": None,                                       #Stores recommendation results
             "selected": pd.DataFrame(),      # ✅ ADD           #Stores selected properties for comparison  
@@ -76,6 +76,23 @@ def render_thread_sidebar():
             "explanation_done": False,       # ✅ ADD           #Tracks whether explanation already generated
             "name": "New Chat"                                  #Thread display name in sidebar
         }
+
+        # store like 
+        # st.session_state
+        # |
+        # +-- threads
+        #     |
+        #     +-- a1b2c3d4
+        #     |      |
+        #     |      +-- messages
+        #     |      +-- selected
+        #     |      +-- comparison_result
+        #     |      +-- explanation
+        #     |
+        #     +-- x9k2p1m7
+        #         |
+        #         +-- messages
+        #         +-- selected
 
         st.session_state.active_thread = tid                    #This means - Current opened thread = newly created thread
 

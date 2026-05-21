@@ -13,7 +13,7 @@ class PropertyState(TypedDict, total=False):
     # SYSTEM DATA
     # ---------------------------------
     df: pd.DataFrame
-    X_processed: object
+    X_processed: object 
 
     # ---------------------------------
     # USER INPUT

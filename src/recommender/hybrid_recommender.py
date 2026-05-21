@@ -160,7 +160,7 @@ def get_dynamic_weights(intent):
 
     preferences = intent.get("preferences", [])
 
-    if "low budget" in preferences:
+    if "low budget" in preferences: #if user has "low budget" preference then we increase the weight for price and decrease the weight for area because for low budget users price is more important than area
         weights["price"] += 0.15
         weights["area"] -= 0.05
 
@@ -265,12 +265,6 @@ def compute_weighted_score(df, weights):
 
     temp = df.copy()
 
-    temp["area"] = temp.get("area", 0)
-    temp["amenities_count"] = temp.get("amenities_count", 0)
-    temp["locality_rating"] = temp.get("locality_rating", 0)
-    temp["commuting_rating"] = temp.get("commuting_rating", 0)
-    temp["distance_to_center_km"] = temp.get("distance_to_center_km", 0)
-
     temp["price_norm"] = normalize(temp["price"])
     temp["area_norm"] = normalize(temp["area"])
     temp["amenities_norm"] = normalize(temp["amenities_count"])
@@ -278,12 +272,12 @@ def compute_weighted_score(df, weights):
     temp["connectivity_norm"] = normalize(temp["commuting_rating"])
     temp["distance_norm"] = normalize(temp["distance_to_center_km"])
 
-    temp["price_score"] = (1 - temp["price_norm"]) * weights["price"]
-    temp["area_score"] = temp["area_norm"] * weights["area"]
-    temp["amenities_score"] = temp["amenities_norm"] * weights["amenities"]
-    temp["location_score"] = temp["location_norm"] * weights["location"]
+    temp["price_score"] = (1 - temp["price_norm"]) * weights["price"] #for price we do (1 - norm) because lower price is better, while for other features higher is better so we use norm directly for scoring
+    temp["area_score"] = temp["area_norm"] * weights["area"] #for area we use norm directly because higher area is better, so higher norm should give higher score
+    temp["amenities_score"] = temp["amenities_norm"] * weights["amenities"] 
+    temp["location_score"] = temp["location_norm"] * weights["location"] 
     temp["connectivity_score"] = temp["connectivity_norm"] * weights["connectivity"]
-    temp["distance_score"] = (1 - temp["distance_norm"]) * weights["distance"]
+    temp["distance_score"] = (1 - temp["distance_norm"]) * weights["distance"] 
 
     temp["weighted_score"] = (
         temp["price_score"] +
@@ -302,7 +296,7 @@ def compute_weighted_score(df, weights):
 # -----------------------------
 # HYBRID RANKING
 # -----------------------------
-def apply_hybrid_ranking(similar_df, intent, slider_weights=None, alpha=0.6):
+def apply_hybrid_ranking(similar_df, intent, slider_weights=None, alpha=0.6): #similar_df is the dataframe of similar properties returned by content_based_filtering.py
     """
     Combine:
     - cosine similarity
@@ -311,13 +305,13 @@ def apply_hybrid_ranking(similar_df, intent, slider_weights=None, alpha=0.6):
     Returns final ranked properties as sorted hybrid_score column
     """
 
-    weights = combine_weights(intent, slider_weights)
+    weights = combine_weights(intent, slider_weights) #combine intent-based weights and slider-based weights to get final weights for scoring
 
-    temp = compute_weighted_score(similar_df, weights)
+    temp = compute_weighted_score(similar_df, weights)  #compute weighted scores for similar properties based on final weights and add columns like "price_score", "area_score", "amenities_score", "location_score", "connectivity_score", "distance_score", "weighted_score" and "why_recommended" to the similar_df dataframe
 
-    temp["hybrid_score"] = (
-        alpha * temp["cosine_similarity"] +
-        (1 - alpha) * temp["weighted_score"]
+    temp["hybrid_score"] = (                        #combine cosine similarity and weighted score to get final hybrid score for ranking, alpha is the weight for cosine -
+        alpha * temp["cosine_similarity"] +         #similarity and (1-alpha) is the weight for weighted score
+        (1 - alpha) * temp["weighted_score"]        
     )
 
     temp = temp.sort_values("hybrid_score", ascending=False)

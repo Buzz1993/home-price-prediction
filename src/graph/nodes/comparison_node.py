@@ -13,6 +13,6 @@ def comparison_node(state):
     raw_df, compare_df = run_comparison(selected_df)
 
     state["comparison_raw"] = raw_df
-    state["comparison_result"] = compare_df
+    state["comparison_result"] = compare_df 
 
     return state

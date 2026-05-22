@@ -292,7 +292,19 @@ def compute_weighted_score(df, weights):
 
     return temp
 
-
+# We first find top 10 similar properties using: (content_based_filtering.py)
+# - filters
+# - mode (static/dynamic)
+# - cosine similarity
+#
+# Then on the retrieved similar properties dataframe,
+# we apply: (hybrid_reconmmender.py)
+# - user intent
+# - slider weights
+#
+# Finally, we compute hybrid_score (hybrid_reconmmender.py)
+# (cosine similarity + weighted score)
+# and sort the top 10 recommended properties.
 # -----------------------------
 # HYBRID RANKING
 # -----------------------------
@@ -311,7 +323,7 @@ def apply_hybrid_ranking(similar_df, intent, slider_weights=None, alpha=0.6): #s
 
     temp["hybrid_score"] = (                        #combine cosine similarity and weighted score to get final hybrid score for ranking, alpha is the weight for cosine -
         alpha * temp["cosine_similarity"] +         #similarity and (1-alpha) is the weight for weighted score
-        (1 - alpha) * temp["weighted_score"]        
+        (1 - alpha) * temp["weighted_score"]        #note : cosine similarity column alraedy added to the similar properties dataframe in content_based_filtering.py
     )
 
     temp = temp.sort_values("hybrid_score", ascending=False)

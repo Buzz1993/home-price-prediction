@@ -3,8 +3,15 @@
 # ===============================
 
 def price_analysis(row):
+    """
+    Analyze whether a property's cost per sqft
+    is overpriced, undervalued, or fair
+    based on buy_min and buy_max range.
+    """
     try:
-        min_p = row.get("buy_min", 0)
+        #buy_min = minimum buying price per sqft
+        #buy_max = maximum buying price per sqft
+        min_p = row.get("buy_min", 0) #buy_min and buy_min already present in dataframe created while data cleaning
         max_p = row.get("buy_max", 0)
         actual = row.get("costpersqft", 0)
 
@@ -41,7 +48,8 @@ def price_analysis(row):
 
 def run_analysis(df):
     """
-    Apply analysis to dataframe
+    Run price analysis for all properties
+    and return analysis results as a list.
     """
     results = []
 
@@ -54,5 +62,9 @@ def run_analysis(df):
             "analysis_msg": analysis["message"] if analysis else None, # create new column "analysis_msg" in results with value as analysis["message"] (overpriced by x%, underpriced by x%, within fair price range) if analysis exists else None
             "analysis_severity": analysis["severity"] if analysis else None # create new column "analysis_severity" in results with value as analysis["severity"] (high, medium, low) if analysis exists else None
         })
-
-    return results
+    
+    return results 
+    #ruturn as list
+    #eg:[{'id': 'cardid71276787', 'analysis_flag': 'fair', 'analysis_msg': 'Within fair price range', 'analysis_severity': 'low'}, 
+    # {'id': 'cardid71100181', 'analysis_flag': 'overpriced', 'analysis_msg': 'Overpriced by 50.5%', 'analysis_severity': 'high'}, 
+    # {'id': 'cardid70034733', 'analysis_flag': 'fair', 'analysis_msg': 'Within fair price range', 'analysis_severity': 'low'},.... 

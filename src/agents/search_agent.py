@@ -32,44 +32,31 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
     recs["similar"] = add_rent_columns(recs["similar"]) #add min_rent and max_rent columns to Similar Properties dataframe by applying calculate_rent function on each row
 
     # Agents
-    analysis_results = run_analysis(recs["similar"]) #run analysis agent on similar properties to get analysis results with columns "id", "analysis_flag", "analysis_msg", "analysis_severity"
-    risk_results = run_risk_agent(recs["similar"]) #run risk agent on similar properties to get risk results with columns "id", "risk_categories", "risk_score", "risk_label"
-    future_results = run_future_agent(recs["similar"]) #run future agent on similar properties to get future results with columns "id", "growth_label", "growth_reason"
+    analysis_results = run_analysis(recs["similar"]) #run analysis agent on similar properties to get analysis results in list of dict - "id", "analysis_flag", "analysis_msg", "analysis_severity"
+    risk_results = run_risk_agent(recs["similar"]) #run risk agent on similar properties to get risk results in list of dict - "id", "risk_categories", "risk_score", "risk_label"
+    future_results = run_future_agent(recs["similar"]) #run future agent on similar properties to get future results in list of dict - "id", "growth_label", "growth_reason", "future_signals", "infra_detected"
 
 
     # Merge future
     #check if future_results exists and is not empty, then create future_df from future_results and merge with recs["similar"] on "id" column to add future agent results to Similar Properties dataframe
     if future_results and len(future_results) > 0: 
-        future_df = pd.DataFrame(future_results)
-        recs["similar"] = recs["similar"].merge(future_df, on="id", how="left") #future_df has columns "id", "growth_label", "growth_reason", "growth_score" which will be added to Similar Properties dataframe based on matching "id" values 
+        future_df = pd.DataFrame(future_results)  # Convert list of dictionaries into pandas DataFrame.  
+        recs["similar"] = recs["similar"].merge(future_df, on="id", how="left") #future_df has columns "id", "growth_label", "growth_reason", "growth_score", "future_signals", "infra_detected"  which will be added to Similar Properties dataframe based on matching "id" values 
 
     # Merge risk
     if risk_results:
         risk_df = pd.DataFrame(risk_results)
         recs["similar"] = recs["similar"].merge(risk_df, on="id", how="left") #risk_df has columns "id", "risk_categories", "risk_score", "risk_label" which will be added to Similar Properties dataframe based on matching "id" values
 
-    # Safety
-    for col in ["growth_label", "growth_reason"]: #check if growth_label and growth_reason columns exist in recs["similar"] dataframe, if not, then create them with None values to ensure these columns are always present for downstream processing
-        if col not in recs["similar"].columns:
-            recs["similar"][col] = None 
 
-    # Analysis mapping
-    analysis_map = {a["id"]: a for a in analysis_results} #create a dictionary analysis_map where keys are property "id" from analysis_results and values are the corresponding analysis result dictionaries, this allows for easy lookup of analysis results by property id
-    
-    #Merge analysis results into Similar Properties dataframe by mapping "id" column to analysis_map to get corresponding 
-    #"analysis_flag", "analysis_msg", "analysis_severity" values for each property, if id does not exist in analysis_map then set these columns to None
+    # Merge analysis results
+    if analysis_results and len(analysis_results) > 0:
 
-    recs["similar"]["analysis_flag"] = recs["similar"]["id"].map(  
-        lambda x: analysis_map.get(x, {}).get("analysis_flag")
-    )
-    
-    recs["similar"]["analysis_msg"] = recs["similar"]["id"].map(
-        lambda x: analysis_map.get(x, {}).get("analysis_msg")
-    )
+        # Convert list of dictionaries into DataFrame
+        analysis_df = pd.DataFrame(analysis_results)
 
-    recs["similar"]["analysis_severity"] = recs["similar"]["id"].map(
-        lambda x: analysis_map.get(x, {}).get("analysis_severity")
-    )
+        # Merge analysis results into Similar Properties dataframe
+        recs["similar"] = recs["similar"].merge(analysis_df,on="id",how="left")
 
     # -----------------------------
     # NEGOTIATION AGENT (ADD HERE)

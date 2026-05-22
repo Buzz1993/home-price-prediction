@@ -45,6 +45,12 @@ INFRA_KEYWORDS = {
 # CLEAN TEXT
 # -----------------------------
 def clean_text(text):
+    """
+    Clean and normalize input text.
+
+    Returns:
+        str
+    """
     if not isinstance(text, str):
         return ""
     return text.lower()
@@ -54,6 +60,20 @@ def clean_text(text):
 # EXTRACT SIGNALS
 # -----------------------------
 def extract_future_signal(text):
+    """
+    Extract future growth keywords
+    and infrastructure categories
+    from text.
+
+    Returns:
+        tuple[list, list]
+
+    Example:
+        (
+            ["upcoming", "planned"],
+            ["metro", "road"]
+        )
+    """
     text = clean_text(text)
 
     found_future = set()
@@ -76,6 +96,16 @@ def extract_future_signal(text):
 # LABEL
 # -----------------------------
 def growth_label(future_words, infra_words):
+    """
+    Generate growth label based on
+    detected future and infrastructure signals.
+
+    Returns:
+        str
+
+    Example:
+        "🚀 High Growth"
+    """
     if future_words and infra_words:
         return "🚀 High Growth"
     elif infra_words:
@@ -88,6 +118,12 @@ def growth_label(future_words, infra_words):
 # REASON
 # -----------------------------
 def growth_reason(future_words, infra_words):
+    """
+    Generate explanation for growth label.
+
+    Returns:
+        str
+    """
     if future_words and infra_words:
         return f"Growth expected due to {', '.join(infra_words)} ({', '.join(future_words)})"
     elif infra_words:
@@ -100,6 +136,16 @@ def growth_reason(future_words, infra_words):
 # SCORE (optional)
 # -----------------------------
 def growth_score(label):
+    """
+    Convert growth label into
+    numerical growth score.
+
+    Returns:
+        int
+
+    Example:
+        3
+    """
     if label == "🚀 High Growth":
         return 3
     elif label == "📍 Mature Area":
@@ -112,21 +158,32 @@ def growth_score(label):
 # MAIN AGENT
 # -----------------------------
 def run_future_agent(df):
+    """
+    Run future growth analysis on all properties
+    and return results in list format.
+
+    Returns:
+        list[dict]
+    """
 
     results = []
 
     for _, row in df.iterrows():
 
-        text = " ".join([
+        # Combine text from "features_text" and "nearest_text" columns into one single text string for future growth analysis
+        text = " ".join([                     
             str(row.get("features_text", "")),
             str(row.get("nearest_text", ""))   
         ])
 
+        # Example:
+        # future_words = ["upcoming", "planned"]
+        # infra_words = ["metro", "road"]
         future_words, infra_words = extract_future_signal(text)
 
-        label = growth_label(future_words, infra_words)
-        reason = growth_reason(future_words, infra_words)
-        score = growth_score(label)
+        label = growth_label(future_words, infra_words) # Generate growth category label Example: "🚀 High Growth" ,"📍 Mature Area" and "➖ No Growth Signal"
+        reason = growth_reason(future_words, infra_words) # Example: "Growth expected due to metro, road (upcoming, planned)"
+        score = growth_score(label) #score like 3, 1 or 0
 
         results.append({
             "id": row.get("id"),
@@ -135,7 +192,7 @@ def run_future_agent(df):
             "growth_label": label,
             "growth_reason": reason,
             "growth_score": score   # optional but useful
-        }) #create new columns "future_signals" (comma separated future words found), "infra_detected" (comma separated infrastructure categories detected), -
+        }) #"future_signals" (comma separated future words found), "infra_detected" (comma separated infrastructure categories detected), -
            #"growth_label" (High Growth, Mature Area, No Growth Signal), "growth_reason" (text explanation of growth label), "growth_score" (numerical score for growth label) in results
 
     return results

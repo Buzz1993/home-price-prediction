@@ -121,9 +121,9 @@ RISK_WEIGHTS = {
     "construction": 1,
     "overcrowding": 2,
     "cleanliness": 1,
-    "connectivity": 2,     # 👈 added
-    "infrastructure": 2,   # 👈 added
-    "flooding": 3,         # 👈 high impact
+    "connectivity": 2,     
+    "infrastructure": 2,   
+    "flooding": 3,         
     "financial": 2,
     "amenities": 1,
     "lifestyle": 1
@@ -133,6 +133,9 @@ RISK_WEIGHTS = {
 # TEXT CLEAN
 # -----------------------------
 def clean_text(text):
+    """
+    Clean and normalize input text.
+    """
     if not isinstance(text, str):
         return ""
     return text.lower()
@@ -141,6 +144,10 @@ def clean_text(text):
 # EXTRACT RISKS
 # -----------------------------
 def extract_risks(text):
+    """
+    Extract risk categories from text
+    using keyword matching.
+    """
     text = clean_text(text)
     found = set()
 
@@ -152,7 +159,9 @@ def extract_risks(text):
                 found.add(category)
                 break
 
-            # 2. loose match (handles variations)
+            # Loose keyword matching:Check if all words from keyword exist somewhere in the text.
+            # Example: "traffic jam" 
+            # "heavy traffic because of road jam"
             words = kw.split()
             if all(w in text for w in words):
                 found.add(category)
@@ -164,12 +173,22 @@ def extract_risks(text):
 # SCORE
 # -----------------------------
 def risk_score(risks):
-    return sum(RISK_WEIGHTS.get(r, 1) for r in risks)
+    """
+    Calculate total risk score
+    based on detected risks.
+    """
+    return sum(RISK_WEIGHTS.get(r, 1) for r in risks) # Sum weights of all detected risks 
+                                                      # If risk category not found in RISK_WEIGHTS,
+                                                      # use default weight = 1.
 
 # -----------------------------
 # LABEL
 # -----------------------------
 def risk_label(score):
+    """
+    Convert numerical risk score
+    into Low, Medium, or High risk label.
+    """
     if score >= 6:
         return "🔴 High Risk"
     elif score >= 3:
@@ -181,22 +200,26 @@ def risk_label(score):
 # MAIN AGENT
 # -----------------------------
 def run_risk_agent(df):
-
+    """
+    Run risk analysis on all properties
+    and return results in list format.
+    """
     results = []
 
     for _, row in df.iterrows():
 
-        text = str(row.get("needs_improvement", ""))
+        #Get value from "needs_improvement" column for current dataframe row.
+        text = str(row.get("needs_improvement", "")) #needs_improvement is coilumn name already have in dataframe created while data cleaning
 
-        risks = extract_risks(text)
-        score = risk_score(risks)
-        label = risk_label(score)
+        risks = extract_risks(text)  # Extract detected risk categories from text - Example: ["traffic", "parking"]
+        score = risk_score(risks) # Calculate total numerical risk score - Example: traffic(2) + parking(2) = 4
+        label = risk_label(score) # Convert numerical score into risk label (Low Risk, Medium Risk, High Risk) - Example: 4 → 🟡 Medium Risk
 
         results.append({
             "id": row.get("id"),
             "risk_categories": ", ".join(risks),
             "risk_score": score,
             "risk_label": label
-        }) #create new columns "risk_categories" (comma separated risk categories), "risk_score" (numerical score), "risk_label" (Low, Medium, High) in results
+        }) #"risk_categories" (comma separated risk categories), "risk_score" (numerical score), "risk_label" (Low, Medium, High)
 
     return results

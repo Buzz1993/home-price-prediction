@@ -19,6 +19,14 @@ def add_rent_columns(df):
         return df
 
 def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
+    """
+    Run complete property recommendation pipeline
+    including filtering, ranking, and all agents.
+
+    Returns:
+        dict -> {"input", "similar"}
+    """
+    
     print("✅ search_agent executed")
 
     recs = recommend_with_constraints(df, X_processed, filters, mode) #get "input" and "similar" properties based on filters and mode
@@ -82,4 +90,4 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
             how="left"
         )
 
-    return recs
+    return recs #return input and similar properties

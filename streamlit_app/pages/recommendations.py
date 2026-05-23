@@ -174,10 +174,15 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
 
     final_state = search_graph.invoke(initial_state)
 
-    recs = final_state["recommendations"]
-    #print("=============================")
+    recs = final_state["recommendations"] #recs is dictionary having two keys "input" and "similar" and values are input properties and similar properties respectively
+    print("=============================")
     #print(recs)
-    #print("=============================")
+    #print(recs["input"].columns.tolist())
+    #print(recs["similar"].columns.tolist())
+
+    print("shape of input property columns", len(recs["input"].columns))
+    print("shape of similar property columns", len(recs["similar"].columns))
+    print("=============================")
 
     if not recs:
         return

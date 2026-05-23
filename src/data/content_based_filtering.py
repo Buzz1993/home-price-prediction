@@ -133,4 +133,11 @@ def recommend_with_constraints(df, X, filters, mode="static", k=10):
     inp = df.loc[[idx]].copy() # Get real property details for selected input property
     inp["cosine_similarity"] = 1.0 # Assign cosine similarity 1.0 always because property is compared with itself
 
+    print("==============================")
+    #print("INPUT COLUMNS:", inp.columns.tolist())
+    #print("SIMILAR PROPERTY COLUMNS:", sim_df.columns.tolist())
+    print("Input properties shape:", inp.shape)
+    print("Similar properties shape:", sim_df.shape)
+    print("==============================")
+
     return {"input": inp, "similar": sim_df}

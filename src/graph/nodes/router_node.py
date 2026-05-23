@@ -9,9 +9,26 @@ def router_node(state):
     msg = state["user_message"].lower()
 
     # -----------------------------
-    # PRICE PREDICTION
+    # RENTAL
     # -----------------------------
     if any(word in msg for word in [
+        "rent",
+        "rental",
+        "tenant",
+        "lease",
+        "yield",
+        "income",
+        "monthly rent",
+        "rental estimate"
+    ]):
+
+        state["route"] = "rental"
+
+
+    # -----------------------------
+    # PRICE PREDICTION
+    # -----------------------------
+    elif any(word in msg for word in [
         "predict",
         "prediction",
         "estimated price",

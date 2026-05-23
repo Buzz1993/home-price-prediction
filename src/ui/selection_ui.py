@@ -99,7 +99,7 @@ def render_selected_panel():
 
     edited_selected = st.data_editor(
         selected_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         key="selected_editor",
         disabled=["id","city","location","bed","area","costpersqft","furnish","price","builder"]
@@ -152,7 +152,7 @@ def handle_selection(df, selected_keys_state_key, editor_key):
 
     edited = st.data_editor(
         df,
-        use_container_width=True,
+        width="stretch",
         key=editor_key,
         hide_index=True
     )

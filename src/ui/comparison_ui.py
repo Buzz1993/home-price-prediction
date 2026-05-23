@@ -124,7 +124,7 @@ def render_comparison(df, edited_selected):
     # 📊 RESULT TABLE
     # -----------------------------
     st.subheader("📊 Comparison Result")
-    st.dataframe(compare_df, use_container_width=True)
+    st.dataframe(compare_df, width="stretch")
 
     # ==============================
     # 🗺️ MAP
@@ -178,7 +178,7 @@ def render_comparison(df, edited_selected):
     st.subheader("💰 Rental Estimate")
 
     rent_view = raw_df.loc[:, ["id", "area", "min_rent", "max_rent"]].copy()
-    st.dataframe(rent_view, use_container_width=True)
+    st.dataframe(rent_view, width="stretch")
 
     # ==============================
     # 🧠 AI INSIGHTS

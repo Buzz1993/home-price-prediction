@@ -51,17 +51,14 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
 
     # Merge analysis results
     if analysis_results and len(analysis_results) > 0:
-
-        # Convert list of dictionaries into DataFrame
-        analysis_df = pd.DataFrame(analysis_results)
-
-        # Merge analysis results into Similar Properties dataframe
-        recs["similar"] = recs["similar"].merge(analysis_df,on="id",how="left")
+        analysis_df = pd.DataFrame(analysis_results) # Convert list of dictionaries into DataFrame
+        recs["similar"] = recs["similar"].merge(analysis_df,on="id",how="left") # Merge analysis results into Similar Properties dataframe
 
     # -----------------------------
     # NEGOTIATION AGENT (ADD HERE)
     # -----------------------------
-    # Run negotiation agent on similar properties to get negotiation results with columns "id", "negotiation_tips", "negotiation_score"
+    # Run negotiation agent on similar properties to get negotiation results with columns "id","negotiation_power",-
+    # "suggested_discount_percent","target_price","price_position","strategy","talking_points"
     negotiation_df = run_negotiation_agent(recs["similar"])
 
     if negotiation_df is not None and len(negotiation_df) > 0:

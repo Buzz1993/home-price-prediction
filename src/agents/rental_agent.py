@@ -129,7 +129,7 @@ def run_rental_agent(df: pd.DataFrame):
         pd.DataFrame
     """
 
-    print("✅rental agent executed")
+    print("✅ rental agent executed")
 
     results = []
 

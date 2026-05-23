@@ -51,6 +51,7 @@ def run_analysis(df):
     Run price analysis for all properties
     and return analysis results as a list.
     """
+    print("✅ analysis_agent executed")
     results = []
 
     for _, row in df.iterrows():

@@ -204,6 +204,7 @@ def run_risk_agent(df):
     Run risk analysis on all properties
     and return results in list format.
     """
+    print("✅ risk_agent executed")
     results = []
 
     for _, row in df.iterrows():

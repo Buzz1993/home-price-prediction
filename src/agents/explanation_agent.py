@@ -1,6 +1,7 @@
 #explanation_agent.py
 
 def generate_comparison_explanation(raw_df, score_df, llm_func):
+    print("✅ explanation_agent executed")
 
     # 🔹 Structured data (very important)
     context = {

@@ -156,6 +156,7 @@ def run_negotiation_agent(df: pd.DataFrame):
     Returns:
         pd.DataFrame
     """
+    print("✅negotiation agent executed")
 
     results = []
 
@@ -226,10 +227,8 @@ def run_negotiation_agent(df: pd.DataFrame):
         # overpriced properties
         # give stronger negotiation power
         if analysis_flag == "overpriced":
-
             if analysis_severity == "high":
                 power_score += 3
-
             else:
                 power_score += 2
 

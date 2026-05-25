@@ -175,6 +175,10 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     final_state = search_graph.invoke(initial_state)
 
     recs = final_state["recommendations"] #recs is dictionary having two keys "input" and "similar" and values are input properties and similar properties respectively
+    # state["recommendations"] = recs (from search_node.py) stores the recommendation output inside the LangGraph runtime state, where recs is a dictionary containing both-
+    # the input property dataframe and the similar properties dataframe. After the graph execution completes, the updated runtime state is returned as final_state, so the-
+    # same stored recommendations can later be accessed using recs = final_state["recommendations"].
+
     print("=============================")
     #print(recs)
     #print(recs["input"].columns.tolist())

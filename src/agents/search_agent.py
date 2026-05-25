@@ -12,6 +12,7 @@ from src.utils.rent_utils import calculate_rent
 import pandas as pd
 
 def add_rent_columns(df):
+        #add min_rent and max_rent columns to Similar Properties dataframe by applying calculate_rent function on each row
         df[["min_rent", "max_rent"]] = df.apply(
             lambda row: pd.Series(calculate_rent(row)),
             axis=1

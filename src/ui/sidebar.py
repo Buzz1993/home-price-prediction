@@ -151,12 +151,14 @@ def render_thread_sidebar():
 
                 if st.button("✏️ Rename", key=f"rename_btn_{tid}"):
                     st.session_state.threads[tid]["name"] = new_name
+                    print("*********rename got clicked***********") #when click on the rename then only this get print
                     st.rerun()
 
                 # PIN / UNPIN
                 if tid in st.session_state.pinned_threads:
                     if st.button("📌 Unpin", key=f"unpin_{tid}"):
                         st.session_state.pinned_threads.remove(tid)
+                        print("*********Unpin clicked***********")
                         st.rerun()
                 else:
                     if st.button("📌 Pin", key=f"pin_{tid}"):
@@ -164,6 +166,7 @@ def render_thread_sidebar():
                             st.warning("Max 5 pinned threads allowed")
                         else:
                             st.session_state.pinned_threads.append(tid)
+                        print("*********Pin clicked***********")    
                         st.rerun()
 
                 # DELETE
@@ -176,4 +179,6 @@ def render_thread_sidebar():
                     if st.session_state.active_thread == tid:
                         st.session_state.active_thread = None
 
-                    st.rerun()
+                    print("*********Delete clicked***********")                   
+                    st.rerun() #rerun entire Streamlit script using latest session_state values to rebuild/update UI
+                               #because of rerun main() executes again from top and this main() is the function from recommendations.py

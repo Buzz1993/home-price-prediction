@@ -20,6 +20,6 @@ def search_node(state):
         state["mode"]
     )
 
-    state["recommendations"] = recs
+    state["recommendations"] = recs #input and similar properties get stored in state["recommendations"]
 
     return state

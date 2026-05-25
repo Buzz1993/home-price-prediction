@@ -51,12 +51,27 @@ def clear_selected():
     Clear all selected properties from
     global session state and active thread.
     """
+
+    # clear selected dataframe
     st.session_state.selected_properties = pd.DataFrame()
 
-    # 🔥 SYNC THREAD
+    # clear checkbox states
+    st.session_state.sim_selected_keys = set()
+    st.session_state.input_selected_keys = set()
+
+    # clear thread selected data
     active_thread = st.session_state.get("active_thread")
+
     if active_thread:
         st.session_state.threads[active_thread]["selected"] = pd.DataFrame()
+
+    # clear comparison state
+    if active_thread:
+        st.session_state.threads[active_thread]["comparison_result"] = None
+        st.session_state.threads[active_thread]["comparison_raw"] = None
+
+    # stop comparison rerun trigger
+    st.session_state.run_comparison_now = False
 
 
 # =============================
@@ -117,6 +132,7 @@ def render_selected_panel():
             ]
         )
 
+        print("************selected properties deleted - selection_ui.py************")
         st.rerun()
 
     # 🔥 DO NOT overwrite compare selection here

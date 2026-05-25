@@ -18,6 +18,7 @@ sys.path.append(str(ROOT_DIR))
 
 from src.data.content_based_filtering import train
 from src.ui.sidebar import get_user_intent_and_weights
+from src.ui.sidebar import render_thread_sidebar
 
 from src.ui.selection_ui import (
     render_selected_panel,
@@ -177,7 +178,17 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     recs = final_state["recommendations"] #recs is dictionary having two keys "input" and "similar" and values are input properties and similar properties respectively
     # state["recommendations"] = recs (from search_node.py) stores the recommendation output inside the LangGraph runtime state, where recs is a dictionary containing both-
     # the input property dataframe and the similar properties dataframe. After the graph execution completes, the updated runtime state is returned as final_state, so the-
-    # same stored recommendations can later be accessed using recs = final_state["recommendations"].
+    # same stored recommendations can later be accessed using recs = final_state["recommendations"].(from recommendations.py)
+
+    #where, similar properties dataframe has additional columns 
+    #analysis_flag, analysis_msg, analysis_severity (from analysis agent results)
+    #risk_categories, risk_score, risk_label (from risk agent results)
+    #future_signals, infra_detected, growth_label, growth_reason, growth_score (from future agent results)
+    #negotiation_power, suggested_discount_percent, target_price, price_position, strategy, talking_points (from negotiation agent results)
+    #monthly_rent_estimate, annual_rent, rental_yield_percent, demand_level, investment_rating, rental_strategy (from rental agent results)
+    #price_score, area_score, amenities_score, location_score, connectivity_score, distance_score, weighted_score,why_recommended,hybrid_score (from hybrid ranking calculations) i.e from hybrid_recommender.py
+    #min_rent, max_rent (from search agent))
+
 
     print("=============================")
     #print(recs)
@@ -191,13 +202,16 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     if not recs:
         return
 
-    name = f"{st.session_state.city} | {st.session_state.bed} BHK"
+    name = f"{st.session_state.city} | {st.session_state.bed} BHK" #given the thread name eg: Mumbai | 2 BHK based on selected city and bed filters
+    #print(name)
 
-    active_thread = st.session_state.get("active_thread")
+    active_thread = st.session_state.get("active_thread") #active thread id example:f7c11cb2
 
     # =========================================
     # ✅ REUSE "NEW CHAT" THREAD
     # =========================================
+    # After clicking the "New Chat" button in the UI,
+    # a new chat thread gets opened, and for that thread we use the below code.
     if (
         active_thread
         and active_thread in st.session_state.threads
@@ -219,7 +233,7 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     # ✅ CREATE NEW THREAD (NORMAL CASE)
     # =========================================
     else:
-
+        #user already has an existing search thread and now performs another search, So instead of overwriting old thread data, creates a brand new thread
         tid = str(uuid.uuid4())[:8]
 
         st.session_state.threads[tid] = {
@@ -255,11 +269,34 @@ def main():
     df, X_processed = load_system()
     init_session_state()
 
+    # print("\n===== SESSION STATE DEBUG =====")
+
+    # print("threads:")
+    # print(st.session_state.threads)
+
+    # print("\nactive_thread:")
+    # print(st.session_state.active_thread)
+
+    # print("\npinned_threads:")
+    # print(st.session_state.pinned_threads)
+
+    # print("\nselected_properties:")
+    # print(st.session_state.selected_properties)
+
+    # print("\ninput_selected_keys:")
+    # print(st.session_state.input_selected_keys)
+
+    # print("\nsim_selected_keys:")
+    # print(st.session_state.sim_selected_keys)
+
+    # print("\nlast_changed:")
+    # print(st.session_state.last_changed)
+
+    # print("================================\n")
+
     # -----------------------------
     # SIDEBAR
     # -----------------------------
-    from src.ui.sidebar import render_thread_sidebar
-
     render_thread_sidebar()   #is responsible for creating and managing the entire sidebar thread UI.
 
     # -----------------------------
@@ -315,7 +352,11 @@ def main():
 
         # Stores complete thread/session data including: recommendation results, selected properties,comparison results, chat messages, explanation state, thread name and UI flags
         # Example: thread["data"], thread["selected"], thread["comparison_result"], thread["messages"]
-        thread = st.session_state.threads[st.session_state.active_thread] 
+        thread = st.session_state.threads[st.session_state.active_thread]
+        #print("=============================")
+        #print("thread data printed",thread.keys())
+        #print(thread.keys() and thread.values()) 
+
 
         # Stores recommendation results generated by the search pipeline including:input property dataframe and similar properties dataframe
         # Example:recs["input"], recs["similar"]
@@ -327,8 +368,14 @@ def main():
             #get selected properties from - Selected Properties (Comparison Tray)
             edited_selected = render_selected_panel()
 
-            if edited_selected is not None:
-                #only get rows where Compare column is True (checkbox selected) from - Selected Properties (Comparison Tray)
+            selected_for_compare = pd.DataFrame()
+
+            if (
+                edited_selected is not None
+                and not edited_selected.empty
+                and "Compare" in edited_selected.columns
+            ):
+
                 selected_for_compare = edited_selected[
                     edited_selected["Compare"] == True
                 ]
@@ -340,9 +387,12 @@ def main():
             render_similar_properties(recs["similar"], thread_id) #display similar properties details in a table
 
             # ✅ MOVE COMPARISON HERE (CORRECT ORDER)
-            if edited_selected is not None:
-                
-                #only get rows where Compare column is True (checkbox selected) from - Selected Properties (Comparison Tray)
+            if (
+                edited_selected is not None
+                and not edited_selected.empty
+                and "Compare" in edited_selected.columns
+            ):
+
                 selected_for_compare = edited_selected[
                     edited_selected["Compare"] == True
                 ]

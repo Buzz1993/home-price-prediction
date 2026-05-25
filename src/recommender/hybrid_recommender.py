@@ -265,19 +265,19 @@ def compute_weighted_score(df, weights):
 
     temp = df.copy()
 
-    temp["price_norm"] = normalize(temp["price"])
-    temp["area_norm"] = normalize(temp["area"])
-    temp["amenities_norm"] = normalize(temp["amenities_count"])
-    temp["location_norm"] = normalize(temp["locality_rating"])
-    temp["connectivity_norm"] = normalize(temp["commuting_rating"])
-    temp["distance_norm"] = normalize(temp["distance_to_center_km"])
+    price_norm = normalize(temp["price"])
+    area_norm = normalize(temp["area"])
+    amenities_norm = normalize(temp["amenities_count"])
+    location_norm = normalize(temp["locality_rating"])
+    connectivity_norm = normalize(temp["commuting_rating"])
+    distance_norm = normalize(temp["distance_to_center_km"])
 
-    temp["price_score"] = (1 - temp["price_norm"]) * weights["price"] #for price we do (1 - norm) because lower price is better, while for other features higher is better so we use norm directly for scoring
-    temp["area_score"] = temp["area_norm"] * weights["area"] #for area we use norm directly because higher area is better, so higher norm should give higher score
-    temp["amenities_score"] = temp["amenities_norm"] * weights["amenities"] 
-    temp["location_score"] = temp["location_norm"] * weights["location"] 
-    temp["connectivity_score"] = temp["connectivity_norm"] * weights["connectivity"]
-    temp["distance_score"] = (1 - temp["distance_norm"]) * weights["distance"] 
+    temp["price_score"] = (1 - price_norm * weights["price"]) #for price we do (1 - norm) because lower price is better, while for other features higher is better so we use norm directly for scoring
+    temp["area_score"] = area_norm * weights["area"] #for area we use norm directly because higher area is better, so higher norm should give higher score
+    temp["amenities_score"] = amenities_norm * weights["amenities"] 
+    temp["location_score"] = location_norm * weights["location"] 
+    temp["connectivity_score"] = connectivity_norm * weights["connectivity"]
+    temp["distance_score"] = (1 - distance_norm) * weights["distance"] 
 
     temp["weighted_score"] = (
         temp["price_score"] +
@@ -287,6 +287,7 @@ def compute_weighted_score(df, weights):
         temp["connectivity_score"] +
         temp["distance_score"]
     )
+
 
     temp["why_recommended"] = temp.apply(explain, axis=1)
 

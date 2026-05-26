@@ -188,16 +188,17 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     #monthly_rent_estimate, annual_rent, rental_yield_percent, demand_level, investment_rating, rental_strategy (from rental agent results)
     #price_score, area_score, amenities_score, location_score, connectivity_score, distance_score, weighted_score,why_recommended,hybrid_score (from hybrid ranking calculations) i.e from hybrid_recommender.py
     #min_rent, max_rent (from search agent))
+    #print("=============================")
+    # print(st.session_state.threads) # get empty dictionary {} when we run the search(after clicking on search button) for the first time as no thread is created yet
 
 
-    print("=============================")
+    print("==============111===============")
     #print(recs)
     #print(recs["input"].columns.tolist())
     #print(recs["similar"].columns.tolist())
 
     print("shape of input property columns", len(recs["input"].columns))
     print("shape of similar property columns", len(recs["similar"].columns))
-    print("=============================")
 
     if not recs:
         return
@@ -234,9 +235,10 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     # =========================================
     else:
         #user already has an existing search thread and now performs another search, So instead of overwriting old thread data, creates a brand new thread
-        tid = str(uuid.uuid4())[:8]
-
-        st.session_state.threads[tid] = {
+        tid = str(uuid.uuid4())[:8] #generate short unique thread ID example: 'a1b2c3d4' for new search thread
+        
+        #In threads dict - data get added as in search node.py we store the search results in state["recommendations"] = recs 
+        st.session_state.threads[tid] = { #create new thread in session state with key as thread id and value as dictionary having keys "messages","data","selected","comparison_result","comparison_raw","auto_compare_explain","explanation_done","name" to store all relevant data for that thread
             "messages": [],
             "data": recs,
             "selected": pd.DataFrame(),
@@ -248,6 +250,8 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
         }
 
         st.session_state.active_thread = tid
+        #print("=============================")
+        #print(st.session_state.threads) #On first execution/search, almost everything is empty/default except "data" because only recommendation results exist at that moment.
 
     st.rerun()
 
@@ -347,14 +351,16 @@ def main():
     # -----------------------------
     # THREAD DISPLAY + CHAT (FIXED)
     # -----------------------------
+    #print("==============222===============")
     if st.session_state.active_thread: # Streamlit session_state is used to store values across app reruns so this if st.session_state.active_thread means - Checks whether an active thread currently exists
     #active thread id example:f7c11cb2
-
-        # Stores complete thread/session data including: recommendation results, selected properties,comparison results, chat messages, explanation state, thread name and UI flags
-        # Example: thread["data"], thread["selected"], thread["comparison_result"], thread["messages"]
+        
+        # FETCHES / ACCESSES the currently active thread data from memory.
+        # Example: thread["data"], thread["selected"], thread["comparison_result"], thread["messages"], thread["comparison_raw"], thread["auto_compare_explain"], thread["explanation_done"], thread["name"]
+        #all this are saved at this step : # ✅ CREATE NEW THREAD (NORMAL CASE)
         thread = st.session_state.threads[st.session_state.active_thread]
         #print("=============================")
-        #print("thread data printed",thread.keys())
+        #print("thread data printed: ",thread.keys()) #dict_keys(['messages', 'data', 'selected', 'comparison_result', 'comparison_raw', 'auto_compare_explain', 'explanation_done', 'name'])
         #print(thread.keys() and thread.values()) 
 
 
@@ -376,7 +382,7 @@ def main():
                 and "Compare" in edited_selected.columns
             ):
 
-                selected_for_compare = edited_selected[
+                selected_for_compare = edited_selected[ #selected_for_compare is a dataframe having only rows where Compare column is True (checkbox selected) from the edited_selected dataframe which is the output of render_selected_panel() function and has all the properties that are currently present in the Selected Properties (Comparison Tray) along with the "Compare" column which is a boolean column created in render_selected_panel() function to track which properties are selected for comparison by the user using checkboxes in the UI.
                     edited_selected["Compare"] == True
                 ]
 
@@ -386,45 +392,37 @@ def main():
             render_input_properties(recs["input"], thread_id) #display input property details in a table
             render_similar_properties(recs["similar"], thread_id) #display similar properties details in a table
 
-            # ✅ MOVE COMPARISON HERE (CORRECT ORDER)
-            if (
-                edited_selected is not None
-                and not edited_selected.empty
-                and "Compare" in edited_selected.columns
-            ):
+            # -----------------------------
+            # COMPARE BUTTON
+            # -----------------------------
+            if len(selected_for_compare) >= 2:
 
-                selected_for_compare = edited_selected[
-                    edited_selected["Compare"] == True
-                ]
+                if st.button("⚖️ Compare Selected Properties"):
 
-                if len(selected_for_compare) >= 2:
+                    active_thread = st.session_state.active_thread 
+                    thread = st.session_state.threads[active_thread] # get current active thread data example: thread["data"], thread["selected"]
+                    # print("==============================")
+                    # print("data", thread.get("data")) #recommendation results including input_df and similar_df
+                    # print("==============================")
+                    # print("selected", thread.get("selected")) #Selected Properties (Comparison Tray) 
+                    # print("==============================")
 
-                    if st.button("⚖️ Compare Selected Properties"):
+                    # ✅ UPDATE CURRENT THREAD (NO NEW THREAD)
+                    thread["selected"] = selected_for_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected) 
+                    thread["comparison_result"] = None
+                    thread["comparison_raw"] = None
+                    thread["auto_compare_explain"] = False
+                    thread["explanation_done"] = False
 
-                        active_thread = st.session_state.active_thread 
-                        thread = st.session_state.threads[active_thread] # get current active thread data example: thread["data"], thread["selected"]
-                        # print("==============================")
-                        # print("data", thread.get("data")) #recommendation results including input_df and similar_df
-                        # print("==============================")
-                        # print("selected", thread.get("selected")) #Selected Properties (Comparison Tray) 
-                        # print("==============================")
+                    #rename thread
+                    selected_ids = selected_for_compare["id"].astype(str).tolist()
 
-                        # ✅ UPDATE CURRENT THREAD (NO NEW THREAD)
-                        thread["selected"] = selected_for_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected) 
-                        thread["comparison_result"] = None
-                        thread["comparison_raw"] = None
-                        thread["auto_compare_explain"] = False
-                        thread["explanation_done"] = False
+                    thread["name"] = "Compare: " + " vs ".join(selected_ids) #gives thread name 
 
-                        #rename thread
-                        selected_ids = selected_for_compare["id"].astype(str).tolist()
+                    # ✅ TRIGGER COMPARISON
+                    st.session_state.run_comparison_now = True #trigger when we click the Compare Selected Properties button
 
-                        thread["name"] = "Compare: " + " vs ".join(selected_ids) #gives thread name 
-
-                        # ✅ TRIGGER COMPARISON
-                        st.session_state.run_comparison_now = True #trigger when we click the Compare Selected Properties button
-
-                        st.rerun()
+                    st.rerun()
 
         
         # ==============================
@@ -439,7 +437,7 @@ def main():
             # ✅ ONLY compared rows
             if selected_df is not None and not selected_df.empty and len(selected_df) >= 2:
 
-                compare_df = selected_df.copy() #Selected Properties (Comparison Tray) dataframe (same as compare_df but with the "Compare" column and only the original columns of the properties)
+                compare_df = selected_df.copy() #Create a copy of Selected Properties (Comparison Tray) dataframe
 
                 if "Compare" not in compare_df.columns: 
                     compare_df["Compare"] = True

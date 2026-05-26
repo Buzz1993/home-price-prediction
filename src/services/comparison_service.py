@@ -5,7 +5,6 @@
 
 import pandas as pd
 
-from src.utils.rent_utils import calculate_rent
 from src.utils.development_utils import get_development_summary
 from src.agents.comparison_agent import run_comparison_agent
 
@@ -19,50 +18,30 @@ def prepare_comparison_data(selected_df):
     # =============================
     """
     Prepare selected properties for comparison by:
-    - removing UI columns
-    - calculating rent
-    - creating risk_score from risk_label
-    - creating growth_score from growth_label
+    - removing UI columns : "Compare" and "Delete"
     - adding development summary
 
     Returns cleaned and enriched dataframe.
     """
 
+    # selected_df is the dataframe of selected properties
+    # with only rows where Compare column is True
     df = selected_df.copy()
 
     # Remove UI column
     if "Compare" in df.columns:
         df = df.drop(columns=["Compare"])
 
-    # RENT CALCULATION
-    def safe_rent(row):
-        try:
-            min_rent, max_rent = calculate_rent(row)
-            return pd.Series([min_rent or 0, max_rent or 0])
-        except:
-            return pd.Series([0, 0])
-
-    df[["min_rent", "max_rent"]] = df.apply(safe_rent, axis=1)
-
-    # RISK SCORE
-    if "risk_score" not in df.columns:
-        df["risk_score"] = df["risk_label"].map({
-            "🟢 Low Risk": 1,
-            "🟡 Medium Risk": 4,
-            "🔴 High Risk": 7
-        }).fillna(3)
-
-    # GROWTH SCORE
-    if "growth_score" not in df.columns:
-        df["growth_score"] = df["growth_label"].map({
-            "🚀 High Growth": 3,
-            "📍 Mature Area": 1,
-            "➖ No Growth Signal": 0
-        }).fillna(1)
+    # Remove UI delete column
+    if "Delete" in df.columns:
+        df = df.drop(columns=["Delete"])
 
     # DEVELOPMENT SUMMARY
     df["dev_summary"] = df.apply(
-        lambda row: get_development_summary(row["location"], row["city"]),
+        lambda row: get_development_summary(
+            row["location"],
+            row["city"]
+        ),
         axis=1
     )
 

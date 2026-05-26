@@ -149,7 +149,9 @@ def render_selected_panel():
             st.session_state.selected_properties.copy()
         )
 
-    return edited_selected
+    #print("================================")
+    #print("edited selected", edited_selected)
+    return edited_selected #return dataframe of selected properties with "Compare" and "Delete" columns to track user actions in the comparison tray
 
 
 # =============================

@@ -15,6 +15,10 @@ dev_cache = {}
 # FILTER RESULTS (REDUCE NOISE)
 # -----------------------------
 def filter_results(results):
+    """
+    Keep only useful development-related
+    search results and remove noisy results.
+    """
 
     cleaned = []
 
@@ -54,6 +58,10 @@ def filter_results(results):
 # CLEAN SUMMARY (REMOVE JUNK)
 # -----------------------------
 def clean_summary(summary):
+    """
+    Clean LLM summary output and
+    remove vague/generic responses.
+    """
 
     text = summary.lower()
 
@@ -74,6 +82,11 @@ def clean_summary(summary):
 # MAIN FUNCTION
 # -----------------------------
 def get_development_summary(location, city):
+    """
+    Fetch development-related news/results
+    using DuckDuckGo search and generate
+    a short development summary for a location.
+    """
 
     key = f"{location}_{city}".lower()
 
@@ -91,7 +104,7 @@ def get_development_summary(location, city):
     text_data = []
 
     try:
-        with DDGS() as ddgs:
+        with DDGS() as ddgs: #DDGS is a Python wrapper for DuckDuckGo's search engine, allowing us to perform web searches and retrieve results programmatically.
             results = ddgs.text(query, max_results=5)
 
             # filter noisy results

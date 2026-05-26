@@ -96,12 +96,13 @@ def render_comparison(df, edited_selected):
                 "explanation": None
             }
 
-            final_state = comparison_graph.invoke(initial_state)
-
-            raw_df = final_state["comparison_raw"]
+            final_state = comparison_graph.invoke(initial_state) #comparison_node and explanation_node get executed inside this comparison_graph
+            
+            #from comparison_node we get the below two dataframes stored in final_state
+            raw_df = final_state["comparison_raw"] 
             compare_df = final_state["comparison_result"]
 
-            explanation = final_state["explanation"]
+            explanation = final_state["explanation"] #for this explanation_node get exected in comparison_graph, and the generated explanation is stored in final_state["explanation"]
 
             # SAVE
             thread["comparison_result"] = compare_df

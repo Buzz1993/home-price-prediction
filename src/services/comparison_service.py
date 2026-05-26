@@ -59,16 +59,17 @@ def run_comparison(selected_df):
     Runs comparison agent on prepared data.
     """
 
-    prepared_df = prepare_comparison_data(selected_df) # prepared_df is the enriched dataframe of selected properties with calculated rent, risk_score, growth_score, and development summary. This is the input to the comparison agent. 
-    # print("prepared_df", prepared_df) 
+    raw_df = prepare_comparison_data(selected_df) # raw_df is the enriched dataframe of selected properties with calculated rent, risk_score, growth_score, and development summary. This is the input to the comparison agent. 
+    # print("raw_df", raw_df) 
     # print("===============================")
 
 
-    compare_df = run_comparison_agent(prepared_df) # Comparison Result dataframe : includes the original selected property data along with new columns like price_score, risk_score_norm, growth_score_norm, overall_score, verdict, and explanation_msg
+    compare_df = run_comparison_agent(raw_df) # from raw_df, we get compare_df which is the final comparison result dataframe with columns like "id", "project_name", "location", "price", "risk_score", "growth_score", "hybrid_score", "locality_rating", "rental_yield_percent", "investment_rating", "overall_score", "verdict", and "explanation" (short explanation of why a property got a certain verdict based on its scores)
+                                                    #only overall_score column is created in run_comparison_agent, else note that other columns are already in prepared_df, we only take some of them in comapre_df for showing them in comaparison Result table in UI.
     # print("compare_df", compare_df) 
     # print("===============================")    
 
-    return prepared_df, compare_df
+    return raw_df, compare_df
 
 
 # =============================

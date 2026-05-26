@@ -16,6 +16,6 @@ def explanation_node(state):
         ask_deepseek_stream
     )
 
-    state["explanation"] = explanation
+    state["explanation"] = explanation #save the generated explanation in state["explanation"]
 
     return state

@@ -78,6 +78,12 @@ def render_comparison(df, edited_selected):
             raw_df = thread["comparison_raw"] #Selected Properties (Comparison Tray) dataframe (same as compare_df but without the "Compare" column and only the original columns of the properties)
             compare_df = thread["comparison_result"] #Comparison Result dataframe
         #At the FIRST comparison run, this will aways run
+
+
+        # initial_state is Temporary Runtime State for LangGraph.
+        # It exists only while the graph is executing.
+        # After graph execution completes, this state gets destroyed,
+        # so values stored here are temporary.
         else:
             initial_state = {
 
@@ -104,7 +110,7 @@ def render_comparison(df, edited_selected):
 
             explanation = final_state["explanation"] #for this explanation_node get exected in comparison_graph, and the generated explanation is stored in final_state["explanation"]
 
-            # SAVE
+            # all this threads are already created in thread_manager.py
             thread["comparison_result"] = compare_df
             thread["comparison_raw"] = raw_df
             thread["selected"] = selected_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected)

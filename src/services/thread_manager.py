@@ -4,7 +4,12 @@
 
 import pandas as pd
 
+#cetralized thread management for creating and updating threads in session state for both when we click on the search button in recommendations.py- 
+#and when we click on the New chat button in sidebar.py
 
+# thread is LONG-TERM APP MEMORY stored inside st.session_state.
+# It persists across Streamlit reruns and stores permanent UI data
+# like messages, recommendations, comparison results, and explanations.
 def create_thread(name="New Chat", data=None):
     """
     Create and return a new thread structure.

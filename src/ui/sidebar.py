@@ -2,6 +2,7 @@
 import streamlit as st
 import uuid
 import pandas as pd
+from src.services.thread_manager import create_thread
 
 # =============================
 # USER INTENT + SLIDERS
@@ -66,16 +67,7 @@ def render_thread_sidebar():
         import uuid
         tid = str(uuid.uuid4())[:8] #generate short unique thread ID example: 'a1b2c3d4' for each new chat thread
 
-        st.session_state.threads[tid] = {                       #each thread id and its corresponding data like "messages","data" etc we store in the session_state as session_state is a storage 
-            "messages": [],                                     #Stores chatbot conversation
-            "data": None,                                       #Stores recommendation results
-            "selected": pd.DataFrame(),      # ✅ ADD           #Stores selected properties for comparison  
-            "comparison_result": None,       # ✅ ADD           #Stores final comparison output
-            "comparison_raw": None,          # ✅ ADD           #Stores raw comparison data before formatting
-            "auto_compare_explain": False,   # ✅ ADD           #Flag to trigger automatic explanation after comparison
-            "explanation_done": False,       # ✅ ADD           #Tracks whether explanation already generated
-            "name": "New Chat"                                  #Thread display name in sidebar
-        }
+        st.session_state.threads[tid] = create_thread() #each thread id and its corresponding data like "messages","data" etc we store in the session_state as session_state is a storage
 
         # store like 
         # st.session_state

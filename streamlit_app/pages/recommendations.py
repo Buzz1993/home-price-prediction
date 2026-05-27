@@ -30,6 +30,7 @@ from src.ui.chat_ui import handle_chat
 from src.ui.comparison_ui import render_comparison
 
 from src.graph.workflow import search_graph, comparison_graph
+from src.services.thread_manager import create_thread
 
 # ===============================
 # MEMORY / GLOBAL CONFIG
@@ -238,16 +239,10 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
         tid = str(uuid.uuid4())[:8] #generate short unique thread ID example: 'a1b2c3d4' for new search thread
         
         #In threads dict - data get added as in search node.py we store the search results in state["recommendations"] = recs 
-        st.session_state.threads[tid] = { #create new thread in session state with key as thread id and value as dictionary having keys "messages","data","selected","comparison_result","comparison_raw","auto_compare_explain","explanation_done","name" to store all relevant data for that thread
-            "messages": [],
-            "data": recs,
-            "selected": pd.DataFrame(),
-            "comparison_result": None,
-            "comparison_raw": None,
-            "auto_compare_explain": False,
-            "explanation_done": False,
-            "name": name
-        }
+        st.session_state.threads[tid] = create_thread( #create new thread in session state with key as thread id and value as dictionary having keys "messages","data","selected","comparison_result","comparison_raw","auto_compare_explain","explanation_done","name" to store all relevant data for that thread
+            name=name,
+            data=recs
+        )
 
         st.session_state.active_thread = tid
         #print("=============================")

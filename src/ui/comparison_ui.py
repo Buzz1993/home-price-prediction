@@ -88,7 +88,7 @@ def render_comparison(df, edited_selected):
 
                 "recommendations": None,
 
-                "selected_properties": selected_compare,
+                "selected_properties": selected_compare, #selected properties dataframe with only rows where Compare column is True (checkbox selected)
 
                 "comparison_raw": None,
                 "comparison_result": None,
@@ -107,9 +107,10 @@ def render_comparison(df, edited_selected):
             # SAVE
             thread["comparison_result"] = compare_df
             thread["comparison_raw"] = raw_df
-            thread["selected"] = selected_compare.copy()
+            thread["selected"] = selected_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected)
+                                                        #same dataframme which we have taken above at top as selected_compare and passed to comparison_graph
 
-            thread["last_explanation"] = explanation
+            thread["last_explanation"] = explanation #this generated using explanation_node in comparison_graph
             thread["show_explanation"] = False # Explanation generated but not shown yet, hence set to False.
 
     # -----------------------------
@@ -117,7 +118,7 @@ def render_comparison(df, edited_selected):
     # -----------------------------
     if active_thread:
         thread = st.session_state.threads[active_thread]
-
+        #this "selected" and "auto_compare_explain" we have created in sidebar.py while creating a new thread
         thread["selected"] = selected_compare.copy() #selected properties dataframe with only rows where Compare column is True (checkbox selected) 
 
         thread["auto_compare_explain"] = True

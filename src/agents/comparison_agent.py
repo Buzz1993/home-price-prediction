@@ -142,7 +142,7 @@ def run_comparison_agent(df):
     # -----------------------------
     # PRICE SCORE (lower is better)
     # -----------------------------
-    df["price_score"] = 1 - normalize(df["price"])
+    df["comparison_price_score"] = 1 - normalize(df["price"])
 
     # -----------------------------
     # RISK SCORE (lower is better)
@@ -199,7 +199,7 @@ def run_comparison_agent(df):
     # FINAL SCORE
     # -----------------------------
     df["overall_score"] = (
-        0.20 * df["price_score"] +
+        0.20 * df["comparison_price_score"] +
         0.20 * df["risk_score_norm"] +
         0.20 * df["growth_score_norm"] +
         0.20 * df["hybrid_score_norm"] +
@@ -217,7 +217,7 @@ def run_comparison_agent(df):
             return "⚠️ Risky"
         elif row["investment_rating"] == "Excellent":
             return "💰 Strong Investment"
-        elif row["price_score"] < 0.3:
+        elif row["comparison_price_score"] < 0.3:
             return "💸 Expensive"
         else:
             return "👍 Balanced"
@@ -227,7 +227,7 @@ def run_comparison_agent(df):
     def explain(row):
         reasons = []
 
-        if row["price_score"] > 0.6:
+        if row["comparison_price_score"] > 0.6:
             reasons.append("better price")
 
         if row["risk_score"] <= 2:

@@ -444,7 +444,9 @@ def main():
                 )
 
         else:
-            if thread.get("comparison_result") is not None:
+            # Triggered only when comparison results are already stored in thread memory (generated earlier from comparison_node.py),
+            # so comparison graph does not need to run again. 
+            if thread.get("comparison_result") is not None: 
 
                 selected_df = thread.get("selected")  #Selected Properties (Comparison Tray) dataframe
 

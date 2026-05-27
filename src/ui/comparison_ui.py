@@ -118,7 +118,10 @@ def render_comparison(df, edited_selected):
 
             thread["last_explanation"] = explanation #this generated using explanation_node in comparison_graph
             thread["show_explanation"] = False # Explanation generated but not shown yet, hence set to False.
-
+                                                # show_explanation is stored in thread memory to control when the explanation should be displayed in the UI.
+                                                # This allows us to reuse the already-generated explanation whenever needed across Streamlit reruns.
+                                                # Otherwise, the LLM would regenerate the explanation every time, causing expensive LLM calls, slower UI performance,
+                                                # and unnecessary recomputation.
     # -----------------------------
     # SAVE TO SESSION
     # -----------------------------
@@ -129,6 +132,14 @@ def render_comparison(df, edited_selected):
 
         thread["auto_compare_explain"] = True
         thread["show_explanation"] = True # Allow stored explanation to be displayed.
+
+    #-----------------------------
+    # 🎨 UI Rendering Section
+    # Displays:
+    # - Comparison table
+    # - Property map
+    # - Rental estimate
+    # - AI insights
 
     # -----------------------------
     # 📊 RESULT TABLE

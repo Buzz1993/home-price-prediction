@@ -18,13 +18,13 @@ def handle_chat(thread, recs, edited_selected=None):
     # 🔥 SHOW CHAT HISTORY
     # =============================
     for role, msg in thread.get("messages", []):
-        with st.chat_message("user" if role == "USER" else "assistant"):
+        with st.chat_message("user" if role == "USER" else "assistant"): 
             st.markdown(msg)
 
     # =============================
     # 💬 USER INPUT BOX (NEW)
     # =============================
-    user_msg = st.chat_input("Ask anything about properties...")
+    user_msg = st.chat_input("Ask anything about properties...") # New chat input box for user to ask questions 
 
     if user_msg:
 

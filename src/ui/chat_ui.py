@@ -17,7 +17,8 @@ def handle_chat(thread, recs, edited_selected=None):
     # =============================
     # 🔥 SHOW CHAT HISTORY
     # =============================
-    for role, msg in thread.get("messages", []):
+    # Get old/stored chat messages from thread["messages"] and display them in the UI.
+    for role, msg in thread.get("messages", []): 
         with st.chat_message("user" if role == "USER" else "assistant"): 
             st.markdown(msg)
 
@@ -31,10 +32,11 @@ def handle_chat(thread, recs, edited_selected=None):
         # -------------------------
         # SHOW USER MESSAGE
         # -------------------------
+        # Display the current user message in the UI and store it in thread chat history.
         with st.chat_message("user"):
             st.markdown(user_msg)
 
-        thread["messages"].append(("USER", user_msg))
+        thread["messages"].append(("USER", user_msg)) # Save the new user message to thread["messages"] i.e in thread chat history
 
         # -------------------------
         # RUN CHAT GRAPH

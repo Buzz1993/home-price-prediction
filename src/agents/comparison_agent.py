@@ -137,7 +137,7 @@ def run_comparison_agent(df):
     """
     print("✅ comparison_agent executed")
     df = df.copy()
-    print("comparison_agent input df columns:", df.columns)
+    #print("comparison_agent input df columns:", df.columns)
 
     # -----------------------------
     # PRICE SCORE (lower is better)

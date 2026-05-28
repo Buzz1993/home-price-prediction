@@ -17,6 +17,11 @@ def format_price(price):
 
 
 def valuation_node(state):
+    """
+    Analyzes property valuation using
+    comparison data and generates
+    AI-based pricing insights.
+    """
 
     print("✅ valuation_node executed")
 

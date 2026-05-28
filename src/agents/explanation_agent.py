@@ -129,10 +129,10 @@ def generate_comparison_explanation(raw_df, compare_df, llm_func):
     """
     print("✅ explanation_agent executed")
 
-    print("===============================")
-    print("raw_df", raw_df.columns.tolist())
-    print("compare_df", compare_df.columns.tolist())
-    print("===============================")
+    # print("===============================")
+    # print("raw_df", raw_df.columns.tolist())
+    # print("compare_df", compare_df.columns.tolist())
+    # print("===============================")
 
     # 🔹 Structured data (very important)
     context = {

@@ -7,6 +7,11 @@ from src.llm.deepseek_client import ask_deepseek
 
 
 def rental_node(state):
+    """
+    Analyzes property rental data
+    and generates AI-based rental
+    investment insights and advice.
+    """
 
     print("✅ rental_node executed")
 

@@ -193,13 +193,13 @@ def predict_property_price(property_row):
 
     try:
 
-        print("\n========== PROPERTY ROW ==========")
-        print(property_row)
-        print("=================================\n")
+        # print("\n========== PROPERTY ROW ==========")
+        # print(property_row)
+        # print("=================================\n")
 
-        print("\n========== PROPERTY ROW INDEX ==========")
-        print(property_row.index.tolist())
-        print("=======================================\n")
+        # print("\n========== PROPERTY ROW INDEX ==========")
+        # print(property_row.index.tolist())
+        # print("=======================================\n")
 
         # ==========================================
         # LOAD ORIGINAL RAW DATA
@@ -209,9 +209,9 @@ def predict_property_price(property_row):
             low_memory=False
         )
 
-        print("\n========== RAW DF COLUMNS ==========")
-        print(raw_df.columns.tolist())
-        print("===================================\n")
+        # print("\n========== RAW DF COLUMNS ==========")
+        # print(raw_df.columns.tolist())
+        # print("===================================\n")
 
         if "id" in property_row.index:
             property_id = property_row["id"]
@@ -233,9 +233,9 @@ def predict_property_price(property_row):
         # ==========================================
         raw_df.columns = raw_df.columns.str.strip()
 
-        print("\n========== RAW DF CLEANED COLUMNS ==========")
-        print(raw_df.columns.tolist())
-        print("===========================================\n")
+        # print("\n========== RAW DF CLEANED COLUMNS ==========")
+        # print(raw_df.columns.tolist())
+        # print("===========================================\n")
 
         raw_id_col = None
 
@@ -251,7 +251,7 @@ def predict_property_price(property_row):
                 "error": f"No ID column found in raw CSV. Columns: {raw_df.columns.tolist()}"
             }
 
-        print("RAW ID COLUMN:", raw_id_col)
+        # print("RAW ID COLUMN:", raw_id_col)
 
         matched_row = raw_df[
             raw_df[raw_id_col]
@@ -280,13 +280,13 @@ def predict_property_price(property_row):
 
         payload = sanitize_payload(raw_payload)
 
-        print("\n========== PAYLOAD SIZE ==========")
-        print(len(payload))
-        print("==================================\n")
+        # print("\n========== PAYLOAD SIZE ==========")
+        # print(len(payload))
+        # print("==================================\n")
 
-        print("\n========== PAYLOAD ==========")
-        print(payload)
-        print("=============================\n")
+        # print("\n========== PAYLOAD ==========")
+        # print(payload)
+        # print("=============================\n")
 
         #This code is used to send your property data (payload) from your Streamlit/LangGraph app -
         #to the FastAPI prediction server so the ML model can predict the house price.
@@ -296,8 +296,8 @@ def predict_property_price(property_row):
             timeout=60
         )
 
-        print("STATUS:", response.status_code)
-        print("RESPONSE:", response.text)
+        # print("STATUS:", response.status_code)
+        # print("RESPONSE:", response.text)
 
         if response.status_code != 200:
 
@@ -321,7 +321,33 @@ def predict_property_price(property_row):
         traceback.print_exc()
         print("================================\n")
 
+        # Handle FastAPI server connection errors.
+        # Start server using:
+        # python -m uvicorn app:app --reload --port 8000
+        error_msg = str(e)
+
+        # -----------------------------------------
+        # FASTAPI SERVER NOT RUNNING
+        # -----------------------------------------
+        if (
+            "127.0.0.1:8000" in error_msg
+            or "Failed to establish a new connection" in error_msg
+            or "actively refused" in error_msg
+        ):
+
+            return {
+                "success": False,
+                "error": (
+                    "Prediction server is not running.\n\n"
+                    "Please start the FastAPI prediction server using:\n"
+                    "python -m uvicorn app:app --reload --port 8000"
+                )
+            }
+
+        # -----------------------------------------
+        # UNKNOWN ERROR
+        # -----------------------------------------
         return {
             "success": False,
-            "error": repr(e)
+            "error": f"Prediction failed: {error_msg}"
         }

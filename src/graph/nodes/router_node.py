@@ -3,6 +3,11 @@
 # ===============================
 
 def router_node(state):
+    """
+    Routes the user query to the correct
+    chat workflow like rental, prediction,
+    negotiation, valuation, or general chat.
+    """
 
     print("✅ router_node executed")
 

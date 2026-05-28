@@ -7,6 +7,11 @@ from src.llm.deepseek_client import ask_deepseek
 
 
 def negotiation_node(state):
+    """
+    Analyzes property negotiation data
+    and generates AI-based negotiation
+    strategies and buyer advice.
+    """
 
     print("✅ negotiation_node executed")
 

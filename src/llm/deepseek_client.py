@@ -17,7 +17,7 @@ def ask_deepseek(prompt):
 
     Args:
         prompt (str): Input prompt text.
-
+        
     Returns:
         str: Generated response or error message.
     """
@@ -34,30 +34,28 @@ def ask_deepseek(prompt):
     }
 
     try:
-
-        response = requests.post(
+        response = requests.post( # Make HTTP POST request to Ollama API, with the prompt and options
             OLLAMA_URL,
             json=payload,
             timeout=180
         )
 
-    except Exception as e:
-
+    # if any exception occurs during try block (like connection error, timeout, etc), catch it and print details for debugging, then return an error message.
+    except Exception as e:       
         print("\n========== REQUEST EXCEPTION ==========")
-        print(type(e))
-        print(str(e))
+        print(type(e)) # This will print the type of exception that occurred, such as ConnectionError, Timeout, etc.
+        print(str(e)) # This will print the error message associated with the exception, providing more details about what went wrong.
         print("=======================================\n")
-
         return f"REQUEST EXCEPTION: {str(e)}"
 
+    # Check if the response status code is not 200 (which means the request was not successful). If it's an error, print the status code and raw response for debugging, 
+    # then return an error message.
     if response.status_code != 200:
-
         print("\n========== OLLAMA ERROR ==========")
         print("STATUS CODE:", response.status_code)
         print("RAW RESPONSE:")
         print(response.text)
         print("==================================\n")
-
         return (
             f"OLLAMA ERROR ({response.status_code})\n"
             f"{response.text}"

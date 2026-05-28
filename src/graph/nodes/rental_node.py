@@ -15,23 +15,52 @@ def rental_node(state):
 
     print("✅ rental_node executed")
 
-    selected_df = state.get("selected_properties")
+    comparison_raw = state.get("comparison_raw")
+    comparison_result = state.get("comparison_result")
 
     # ---------------------------------
     # VALIDATION
     # ---------------------------------
-    if selected_df is None or selected_df.empty:
+    if comparison_raw is None or comparison_raw.empty:
 
         state["response"] = (
             "Please select at least one property first."
         )
 
         return state
+    
+    # ---------------------------------
+    # MERGE COMPARISON INSIGHTS
+    # ---------------------------------
+    if (
+        comparison_result is not None
+        and not comparison_result.empty
+    ):
+
+        important_cols = [
+            "id",
+            "overall_score",
+            "verdict",
+            "comparison_reason"
+        ]
+
+        comparison_merge = comparison_result[
+            important_cols
+        ]
+
+        rental_input_df = comparison_raw.merge(
+            comparison_merge,
+            on="id",
+            how="left"
+        )
+
+    else:
+        rental_input_df = comparison_raw.copy()
 
     # ---------------------------------
     # RUN RENTAL ANALYSIS
     # ---------------------------------
-    rental_df = run_rental_agent(selected_df)
+    rental_df = run_rental_agent(rental_input_df)
 
     # ---------------------------------
     # BUILD CONTEXT

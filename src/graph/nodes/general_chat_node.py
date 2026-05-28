@@ -74,6 +74,15 @@ def general_chat_node(state):
         state.get("explanation")
     )
 
+    # print("===============================")
+    # print("recommendations columns", state.get("recommendations").columns.tolist())
+    # print("selected_properties columns", state.get("selected_properties").columns.tolist())
+    # print("comparison_result columns", state.get("comparison_result").columns.tolist())
+    # print("comarison_raw columns", state.get("comparison_raw").columns.tolist())
+    # print("explanation", state.get("explanation"))
+    # print("===============================")
+
+
     prompt = f"""
     You are an expert Indian real estate assistant.
 

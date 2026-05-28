@@ -148,18 +148,12 @@ def run_rental_agent(df: pd.DataFrame):
         # -----------------------------
         # FUTURE AGENT OUTPUTS
         # -----------------------------
-        growth = str(row.get("growth_label", "")).lower()
-
         growth_score = row.get("growth_score", 0)
-
-        growth_reason = row.get("growth_reason", "")
 
         # -----------------------------
         # RISK AGENT OUTPUTS
         # -----------------------------
         risk_score = row.get("risk_score", 0)
-
-        risk_label = row.get("risk_label", "")
 
         # -----------------------------
         # PROPERTY FEATURES
@@ -169,6 +163,20 @@ def run_rental_agent(df: pd.DataFrame):
         transport = row.get("transport_within_2km", 0)
 
         commercial = row.get("commercial_hub_within_2km", 0)
+
+        overall_score = row.get("overall_score", 0)
+
+        verdict = row.get("verdict", "")
+
+        comparison_reason = row.get("comparison_reason","")
+
+        future_signals = row.get("future_signals","")
+
+        locality_rank = row.get("locality_rank",0)
+
+        distance_to_center = row.get("distance_to_center_km",0)
+
+        locality_rating = row.get("locality_rating",0)
 
         # -----------------------------
         # 1. RENT ESTIMATION
@@ -218,6 +226,18 @@ def run_rental_agent(df: pd.DataFrame):
         if risk_score >= 6:
             demand_score -= 1
 
+        if locality_rating >= 4:
+            demand_score += 1
+
+        if overall_score >= 8:
+            demand_score += 1
+
+        if locality_rank > 50:
+            demand_score -= 1
+
+        if distance_to_center > 20:
+            demand_score -= 1
+
         # -----------------------------
         # 4. DEMAND LEVEL
         # -----------------------------
@@ -245,6 +265,25 @@ def run_rental_agent(df: pd.DataFrame):
         else:
             rating = "Low"
 
+        # strong growth improves rating
+        if growth_score >= 3 and rating != "Excellent":
+
+            if rating == "Low":
+                rating = "Average"
+
+            elif rating == "Average":
+                rating = "Good"
+
+        # high risk reduces rating
+        if risk_score >= 6:
+
+            if rating == "Excellent":
+                rating = "Good"
+
+            elif rating == "Good":
+                rating = "Average"
+
+
         # -----------------------------
         # 6. RENTAL STRATEGY
         # -----------------------------
@@ -263,6 +302,20 @@ def run_rental_agent(df: pd.DataFrame):
         # high risk warning
         if risk_score >= 6:
             strategy += (" | High property risk may affect tenant demand")
+
+        if pd.notna(comparison_reason) and comparison_reason:
+            strategy += f" | {comparison_reason}"
+
+        if pd.notna(future_signals) and future_signals:
+            strategy += (
+                f" | Future growth signals: "
+                f"{future_signals}"
+            )
+
+        if "avoid" in str(verdict).lower():
+            strategy += (
+                " | Weak investment fundamentals"
+            )
 
         # -----------------------------
         # FINAL OUTPUT

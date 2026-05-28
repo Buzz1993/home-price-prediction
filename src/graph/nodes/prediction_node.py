@@ -750,9 +750,7 @@ def prediction_node(state):
 
     print("✅ prediction_node executed")
 
-    selected_df = state.get(
-        "selected_properties"
-    )
+    selected_df = state.get("selected_properties") #selected properties dataframe with only rows where Compare column is True (checkbox selected)
 
     # =========================================
     # VALIDATION

@@ -2,6 +2,8 @@
 # router_node.py
 # ===============================
 
+# router_node sets state["route"] based on user query. Then add_conditional_edges(from workflow.py) uses that route value to execute the matching workflow/node.
+
 def router_node(state):
     """
     Routes the user query to the correct

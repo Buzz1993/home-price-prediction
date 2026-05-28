@@ -17,7 +17,7 @@ def ask_deepseek(prompt):
 
     Args:
         prompt (str): Input prompt text.
-        
+
     Returns:
         str: Generated response or error message.
     """

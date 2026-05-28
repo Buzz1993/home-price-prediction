@@ -94,10 +94,12 @@ def general_chat_node(state):
     - NEVER skip matching properties
     - Use ONLY the provided property data
     - Carefully check ALL rows before answering
-    - Prices are in INR (₹)
+    - Prices are in INR (₹) and crores (Cr)
     - NEVER use dollars ($)
     - If user asks for tables, return clean markdown tables
     - If user asks for filtering/sorting/grouping,
+    - Do not print any property data unless explicitly asked
+    - Do not print any property if it does not match the criteria which user has not asked for.
     carefully analyze ALL property rows before answering
 
     USER MEMORY:

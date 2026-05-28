@@ -18,7 +18,7 @@ from src.graph.nodes.general_chat_node import general_chat_node
 from src.graph.nodes.prediction_node import prediction_node
 from src.graph.nodes.rental_node import rental_node
 
-def route_decision(state):
+def route_decision(state): # already receive state["route"] value from router_node and use that to decide which workflow/node to execute next in chat graph.
 
     return state["route"]
 
@@ -81,12 +81,8 @@ chat_builder.add_edge("memory", "router")
 
 # CONDITIONAL ROUTING
 chat_builder.add_conditional_edges(
-    "router",   # "router" means after router_node executes,
-                # LangGraph performs conditional routing using
-                # route_decision(state). route_decision reads
-                # state["route"] and LangGraph matches that
-                # route value with the mapping below to execute
-                # the corresponding node.
+    "router",   # Once router_node executes, this router run conditional routing
+                # to match and execute the correct workflow/node (prediction, negotiation, rental, general_chat).
     route_decision,
     {
         "valuation": "valuation",

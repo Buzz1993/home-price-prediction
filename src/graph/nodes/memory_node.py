@@ -76,9 +76,9 @@ def memory_node(state):
     # EXTRACT NEW MEMORY
     # -----------------------------
     memory = extract_memory(user_msg) # Send the latest user message to the DeepSeek model and get extracted memory from the response.
-    print(f"Extracted Memory: {memory}")
+    #print(f"Extracted Memory: {memory}")
                                       
-    if memory:
+    if memory: # If the DeepSeek model extracted some memory (i.e. it's not None or empty), save that memory to the SQLite database using memory_store. 
         memory_store.add_memory(USER_ID, memory)
 
     # -----------------------------
@@ -86,6 +86,6 @@ def memory_node(state):
     # -----------------------------
     memories = memory_store.get_memories(USER_ID)
 
-    state["memory"] = memories
+    state["memory"] = memories # Save the list of all memories retrieved from the database into state["memory"]. 
 
     return state

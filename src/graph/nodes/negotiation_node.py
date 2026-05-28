@@ -15,23 +15,67 @@ def negotiation_node(state):
 
     print("✅ negotiation_node executed")
 
-    selected_df = state.get("selected_properties")
+    comparison_raw = state.get("comparison_raw")
+    comparison_result = state.get("comparison_result")
+    # print("===============================")
+    # print("comarison_raw columns", state.get("comparison_raw").columns.tolist())
+    # print("comparison_result columns", state.get("comparison_result").columns.tolist())
+    # print("===============================")
+
 
     # ---------------------------------
     # VALIDATION
     # ---------------------------------
-    if selected_df is None or selected_df.empty:
+    if comparison_raw is None or comparison_raw.empty:
 
         state["response"] = (
             "Please select at least one property first."
         )
 
         return state
+    
+    # ---------------------------------
+    # MERGE COMPARISON INSIGHTS
+    # ---------------------------------
+    important_cols = [
+        "id",
+        "overall_score",
+        "verdict",
+        "comparison_reason"
+    ]
+
+    # ---------------------------------
+    # MERGE COMPARISON INSIGHTS
+    # ---------------------------------
+    if (
+        comparison_result is not None
+        and not comparison_result.empty
+    ):
+
+        important_cols = [
+            "id",
+            "overall_score",
+            "verdict",
+            "comparison_reason"
+        ]
+
+        comparison_merge = comparison_result[important_cols]
+
+        negotiation_input_df = comparison_raw.merge(
+            comparison_merge,
+            on="id",
+            how="left"
+        )
+
+    else:
+        negotiation_input_df = comparison_raw.copy()
 
     # ---------------------------------
     # RUN NEGOTIATION ANALYSIS
     # ---------------------------------
-    negotiation_df = run_negotiation_agent(selected_df)
+    negotiation_df = run_negotiation_agent(
+        negotiation_input_df
+    )
 
     # ---------------------------------
     # BUILD CONTEXT

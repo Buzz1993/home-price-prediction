@@ -143,6 +143,31 @@
 import pandas as pd
 
 
+def safe_numeric(value, default=0):
+    """
+    Safely convert values like:
+    "2.5%", "1,200", None, "", nan
+    into numeric float values.
+    """
+
+    cleaned = (
+        str(value)
+        .replace("%", "")
+        .replace(",", "")
+        .strip()
+    )
+
+    numeric_value = pd.to_numeric(
+        cleaned,
+        errors="coerce"
+    )
+
+    if pd.isna(numeric_value):
+        return default
+
+    return numeric_value
+
+
 def run_negotiation_agent(df: pd.DataFrame):
     """
     Analyze selected properties and generate
@@ -213,6 +238,20 @@ def run_negotiation_agent(df: pd.DataFrame):
 
         weaknesses = str(row.get("needs_improvement", "")).lower()
 
+        overall_score = row.get("overall_score", 0)
+
+        verdict = row.get("verdict", "")
+
+        comparison_reason = row.get("comparison_reason","")
+
+        rental_yield = safe_numeric(row.get("rental_yield_percent", 0))
+
+        demand_level = row.get("demand_level","")
+
+        future_signals = row.get("future_signals","")
+
+        locality_rank = row.get("locality_rank",0)
+
         # -----------------------------
         # 1. PRICE POSITION
         # -----------------------------
@@ -266,6 +305,33 @@ def run_negotiation_agent(df: pd.DataFrame):
         if amenities > 15:
             power_score -= 1
 
+        if rental_yield < 2:
+            power_score += 1
+
+        if "low" in str(demand_level).lower():
+            power_score += 2
+
+        elif "medium" in str(demand_level).lower():
+            power_score += 1
+
+        if "avoid" in verdict.lower():
+            power_score += 2
+
+        elif "good" in verdict.lower():
+            power_score -= 1
+
+        elif "excellent" in verdict.lower():
+            power_score -= 2
+
+        if overall_score < 5:
+            power_score += 2
+
+        elif overall_score < 7:
+            power_score += 1
+
+        if locality_rank > 50:
+            power_score += 1
+
         # -----------------------------
         # 3. CLASSIFY POWER
         # -----------------------------
@@ -296,7 +362,7 @@ def run_negotiation_agent(df: pd.DataFrame):
         # overpriced property
         if analysis_flag == "overpriced":
             strategy.append("Use nearby comparable pricing as leverage")
-            if analysis_msg:
+            if pd.notna(analysis_msg) and analysis_msg:
                 strategy.append(analysis_msg)
 
         # construction issues
@@ -319,6 +385,15 @@ def run_negotiation_agent(df: pd.DataFrame):
         if not strategy:
             strategy.append("Negotiate for a modest discount")
 
+        if rental_yield < 2:
+            strategy.append("Low rental yield weakens investment attractiveness")
+
+        if "low" in str(demand_level).lower():
+            strategy.append("Lower buyer demand may improve negotiation scope")
+
+        if pd.notna(comparison_reason) and comparison_reason:
+            strategy.append(comparison_reason)
+
         # -----------------------------
         # 6. TALKING POINTS
         # -----------------------------
@@ -334,16 +409,26 @@ def run_negotiation_agent(df: pd.DataFrame):
         ]
 
         # add risk categories
-        if risk_categories:
+        if pd.notna(risk_categories) and risk_categories:
             talking_points.append(f"Detected risks: {risk_categories}")
 
         # add growth reason
-        if growth_reason:
+        if pd.notna(growth_reason) and growth_reason:
             talking_points.append(growth_reason)
 
         # add analysis message
-        if analysis_msg:
+        if pd.notna(analysis_msg) and analysis_msg:
             talking_points.append(analysis_msg)
+
+        talking_points.append(f"Overall investment score: {overall_score}")
+
+        talking_points.append(f"Demand level: {demand_level}")
+
+        if pd.notna(verdict) and verdict:
+            talking_points.append(f"Investment verdict: {verdict}")
+
+        if pd.notna(future_signals) and future_signals:
+            talking_points.append(f"Future infra signals: {future_signals}")
 
         # -----------------------------
         # FINAL OUTPUT

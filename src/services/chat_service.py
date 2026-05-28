@@ -14,7 +14,16 @@ USER_ID = "default_user"
 # =============================
 # BUILD CONTEXT
 # =============================
-def build_context(recs, selected_df, comparison_df, comparison_raw=None, last_explanation=None):
+def build_context(
+    recs,
+    comparison_result,
+    comparison_raw=None,
+    last_explanation=None
+):
+    
+    """
+    Build property context for the LLM.
+    """
 
     sections = []
 
@@ -46,22 +55,47 @@ def build_context(recs, selected_df, comparison_df, comparison_raw=None, last_ex
                 sim_df.to_string(index=False)
             )
 
+
     # =====================================
-    # SELECTED PROPERTIES
+    # DETAILED PROPERTY DATA
     # =====================================
-    if selected_df is not None and not selected_df.empty:
+    if comparison_raw is not None and not comparison_raw.empty:
+
+        important_cols = [
+            "id",
+            "project_name",
+            "location",
+            "price",
+            "area",
+            "bhk_type",
+            "locality_rating",
+            "risk_score",
+            "growth_score",
+            "hybrid_score",
+            "rental_yield_percent",
+            "investment_rating",
+            "negotiation_power",
+            "target_price",
+            "price_position",
+            "why_recommended"
+        ]
+
+        available_cols = [
+            c for c in important_cols
+            if c in comparison_raw.columns
+        ]
 
         sections.append(
-            "SELECTED PROPERTIES:\n" +
-            selected_df.to_string(index=False)
+            "DETAILED PROPERTY DATA:\n" +
+            comparison_raw[available_cols].to_string(index=False)
         )
 
     # =====================================
     # COMPARISON RESULT
     # =====================================
-    if comparison_df is not None and not comparison_df.empty:
+    if comparison_result is not None and not comparison_result.empty:
 
-        compare_df = comparison_df.copy()
+        compare_df = comparison_result.copy()
 
         if "price" in compare_df.columns:
             compare_df["price"] = compare_df["price"].apply(
@@ -154,14 +188,23 @@ def generate_rent_response(recs):
     response = "🏠 Rental Analysis:\n\n"
 
     for _, row in rent_df.iterrows():
-        rent = row.get("monthly_rent_estimate") or 0
         yield_ = row.get("rental_yield_percent") or "0%"
         demand = row.get("demand_level") or "Unknown"
         rating = row.get("investment_rating") or "Unknown"
+        
+        # =============================
+        # Safe rent handling
+        # =============================
+        rent = row.get("monthly_rent_estimate") or 0
+
+        try:
+            rent = int(float(rent))
+        except:
+            rent = 0
 
         response += (
             f"📍 {row['id']} ({row['location']})\n"
-            f"• Rent: ₹{int(rent):,}/month\n"
+            f"• Rent: ₹{rent:,}/month\n"
             f"• Yield: {yield_}\n"
             f"• Demand: {demand}\n"
             f"• Rating: {rating}\n\n"
@@ -176,8 +219,7 @@ def generate_rent_response(recs):
 def stream_llm_response(
         user_msg,
         recs,
-        selected_df,
-        comparison_df,
+        comparison_result,
         comparison_raw=None,
         last_explanation=None,
         history=None
@@ -196,8 +238,7 @@ def stream_llm_response(
 
     context = build_context(
         recs,
-        selected_df,
-        comparison_df,
+        comparison_result,
         comparison_raw,
         last_explanation
     )
@@ -212,10 +253,11 @@ def stream_llm_response(
     prompt = f"""
     You are an expert real estate assistant with strong memory.
 
+
     You MUST remember and use:
     - Input property
     - Similar properties
-    - Selected properties
+    - Detailed property comparison data
     - Comparison results
     - Rental estimates
     - Property insights
@@ -227,8 +269,8 @@ def stream_llm_response(
     - Use ONLY provided property data
     - If user asks for IDs of similar properties,
     answer from SIMILAR PROPERTIES section
-    - If user asks for compared properties,
-    answer from SELECTED PROPERTIES or COMPARISON RESULT
+    - If user asks for compared properties, answer 
+    from DETAILED PROPERTY DATA or COMPARISON RESULT
     - Maintain conversation continuity
     - Answer directly
     - IMPORTANT: Prices are in Indian Rupees (₹)

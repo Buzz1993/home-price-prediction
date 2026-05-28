@@ -68,15 +68,14 @@ def general_chat_node(state):
 
     context = build_context(
         state.get("recommendations"),
-        state.get("selected_properties"),
         state.get("comparison_result"),
         state.get("comparison_raw"),
         state.get("explanation")
     )
 
     # print("===============================")
-    # print("recommendations columns", state.get("recommendations").columns.tolist())
-    # print("selected_properties columns", state.get("selected_properties").columns.tolist())
+    # print(type(state.get("recommendations")))
+    # print(state.get("recommendations"))
     # print("comparison_result columns", state.get("comparison_result").columns.tolist())
     # print("comarison_raw columns", state.get("comparison_raw").columns.tolist())
     # print("explanation", state.get("explanation"))
@@ -90,7 +89,7 @@ def general_chat_node(state):
     including:
     - Input Property
     - Similar Properties
-    - Selected Properties
+    - Detailed Property Comparison Data
     - Comparison Results
     - Rental Estimates
     - Property Insights

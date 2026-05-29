@@ -23,6 +23,7 @@ def build_context(
     # =====================================
     # INPUT PROPERTY
     # =====================================
+    # Extract selected columns and their values from recs["input"] and add them to the sections list for LLM context generation.
     if recs and "input" in recs:
 
         input_df = recs["input"]

@@ -23,8 +23,13 @@ SYSTEM_KEYWORDS = [
     "modules",
     "component",
     "components",
+    "implemented",
+    "current modules",
+    "current agents",
+    "overview",
+    "project overview",
     "how does this work",
-    "what does this do",
+    "what does this project do",
     "what is this project",
     "what are the agents",
     "how is rental calculated",
@@ -149,10 +154,15 @@ def general_chat_node(state):
         state.get("explanation")
     )
 
+    # Determine if the question is about the system or about properties
+    system_text = user_msg.lower()
+
     is_system_question = any(
-        keyword in user_msg.lower()
+        keyword in system_text
         for keyword in SYSTEM_KEYWORDS
     )
+
+    print("Detected System Question:", is_system_question)
 
     if is_system_question:
 
@@ -225,3 +235,6 @@ ANSWER:
     state["response"] = response
 
     return state
+
+#=========================================================================================
+

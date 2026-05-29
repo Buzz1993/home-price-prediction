@@ -40,9 +40,6 @@
 # ===============================
 # memory_node.py
 # ===============================
-
-from narwhals import when
-
 from src.llm.memory_store import SQLiteMemoryStore
 from src.llm.deepseek_memory import extract_memory
 

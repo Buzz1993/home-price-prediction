@@ -45,6 +45,11 @@ class PropertyState(TypedDict, total=False):
     explanation: Optional[str]
 
     # ---------------------------------
+    # ADVISOR
+    # ---------------------------------
+    advisor_result: object
+
+    # ---------------------------------
     # CHAT SYSTEM
     # ---------------------------------
     user_message: str 

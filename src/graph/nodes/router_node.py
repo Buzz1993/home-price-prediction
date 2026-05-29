@@ -134,6 +134,47 @@ SYSTEM_KEYWORDS = [
     "valuation logic"
 ]
 
+ADVISOR_KEYWORDS = [
+
+    "should i buy",
+
+    "buy this property",
+
+    "is this a good investment",
+
+    "investment advice",
+
+    "recommendation",
+
+    "final advice",
+
+    "which property should i buy",
+
+    "best investment",
+
+    "best property",
+
+    "advisor",
+
+    "why did you mark",
+
+    "why buy",
+
+    "show exact scores",
+
+    "show scores",
+
+    "advisor score",
+
+    "buy decision",
+
+    "investment decision",
+
+    "recommendation reason",
+
+    "why recommendation"
+]
+
 
 def router_node(state):
     """
@@ -233,6 +274,16 @@ def router_node(state):
     ]):
 
         state["route"] = "valuation"
+
+    # -----------------------------
+    # ADVISOR
+    # -----------------------------
+    elif any(
+        keyword in msg
+        for keyword in ADVISOR_KEYWORDS
+    ):
+
+        state["route"] = "advisor"
 
     # -----------------------------
     # GENERAL PROPERTY CHAT

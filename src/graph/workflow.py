@@ -20,6 +20,7 @@ from src.graph.nodes.rental_node import rental_node
 
 from src.graph.nodes.general_chat_node import general_chat_node
 from src.graph.nodes.system_chat_node import system_chat_node
+from src.graph.nodes.advisor_node import advisor_node
 
 def route_decision(state): # already receive state["route"] value from router_node and use that to decide which workflow/node to execute next in chat graph.
 
@@ -80,6 +81,8 @@ chat_builder.add_node("system", system_chat_node)
 
 chat_builder.add_node("general", general_chat_node)
 
+chat_builder.add_node("advisor", advisor_node)
+
 # edges
 chat_builder.add_edge(START, "memory")
 chat_builder.add_edge("memory", "router")
@@ -100,7 +103,9 @@ chat_builder.add_conditional_edges(
 
         "rental": "rental",
 
-        "general": "general"
+        "general": "general",
+
+        "advisor": "advisor"
     }
 )
 
@@ -116,6 +121,8 @@ chat_builder.add_edge("negotiation", END)
 chat_builder.add_edge("rental", END)
 
 chat_builder.add_edge("general", END)
+
+chat_builder.add_edge("advisor", END)
 
 # COMPILE
 chat_graph = chat_builder.compile()

@@ -267,11 +267,11 @@ def general_chat_node(state):
         ""
     )
 
-    # print("===============================")
-    # print("recommendations", state.get("recommendations"))
-    # print("comarison_raw columns", state.get("comparison_raw").columns.tolist())
-    # print("comparison_result columns", state.get("comparison_result").columns.tolist())
-    # print("===============================")
+    print("===============================")
+    print("recommendations", state.get("recommendations"))
+    print("comarison_raw columns", state.get("comparison_raw").columns.tolist())
+    print("comparison_result columns", state.get("comparison_result").columns.tolist())
+    print("===============================")
 
     context = build_context(
         state.get("recommendations"),

@@ -52,7 +52,7 @@ def load_system():
     """
     df = pd.read_csv(ROOT_DIR / "data" / "cleaned" / "final_cleaned_rec_data.csv")
     pipe, X = train(df)
-    return df, X # returning both the original dataframe and the processed feature matrix after training the model
+    return df, X # returning both the original dataframe(df) and the processed feature matrix(X) after training the model
 
 
 # =============================

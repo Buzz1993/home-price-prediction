@@ -43,7 +43,7 @@
 # # =====================================================
 # # BASIC CLEANING
 # # =====================================================
-# def basic_cleaning(data : pd.DataFrame):
+# def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFrame:
 #     df = data.copy()
     
 #     #convert column names into lowercase
@@ -362,7 +362,7 @@
 #     #--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
 #     #longitude and lattitude
-#     df['lattitude'] = df['geo'].str.split(',').str[1].str.split(':').str[1].str.strip(" '\"").astype('float')
+#     df['latitude'] = df['geo'].str.split(',').str[1].str.split(':').str[1].str.strip(" '\"").astype('float')
 #     df['longitude'] = df['geo'].str.split(',').str[2].str.split(':').str[1].str.strip(" '\"}").astype('float')
     
 #     #--------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1085,7 +1085,7 @@
 #         return R * c
     
 #     # --- Function to add distance column BEFORE split ---
-#     def add_distance_to_center(df, city_col='city', lat_col='lattitude', lon_col='longitude'):
+#     def add_distance_to_center(df, city_col='city', lat_col='latitude', lon_col='longitude'):
 #         df = df.copy()
 #         df['distance_to_center_km'] = df.apply(
 #             lambda row: haversine(
@@ -1395,7 +1395,7 @@
 #     df.drop(columns="amenities", inplace=True)
 
 #     # Step 3: Drop original 'am_' columns
-#     df.drop(columns=am_cols, inplace=True)
+#     #df.drop(columns=am_cols, inplace=True)
 
 #     #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1536,15 +1536,15 @@
 
 
 
-#     # Create a mask for rows where 'lattitude' starts with 16, 12, or 9
+#     # Create a mask for rows where 'latitude' starts with 16, 12, or 9
 #     mask = (
-#         df['lattitude'].astype(str).str.startswith('16') |
-#         df['lattitude'].astype(str).str.startswith('12') |
-#         df['lattitude'].astype(str).str.startswith('9')
+#         df['latitude'].astype(str).str.startswith('16') |
+#         df['latitude'].astype(str).str.startswith('12') |
+#         df['latitude'].astype(str).str.startswith('9')
 #     )
     
-#     # Replace only 'lattitude' and 'longitude' with NaN for those rows
-#     df.loc[mask, ['lattitude', 'longitude']] = np.nan
+#     # Replace only 'latitude' and 'longitude' with NaN for those rows
+#     df.loc[mask, ['latitude', 'longitude']] = np.nan
 
 
 #     #--------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1879,7 +1879,7 @@
 #              'educational institute_3','educational institute_4','educational institute_5',
 #              'shopping centre_1','shopping centre_2','shopping centre_3','shopping centre_4','shopping centre_5',
 #              'commercial hub_1','commercial hub_2','commercial hub_3','commercial hub_4','commercial hub_5','hospital_1','hospital_2','hospital_3','hospital_4','hospital_5',
-#              'tourist spot_1','tourist spot_2','tourist spot_3','tourist spot_4','education', 'transport', 'shopping_centre', 'commercial_hub', 'hospital', 'tourist',
+#              'tourist spot_1','tourist spot_2','tourist spot_3','tourist spot_4',
 #              'url','image','name','wholeaddress','address','powercut_hours','price_category','emi', 'authority_approval_clean','rera_id_grouped',
 #              'nearby_landmarks',
 #              'water_availability_hours','available_units','towers','locality_review_count',
@@ -1891,22 +1891,467 @@
 #              'seller','tourist_mean_km','tourist_min_km','hospital_mean_km','hospital_min_km','transport_mean_km','transport_min_km',
 #             ],axis=1,inplace=True) # 'locality_rank', 'locality_url_rating'
 #             #'id','transportation hub_1','transportation hub_2','transportation hub_3','transportation hub_4','transportation hub_5','price'
+#             #'education', 'transport', 'shopping_centre', 'commercial_hub', 'hospital', 'tourist'
+
+
+#     #--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#     # =========================
+#     # MERGE
+#     # =========================
+#     merged_df = pd.merge(df, webscraped_df, on="id", how="left")
+#     merged_df = merged_df.drop(columns=['AP_Pjt_URL'], errors='ignore')
+#     merged_df.columns = merged_df.columns.str.lower()
+    
+#     # =========================
+#     # RANGE EXTRACTION
+#     # =========================
+#     def extract_range(value):
+#         if pd.isna(value):
+#             return None, None
+        
+#         text = str(value).replace(',', '')  # ✅ remove commas
+        
+#         nums = re.findall(r'\d+', text)
+        
+#         if len(nums) >= 2:
+#             return int(nums[0]), int(nums[1])
+#         elif len(nums) == 1:
+#             return int(nums[0]), int(nums[0])
+#         else:
+#             return None, None
+    
+#     merged_df[['rent_min', 'rent_max']] = merged_df['locality_avg_rent'].apply(lambda x: pd.Series(extract_range(x)))
+#     merged_df[['buy_min', 'buy_max']] = merged_df['locality_avg_buy'].apply(lambda x: pd.Series(extract_range(x)))
+    
+#     # =========================
+#     # LIST FEATURES
+#     # =========================
+#     merged_df['tech_spec_list'] = merged_df['tech_spec'].str.split('|').apply(
+#         lambda lst: [i.strip().lower() for i in lst] if isinstance(lst, list) else lst
+#     )
+    
+#     merged_df['usp_list'] = merged_df['usp'].str.split('|').apply(
+#         lambda lst: [i.strip().lower() for i in lst] if isinstance(lst, list) else lst
+#     )
+    
+#     # =========================
+#     # CLEAN FUNCTIONS
+#     # =========================
+#     def clean_text(text):
+#         if pd.isna(text):
+#             return ""
+        
+#         text = str(text)
+#         text = text.replace('\xa0', ' ')
+#         text = text.replace('|', ' ')
+#         text = text.lower()
+        
+#         text = re.sub(r'\bmins?\b', 'minutes', text)
+#         text = re.sub(r'(\d)(km)', r'\1 km', text)
+        
+#         text = re.sub(r'[^a-zA-Z0-9\s]', ' ', text)
+#         text = re.sub(r'\s+', ' ', text).strip()
+        
+#         return text
+    
+#     def clean_review(text):
+#         if pd.isna(text):
+#             return ""
+        
+#         text = str(text)
+#         text = text.replace('\xa0', ' ')
+#         text = re.sub(r'\.(?=[a-zA-Z])', '. ', text)
+#         text = text.lower()
+#         text = re.sub(r'\s+', ' ', text).strip()
+        
+#         return text
+    
+#     def clean_overall(text):
+#         if pd.isna(text):
+#             return ""
+        
+#         text = str(text).lower()
+        
+#         remove_phrases = [
+#             "residents feel that",
+#             "people liked",
+#             "however",
+#             "there are some concerns",
+#             "some concerns",
+#             "buyers experienced",
+#             "while there is",
+#         ]
+        
+#         for phrase in remove_phrases:
+#             text = text.replace(phrase, "")
+        
+#         text = text.replace('\xa0', ' ')
+#         text = re.sub(r'[^a-zA-Z0-9\s]', ' ', text)
+#         text = re.sub(r'\s+', ' ', text).strip()
+        
+#         return text
+    
+#     # =========================
+#     # 🔹 STEP 1: CUSTOM FLUFF REMOVAL
+#     # =========================
+#     FLUFF_WORDS = [
+#         "luxurious", "luxury", "grand", "magnificent",
+#         "premium", "world class", "royal", "elite",
+#         "beautiful", "stunning", "amazing",
+#         "timeless appeal", "modern lifestyle",
+#         "exclusive", "high end", "ultra modern",
+#         "spacious living", "elegant lifestyle",
+#         "beautifully designed", "lavish", "iconic",
+#         "state of the art", "best in class"
+#     ]
+    
+#     def remove_fluff(text):
+#         if not text:
+#             return ""
+        
+#         text = str(text).lower()
+        
+#         for word in FLUFF_WORDS:
+#             text = text.replace(word, "")
+        
+#         return text
+    
+#     # =========================
+#     # 🔹 STEP 2: TF-IDF BASED CLEANING
+#     # =========================
+#     from sklearn.feature_extraction.text import TfidfVectorizer
+    
+#     def apply_tfidf_filter(series, max_df=0.85, min_df=2, max_features=5000):
+#         """
+#         Remove overly common + weak words but KEEP important ones
+#         """
+#         vectorizer = TfidfVectorizer(
+#             max_df=max_df,
+#             min_df=min_df,
+#             max_features=max_features,
+#             stop_words='english'
+#         )
+        
+#         vectorizer.fit(series.fillna(''))
+#         vocab = set(vectorizer.get_feature_names_out())
+        
+#         def filter_text(text):
+#             words = str(text).split()
+#             return " ".join([w for w in words if w in vocab])
+        
+#         return series.apply(filter_text)
+    
+    
+    
+#     # =========================
+#     # APPLY CLEANING
+#     # =========================
+#     merged_df['positive'] = merged_df['positive'].apply(clean_review)
+#     merged_df['needs_improvement'] = merged_df['needs_improvement'].apply(clean_review)
+#     merged_df['overall_clean'] = merged_df['overall'].apply(clean_overall)
+    
+#     # =========================
+#     # ✅ AMENITIES HANDLING
+#     # =========================
+#     amenity_cols = [col for col in merged_df.columns if col.startswith('am_')]
+    
+#     def get_amenities(row):
+#         amenities = []
+        
+#         for col in amenity_cols:
+#             val = row[col]
+#             if pd.notna(val) and str(val).strip() != "":
+#                 a = str(val).strip().lower()
+#                 a = a.replace('/', ' ').replace('-', ' ')
+#                 amenities.append(a)
+        
+#         return list(set(amenities))  # remove duplicates
+    
+#     merged_df['amenities_list'] = merged_df.apply(get_amenities, axis=1)
+    
+#     # =========================
+#     # FUNCTION: normalize transport
+#     # =========================
+#     def clean_transport(text):
+#         if pd.isna(text):
+#             return ""
+        
+#         text = str(text).lower()
+    
+#         # replace abbreviations
+#         text = re.sub(r'\brs\b', 'railway station', text)
+#         text = re.sub(r'\bms\b', 'metro station', text)
+#         text = re.sub(r'\bmo\b', 'monorail', text)
+#         text = re.sub(r'\bmono\b', 'monorail', text)
+    
+#         # remove extra spaces
+#         text = re.sub(r'\s+', ' ', text).strip()
+    
+#         return text
+    
+    
+#     # =========================
+#     # APPLY ON COLUMN
+#     # =========================
+#     merged_df['transportation_hubs_clean'] = merged_df['transportation_hubs'].apply(clean_transport)
+    
+#     # =========================
+#     # FUNCTION: distance → semantic text
+#     # =========================
+#     def parse_places(text):
+#         if pd.isna(text) or str(text).strip() == "":
+#             return []
+        
+#         places = str(text).split(',')
+#         result = []
+        
+#         for p in places:
+#             p = p.strip().lower()
+#             p = p.replace("nearest-", "")
+#             p = p.replace("nr.", "")
+            
+#             match = re.match(r'(.*)\(([\d\.]+)\s*km\)', p)
+            
+#             if match:
+#                 name = match.group(1).strip()
+#                 dist = float(match.group(2))
+#             else:
+#                 name = p
+#                 dist = None
+            
+#             result.append((name, dist))
+        
+#         return result
+    
+    
+#     def location_to_text(lst, prefix=""):
+#         if not lst:
+#             return ""
+        
+#         texts = []
+#         seen = set()
+        
+#         for name, dist in lst:
+#             if not name:
+#                 continue
+            
+#             name = name.strip().lower()
+            
+#             # clean text
+#             name = name.replace("upcoming-", "upcoming ")
+#             name = re.sub(r'[^\w\s]', ' ', name)
+#             name = re.sub(r'\s+', ' ', name).strip()
+            
+#             # 🔥 IMPORTANT: FILTER ONLY FOR TRANSPORT
+#             if prefix == "transport":
+#                 if not any(k in name for k in ["station", "metro", "railway", "junction", "monorail"]):
+#                     continue
+            
+#             # dedup
+#             if name in seen:
+#                 continue
+#             seen.add(name)
+            
+#             # distance tagging (ONLY for transport)
+#             if prefix == "transport":
+#                 if dist is None:
+#                     text = f"nearby {name}"
+#                 elif dist <= 2:
+#                     text = f"nearby {name}"
+#                 elif dist <= 5:
+#                     text = f"close {name}"
+#                 elif dist <= 10:
+#                     text = f"accessible {name}"
+#                 else:
+#                     text = f"far {name}"
+#             else:
+#                 text = name
+            
+#             texts.append(text)
+        
+#         if prefix:
+#             return prefix + " " + " ".join(texts)
+        
+#         return " ".join(texts)
+    
+    
+#     # =========================
+#     # 🔹 LOCATION COLUMNS
+#     # =========================
+#     location_cols = [
+#         'education',
+#         'transport',
+#         'shopping_centre',
+#         'commercial_hub',
+#         'hospital',
+#         'tourist'
+#     ]
+    
+#     # =========================
+#     # 🔹 APPLY PARSING + TEXT
+#     # =========================
+#     for col in location_cols:
+#         if col in merged_df.columns:
+            
+#             # step 1: parse
+#             merged_df[f"{col}_parsed"] = merged_df[col].apply(parse_places)
+            
+#             # step 2: convert to text
+#             if col == "transport":
+#                 merged_df[f"{col}_text"] = merged_df[f"{col}_parsed"].apply(
+#                     lambda x: location_to_text(x, prefix="transport")
+#                 )
+#             else:
+#                 merged_df[f"{col}_text"] = merged_df[f"{col}_parsed"].apply(
+#                     location_to_text
+#                 )
+    
+    
+#     # =========================
+#     # CREATE FEATURES TEXT
+#     # =========================
+#     merged_df['amenities_text'] = merged_df['amenities_list'].apply(lambda x: ' '.join(x))
+    
+#     merged_df['nearest_text'] = (
+#         merged_df['education_text'].fillna('') + ' ' +
+#         merged_df['transport_text'].fillna('') + ' ' +
+#         merged_df['shopping_centre_text'].fillna('') + ' ' +
+#         merged_df['commercial_hub_text'].fillna('') + ' ' +
+#         merged_df['hospital_text'].fillna('') + ' ' +
+#         merged_df['tourist_text'].fillna('')
+#     )
+
+    
+#     # =========================
+#     # 🔥 SMART MERGE (REMOVE DUPLICATES BETWEEN COLUMNS)
+#     # =========================
+#     def split_features(text):
+#         if pd.isna(text):
+#             return []
+        
+#         return [i.strip().lower() for i in str(text).split('|') if i.strip()]
+    
+#     merged_df['tech_spec_list'] = merged_df['tech_spec'].apply(split_features)
+#     merged_df['usp_list'] = merged_df['usp'].apply(split_features)
+    
+#     # overall_clean is already sentence-based, not '|'
+#     merged_df['overall_list'] = merged_df['overall_clean'].apply(
+#         lambda x: re.split(r'[.]', x) if pd.notna(x) else []
+#     )
+    
+    
+#     def merge_dedup_lists(list1, list2, list3):
+        
+#         combined = list1 + list2 + list3
+        
+#         seen = set()
+#         result = []
+        
+#         for item in combined:
+#             item = item.strip()
+            
+#             if not item:
+#                 continue
+            
+#             if item not in seen:
+#                 seen.add(item)
+#                 result.append(item)
+        
+#         return result
+    
+    
+#     merged_df['features_list'] = merged_df.apply(
+#         lambda row: merge_dedup_lists(
+#             row['tech_spec_list'],
+#             row['usp_list'],
+#             row['overall_list']
+#         ),
+#         axis=1
+#     )
+    
+#     merged_df['features_text'] = merged_df['features_list'].apply(
+#         lambda x: ' '.join(x)
+#     )
+    
+    
+#     for col in ['nearest_text', 'features_text', 'amenities_text']:
+#         merged_df[col] = merged_df[col].apply(clean_text)
+#         merged_df[col] = merged_df[col].apply(remove_fluff)
+    
+#     # Apply ONLY on embedding text columns
+#     merged_df['features_text'] = apply_tfidf_filter(merged_df['features_text'])
+#     merged_df['nearest_text'] = apply_tfidf_filter(merged_df['nearest_text'])
+    
+#     # =========================
+#     # 🔹 FINAL TRIM
+#     # =========================
+#     def trim_text(text, max_words=250):
+#         return " ".join(str(text).split()[:max_words])
+    
+#     merged_df['features_text'] = merged_df['features_text'].apply(trim_text)
+#     merged_df['nearest_text'] = merged_df['nearest_text'].apply(trim_text)
+    
+#     # =========================
+#     # DROP UNUSED COLUMNS
+#     # =========================
+#     merged_df = merged_df.drop(
+#         columns=[
+#             'locality_avg_rent',
+#             'locality_avg_buy',
+#             'tech_spec',
+#             'usp',
+#             'overall',
+#             'overall_clean',
+#             'transportation_hubs',
+#             'education_parsed',
+#             'transport_parsed',
+#             'shopping_centre_parsed',
+#             'commercial_hub_parsed',
+#             'hospital_parsed',
+#             'tourist_parsed',
+#             'tech_spec_list',
+#             'usp_list',
+#             'amenities_list',
+#             'overall_list',
+#             'features_list',
+#             'education_text',
+#             'transport_text',
+#             'shopping_centre_text',
+#             'commercial_hub_text',
+#             'hospital_text',
+#             'tourist_text'
+#         ] + location_cols + amenity_cols,
+#         errors='ignore'
+#     )
+
+
+
+#     df= merged_df
             
 #     print(df.shape)
     
 #     return df
 
 
-# def perform_property_data_cleaning_rec(data: pd.DataFrame, saved_data_path: Path) -> None:
+# def perform_property_data_cleaning_rec(
+#     data: pd.DataFrame,
+#     webscraped_df: pd.DataFrame,   # ✅ added
+#     saved_data_path: Path
+# ) -> None:
+    
 #     logger.info("Starting recommendation data cleaning pipeline")
+    
 #     cleaned_data = (
 #         data
-#         .pipe(basic_cleaning)
+#         .pipe(basic_cleaning, webscraped_df=webscraped_df)   # ✅ pass here
 #     )
+    
 #     cleaned_data.to_csv(saved_data_path, index=False)
 
 
 # if __name__ == "__main__":
+    
 #     # root path
 #     root_path = Path(__file__).parent.parent.parent
 
@@ -1920,23 +2365,35 @@
 #     # data save path
 #     cleaned_data_save_path = cleaned_data_save_dir / cleaned_data_filename
 
-#     # data load path
+#     # main data load path
 #     data_load_path = (
 #         root_path / "data" / "raw" / "f_original magicbricks cleaned 12022 data.csv"
 #     )
 
+#     # ✅ NEW: webscraped data path
+#     webscraped_data_path = (
+#         root_path / "data" / "raw" / "magic_text_webscrapping.csv"
+#     )
+
 #     # load the data
 #     df = load_data(data_load_path)
-#     logger.info("Data read successfully")
+#     logger.info("Main data read successfully")
+
+#     # ✅ load webscraped data
+#     webscraped_df = pd.read_csv(webscraped_data_path, encoding='latin1')
+#     logger.info("Webscraped data read successfully")
 
 #     # clean the data and save
 #     perform_property_data_cleaning_rec(
 #         data=df,
+#         webscraped_df=webscraped_df,   # ✅ added
 #         saved_data_path=cleaned_data_save_path
 #     )
+
 #     logger.info("Data cleaned and saved")
 
 #============================================================================================================================================================================
+# mcp_df created 
 
 #data_cleaning_rec.py
 import numpy as np
@@ -3332,10 +3789,10 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
         lambda x: len(str(x).split(',')) if isinstance(x, str) else 0
     )
 
-    df.drop(columns="amenities", inplace=True)
+    #df.drop(columns="amenities", inplace=True)
 
     # Step 3: Drop original 'am_' columns
-    df.drop(columns=am_cols, inplace=True)
+    #df.drop(columns=am_cols, inplace=True)
 
     #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3787,6 +4244,8 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
     
     #print(price_counts)
 
+ 
+
 
 
 
@@ -4161,6 +4620,7 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
         merged_df['hospital_text'].fillna('') + ' ' +
         merged_df['tourist_text'].fillna('')
     )
+
     
     # =========================
     # 🔥 SMART MERGE (REMOVE DUPLICATES BETWEEN COLUMNS)
@@ -4230,6 +4690,86 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
     
     merged_df['features_text'] = merged_df['features_text'].apply(trim_text)
     merged_df['nearest_text'] = merged_df['nearest_text'].apply(trim_text)
+
+    # ==========================================
+    # ✅ FIX: MCP METADATA DATASET (Copy from merged_df!)
+    # ==========================================
+
+    mcp_df = merged_df.copy()  # 🌟 Changed from df.copy() to merged_df.copy()
+
+    mcp_df["amenities_mcp"] = (mcp_df["amenities"])
+
+    mcp_df["features_mcp"] = mcp_df["features_list"].apply(lambda x: ", ".join(x) if isinstance(x, list) else "")
+    
+
+    # Use the cleaned/combined strings from earlier in basic_cleaning
+    mcp_df["nearest_mcp"] = (
+        mcp_df["education"].fillna("") + ", " +
+        mcp_df["transport"].fillna("") + ", " +
+        mcp_df["shopping_centre"].fillna("") + ", " +
+        mcp_df["commercial_hub"].fillna("") + ", " +
+        mcp_df["hospital"].fillna("") + ", " +
+        mcp_df["tourist"].fillna("")
+    )
+
+    # Filter out all other columns completely
+    mcp_df = mcp_df[['id', 'nearest_mcp', 'amenities_mcp', 'features_mcp']]
+
+    # Comprehensive list of standard and long-form suffix unit keywords
+    unit_patterns = [
+        r'sq\.?\s*ft\.?', r'acres?', r'mins?', r'minutes?', r'bhks?', r'ft', r'feets?', 
+        r'towers?', r'apartments?', r'kilometers?', r'degrees?', r'mtrs?', r'meters?', 
+        r'beds?', r'hours?'
+    ]
+    combined_units = "|".join(unit_patterns)
+
+    # Apply Regex Cleaning to the 3 target text columns
+    mcp_cols = ['nearest_mcp', 'amenities_mcp', 'features_mcp']
+    
+    for col in mcp_cols:
+        # Cast to string safely
+        mcp_df[col] = mcp_df[col].astype(str).fillna("")
+        
+        # 1. Remove bracketed metrics like (2.3 km), (30 m), (20m)
+        mcp_df[col] = mcp_df[col].str.replace(r'\(\s*[\d.]+\s*(?:km|m)\s*\)', '', regex=True)
+        
+        # 2. Remove complex compound ranges like "2, 3 & 4 bhks" or "1, 2 bhk"
+        mcp_df[col] = mcp_df[col].str.replace(rf'\b\d+(?:\s*,\s*\d+)*(?:\s*&\s*\d+)?\s*[-–—]?\s*(?:{combined_units})\b', '', regex=True)
+        
+        # 3. Remove dimensions/matrices like "3 x 3" or "24x7"
+        mcp_df[col] = mcp_df[col].str.replace(r'\b\d+\s*[xX]\s*\d+\b', '', regex=True)
+        
+        # 4. Remove standard hyphenated or spaced measurements (e.g., 20 minutes, 1.6-acre, 950 meters)
+        mcp_df[col] = mcp_df[col].str.replace(rf'\b[\d,.]+\s*[-–—]?\s*(?:{combined_units})\b', '', regex=True)
+        
+        # 5. Remove structural notation height layouts like "1b+g+35"
+        mcp_df[col] = mcp_df[col].str.replace(r'\b(?:\d*[a-zA-Z]\+)+[\s\d]*\b', '', regex=True)
+        mcp_df[col] = mcp_df[col].str.replace(r'\b[a-zA-Z]\+\d+\b', '', regex=True)
+        
+        # 6. Remove standalone hanging plus counters like "40+", "50+", or "60 +"
+        mcp_df[col] = mcp_df[col].str.replace(r'\b\d+\s*\+(?=\s|,|$)', '', regex=True)
+        
+        # 7. Remove raw, trailing standalone distance sequences like 2.9 km or 20m
+        mcp_df[col] = mcp_df[col].str.replace(r'\b[\d.]+\s*[-–—]?\s*(?:kms?|m)\b', '', regex=True)
+        
+        # 8. Clean up multiple repeating commas down to a single comma space
+        mcp_df[col] = mcp_df[col].str.replace(r',\s*,+', ',', regex=True)
+        
+        # 9. Standardize spacing around remaining commas
+        mcp_df[col] = mcp_df[col].str.replace(r'\s*,\s*', ', ', regex=True)
+        
+        # 10. Strip whitespace and any leading/trailing commas completely
+        mcp_df[col] = mcp_df[col].str.strip().str.strip(',')
+        
+        # 11. If the entire row contains nothing but commas/whitespace, reset it to empty string
+        mcp_df.loc[mcp_df[col].str.match(r'^[,\s]*$'), col] = ""
+
+    mcp_df.to_csv(
+        "data/cleaned/property_metadata_mcp.csv",
+        index=False
+    )
+
+    print("Saved MCP dataset")
     
     # =========================
     # DROP UNUSED COLUMNS
@@ -4259,14 +4799,31 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
             'shopping_centre_text',
             'commercial_hub_text',
             'hospital_text',
-            'tourist_text'
+            'tourist_text',
+            "amenities"
         ] + location_cols + amenity_cols,
         errors='ignore'
     )
 
+    # =========================================================================
+    # 🤝 FINAL MERGE: Combine directly and save separately
+    # =========================================================================
+    # Direct merge since mcp_df only has id and the 3 clean text columns
+    final_combined_df = pd.merge(
+        merged_df, 
+        mcp_df, 
+        on="id", 
+        how="left"
+    )
+
+    # Save final_combined_df separately as a new artifact
+    combined_save_path = Path("data/cleaned/final_combined_mcp_data.csv")
+    final_combined_df.to_csv(combined_save_path, index=False)
+    print(f"Saved complete combined dataset separately to: {combined_save_path} | Shape: {final_combined_df.shape}")
 
 
     df= merged_df
+
             
     print(df.shape)
     

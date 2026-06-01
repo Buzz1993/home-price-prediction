@@ -68,3 +68,8 @@ orjson
 
 reportlab
 ddgs
+
+mcp
+
+rapidfuzz>=3.0.0
+rank-bm25

@@ -59,13 +59,16 @@ def run_comparison(selected_df):
     Runs comparison agent on prepared data.
     """
 
-    raw_df = prepare_comparison_data(selected_df) # raw_df is the enriched dataframe of selected properties with calculated rent, risk_score, growth_score, and development summary. This is the input to the comparison agent. 
+    raw_df = prepare_comparison_data(selected_df) # remove comapare and delete columns and add dev_summary column to selected_df to get raw_df 
     # print("raw_df", raw_df) 
     # print("===============================")
 
 
-    compare_df = run_comparison_agent(raw_df) # from raw_df, we get compare_df which is the final comparison result dataframe with columns like "id", "project_name", "location", "price", "risk_score", "growth_score", "hybrid_score", "locality_rating", "rental_yield_percent", "investment_rating", "overall_score", "verdict", and "explanation" (short explanation of why a property got a certain verdict based on its scores)
-                                                    #only overall_score column is created in run_comparison_agent, else note that other columns are already in prepared_df, we only take some of them in comapre_df for showing them in comaparison Result table in UI.
+    compare_df = run_comparison_agent(raw_df) #created comparison_price_score, risk_score_norm, growth_score_norm, locality_score_norm, rental_yiend_norm, overall_score, 
+                                              #verdict, comparison_reason columns and this function returns compare_df with only selected columns 
+                                              # which get shown in "comaparison_result" table in UI 
+                                              # that selected columns are "id", "project_name", "location", "price", "risk_score", "growth_score", "hybrid_score"
+                                              #"locality_rating", "rental_yield_percent", "investment_rating", "overall_score", "verdict", "comparison_reason".
     # print("compare_df", compare_df) 
     # print("===============================")    
 

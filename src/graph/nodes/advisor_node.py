@@ -74,7 +74,7 @@ def advisor_node(state):
     # =====================================
     # VALIDATION
     # =====================================
-
+    #prevent advisor_node from crashing when comparison data is missing.
     if (
         comparison_raw is None
         or comparison_raw.empty
@@ -145,9 +145,7 @@ def advisor_node(state):
             or "which property should i buy" in user_msg
         ):
 
-            property_row = find_best_property(
-                advisor_df
-            )
+            property_row = find_best_property(advisor_df) # get property with highest overall score
 
     # -------------------------------------
     # DEFAULT
@@ -155,19 +153,13 @@ def advisor_node(state):
 
     if property_row is None:
 
-        property_row = find_best_property(
-            advisor_df
-        )
+        property_row = find_best_property(advisor_df)
 
     # -------------------------------------
     # KEEP ONLY ONE PROPERTY
     # -------------------------------------
 
-    advisor_df = advisor_df[
-        advisor_df["id"]
-        ==
-        property_row["id"]
-    ]
+    advisor_df = advisor_df[advisor_df["id"] == property_row["id"]] # filter to single property
 
     # =====================================
     # BUILD PROPERTY CONTEXT

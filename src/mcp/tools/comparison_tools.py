@@ -3,14 +3,15 @@
 import json
 
 import pandas as pd
-
+from pathlib import Path
 from src.services.comparison_service import (
     run_comparison
 )
 
-# load once
+ROOT_PATH = Path(__file__).resolve().parents[3]
+
 master_df = pd.read_csv(
-    "data/cleaned/final_cleaned_rec_data.csv"
+    ROOT_PATH / "data" / "cleaned" / "final_combined_mcp_data.csv"
 )
 
 
@@ -46,6 +47,12 @@ def compare_properties(
         "overall_score",
         ascending=False
     )
+
+    if compare_df.empty:
+        return json.dumps(
+            {"error": "Comparison returned no results"},
+            indent=2
+        )
 
     winner = compare_df.iloc[0]
 

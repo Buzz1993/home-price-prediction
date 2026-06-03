@@ -8,8 +8,7 @@ import streamlit as st
 
 # Ensure root directory is mapped correctly for clean module imports
 ROOT_DIR = Path(__file__).resolve().parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.append(str(ROOT_DIR))
+sys.path.insert(0, str(ROOT_DIR))
 
 from src.ui.intent_chat_ui import render_intent_chat_workspace
 

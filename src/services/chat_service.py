@@ -150,7 +150,7 @@
 # ===============================
 # chat_service.py
 # ===============================
-
+import re
 import json
 from pathlib import Path
 import pandas as pd
@@ -334,7 +334,13 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
     # -----------------------------------------------------------------
     # STEP 1: Comparison Analysis Trigger
     # -----------------------------------------------------------------
-    if "compare" in prompt_lower or "better" in prompt_lower or "rank" in prompt_lower:
+    comparison_keywords = [
+        "compare",
+        "ranking",
+        "rank"
+    ]
+
+    if any(k in prompt_lower for k in comparison_keywords):
         if len(session_state_tray) < 2:
             return {
                 "type": "text",
@@ -356,9 +362,13 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
     extracted_criteria = {"bhk": None, "amenities": None, "location": None}
     
     # Isolate BHK constraints cleanly
-    bhk_match = [word for word in words if "bhk" in word]
-    if bhk_match:
-        extracted_criteria["bhk"] = bhk_match[0]
+    match = re.search(
+        r'(\d+)\s*bhk',
+        prompt_lower
+    )
+
+    if match:
+        extracted_criteria["bhk"] = f"{match.group(1)}bhk"
     else:
         for idx, word in enumerate(words):
             if word == "bhk" and idx > 0 and words[idx-1].isdigit():
@@ -401,9 +411,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
         if historical_state.get("location"):
             extracted_criteria["location"] = historical_state["location"]
     else:
-        # CRITICAL OVERRIDE: If user explicitly provided a new location (like Ghatkopar),
-        # don't allow old query parameters to pollute or overwrite it.
-        extracted_criteria["amenities"] = extracted_criteria["location"]
+        pass
 
     if not extracted_criteria["bhk"] and historical_state.get("bhk"):
         extracted_criteria["bhk"] = historical_state["bhk"]

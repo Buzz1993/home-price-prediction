@@ -4816,6 +4816,16 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
         how="left"
     )
 
+    final_combined_df.drop(
+        columns=[
+            "amenities_text",
+            "nearest_text",
+            "features_text",
+        ],
+        errors="ignore",
+        inplace=True
+    )
+
     # Save final_combined_df separately as a new artifact
     combined_save_path = Path("data/cleaned/final_combined_mcp_data.csv")
     final_combined_df.to_csv(combined_save_path, index=False)

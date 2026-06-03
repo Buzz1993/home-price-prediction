@@ -1,5 +1,5 @@
 # =====================================================================
-# src/ui/intent_chat_ui.py (DATA EDITOR CHECKBOX VERSION)
+# src/ui/intent_chat_ui.py (DATA EDITOR CHECKBOX VERSION - WITH TRAY SELECTION)
 # =====================================================================
 
 import streamlit as st
@@ -31,16 +31,16 @@ def render_intent_chat_workspace():
 
         #chat histry can be like this 
         # {
-        #     "role": "user", 
-        #     "text": "Show me 2BHK options under 2 Cr near Goregaon."
+        #      "role": "user", 
+        #      "text": "Show me 2BHK options under 2 Cr near Goregaon."
         # },
         # {
-        #     "role": "assistant", 
-        #     "text": "Here are the highest ranking properties matching your parameters:",
-        #     "data": [
-        #         {"id": "PROP-101", "price": 1.85, "bhk_type": "2 BHK", "location": "Goregaon East"},
-        #         {"id": "PROP-102", "price": 1.95, "bhk_type": "2 BHK", "location": "Goregaon West"}
-        #     ]
+        #      "role": "assistant", 
+        #      "text": "Here are the highest ranking properties matching your parameters:",
+        #      "data": [
+        #          {"id": "PROP-101", "price": 1.85, "bhk_type": "2 BHK", "location": "Goregaon East"},
+        #          {"id": "PROP-102", "price": 1.95, "bhk_type": "2 BHK", "location": "Goregaon West"}
+        #      ]
         # },
 
         # msg_idx is the index for that message and message is the actual message content like shown above where 1st role(user) and text is become message 0 
@@ -158,21 +158,121 @@ def render_intent_chat_workspace():
                     st.rerun()
 
     # -----------------------------------------------------------------
-    # RIGHT COLUMN: Persistent Visual Comparison Tray Tracker
+    # RIGHT COLUMN: Persistent Visual Comparison Tray Tracker (With Action Buttons)
     # -----------------------------------------------------------------
     with sidebar_tray_col:
         st.subheader("📌 Active Comparison Tray")
         st.write("Properties staged for multi-node evaluation:")
         
+        # Initialize an active comparison selection list in session state if not present
+        if "active_comparison_selection" not in st.session_state:
+            st.session_state.active_comparison_selection = []
+
         if not st.session_state.comparison_tray:
             st.info("Tray is empty. Add properties from chat search items.")
         else:
-            for staged_id in st.session_state.comparison_tray:
-                st.code(f"ID: {staged_id}", language="text")
+            # Build data frame containing both operational columns
+            tray_df = pd.DataFrame({
+                "Compare": [pid in st.session_state.active_comparison_selection for pid in st.session_state.comparison_tray],
+                "Delete": [False] * len(st.session_state.comparison_tray),
+                "Staged Property ID": st.session_state.comparison_tray
+            })
+            
+            # Render dual-action data editor
+            edited_tray_df = st.data_editor(
+                tray_df,
+                key="sidebar_tray_dual_control",
+                hide_index=True,
+                disabled=["Staged Property ID"], 
+                column_config={
+                    "Compare": st.column_config.CheckboxColumn(
+                        "Compare",
+                        help="Check to select this property for the active comparison execution",
+                        default=True
+                    ),
+                    "Delete": st.column_config.CheckboxColumn(
+                        "🗑️",
+                        help="Check to completely remove this property from your tray",
+                        default=False
+                    ),
+                    "Staged Property ID": st.column_config.TextColumn("Staged Property ID")
+                },
+                use_container_width=True
+            )
+            
+            # Process state mutations based on user interaction
+            updated_selection = []
+            tray_mutated = False
+            
+            for idx, row in edited_tray_df.iterrows():
+                pid = row["Staged Property ID"]
                 
-            if st.button("🗑️ Clear Comparison Tray", use_container_width=True):
+                # Action 1: Handle Deletion Priority
+                if row["Delete"]:
+                    if pid in st.session_state.comparison_tray:
+                        st.session_state.comparison_tray.remove(pid)
+                    if pid in st.session_state.active_comparison_selection:
+                        st.session_state.active_comparison_selection.remove(pid)
+                    st.toast(f"Removed {pid[:10]}... from data pool. 🗑️")
+                    tray_mutated = True
+                else:
+                    # Action 2: Maintain Active Comparison Selection State
+                    if row["Compare"]:
+                        updated_selection.append(pid)
+
+            # Update the active execution selection tracking pool
+            st.session_state.active_comparison_selection = updated_selection
+            
+            if tray_mutated:
+                st.rerun()
+                
+            st.caption(f"📊 *Selected for comparison: {len(st.session_state.active_comparison_selection)} of {len(st.session_state.comparison_tray)} properties*")
+
+            # --- NEW INTERACTIVE ACTION BUTTONS ---
+            st.write("") # Spacer
+            
+            # 1. RUN ANALYTICAL COMPARISON BUTTON
+            # Disable the button visually if there aren't at least 2 properties checked
+            disable_comparison = len(st.session_state.active_comparison_selection) < 2
+            
+            if st.button(
+                "🏆 Compare Properties", 
+                use_container_width=True, 
+                type="primary", # Highlights the main action button in Streamlit
+                disabled=disable_comparison,
+                help="Execute multi-node investment comparison matrix for checked items"
+            ):
+                # Programmatically append user message to chat history so the workspace feels natural
+                trigger_prompt = "Compare selected properties from my active tray"
+                st.session_state.chat_history.append({"role": "user", "text": trigger_prompt})
+                
+                # Run backend analytics pipeline with the checked subsets
+                with st.spinner("Processing node routing matrices..."):
+                    response_payload = parse_intent_and_execute(
+                        "compare properties",  # Forces the chat engine into comparison mode
+                        st.session_state.active_comparison_selection
+                    )
+                
+                # Append the response data block back into chat history for rendering
+                if response_payload["type"] == "comparison":
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "text": "🏆 **Investment Analytical Evaluation Completed!**",
+                        "comparison_data": response_payload["content"]
+                    })
+                elif response_payload["type"] == "text":
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "text": response_payload["content"]
+                    })
+                
+                st.rerun()
+
+            # 2. CLEAR ENTIRE TRAY BUTTON
+            if st.button("🗑️ Clear Entire Tray", use_container_width=True):
                 st.session_state.comparison_tray = []
+                st.session_state.active_comparison_selection = []
                 st.rerun()
                 
             st.write("---")
-            st.caption("💡 *Tip: Once you add at least 2 properties to this tray, type **'compare properties'** in the chat box to invoke your analytical node framework!*")
+            st.caption("💡 *Tip: Check at least 2 properties under 'Compare' and click the **Compare Properties** button above to invoke your analytical node framework!*")

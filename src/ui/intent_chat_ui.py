@@ -319,20 +319,14 @@ from src.services.chat_service import parse_intent_and_execute
 SEARCH_DISPLAY_COLUMNS = ["Select", "id", "price", "bhk_type", "location", "amenities_mcp", "search_score"]
 
 RESPONSE_CONFIG = {
-    # "data","comparison_data","rental_data" are payload keys
     "text": (None, None),
-    "search_results": (
-        "🎯 Here are the highest ranking properties matching your intent parameters:",
-        "data"
-    ),
-    "comparison": (
-        "🏆 **Investment Analytical Evaluation Completed!**",
-        "comparison_data"
-    ),
-    "rental": (
-        "🏠 Rental Analysis Completed",
-        "rental_data"
-    )
+    "search_results": ("🎯 Here are the highest ranking properties matching your intent parameters:", "data"),
+    "comparison": ("🏆 **Investment Analytical Evaluation Completed!**", "comparison_data"),
+    "rental": ("💰 **Rental Performance Matrix Extractions Completed:**", "rental_data"),
+    "prediction": ("🔮 **FastAPI Core Predictive Yield Forecast Completed:**", "prediction_data"),
+    "negotiation": ("🤝 **Strategic Buyer Leverage & Talking Points Compiled:**", "negotiation_data"),
+    "valuation": ("📊 **Benchmark Deviation Pricing Assessments Completed:**", "valuation_data"),
+    "advisor": ("🧠 **High-Conviction Suitability Investment Advice Compiled:**", "advisor_data")
 }
 
 SEARCH_COLUMN_CONFIG = {
@@ -496,6 +490,36 @@ def render_comparison_result(comp_data):
     render_dataframe(comp_data["rankings"])
 
 
+def render_extended_data_grids(message):
+    """Processes newly declared payload formats inside your active conversation log streams."""
+    if "prediction_data" in message:
+        pred_df = pd.DataFrame(message["prediction_data"])
+        st.dataframe(pred_df.style.format({"original_price": "₹{:.2f} Cr", "predicted_price": "₹{:.2f} Cr", "margin_diff": "₹{:.2f} Cr"}), hide_index=True, use_container_width=True)
+        
+    elif "negotiation_data" in message:
+        for idx, item in enumerate(message["negotiation_data"]):
+            with st.expander(f"🤝 Strategy Guide - Property: {item.get('id')}"):
+                st.metric("Target Buying Price", f"₹{item.get('target_price')} Cr", help=f"Suggested discount: {item.get('suggested_discount_percent')}")
+                st.markdown(f"**Negotiation Leverage Power:** `{item.get('negotiation_power')}`")
+                st.markdown(f"**Strategic Approach:** {item.get('strategy')}")
+                st.info(f"**Talking Points:** {item.get('talking_points')}")
+                
+    elif "valuation_data" in message:
+        val_df = pd.DataFrame(message["valuation_data"])
+        st.dataframe(val_df[["id", "project_name", "price", "costpersqft", "analysis_msg", "analysis_severity"]], hide_index=True, use_container_width=True)
+        
+    elif "advisor_data" in message:
+        for item in message["advisor_data"]:
+            # FIX: Dropped the broken hasattr get_container hack logic completely
+            with st.container():
+                st.markdown(f"### 🏠 Asset Allocation Analysis - ID: {item.get('id')}")
+                st.warning(f"**Investment Suitability:** {item.get('suitable_for')} | **Verdict Status:** {item.get('verdict')}")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.success(f"**Identified Positives:**\n{item.get('positives')}")
+                with col2:
+                    st.error(f"**Identified Systemic Risks:**\n{item.get('risks')}")
+                st.write("---")
 # ---------------------------------------------------------------------
 # 4. CHAT STREAM WORKFLOW MANAGERS
 # ---------------------------------------------------------------------
@@ -518,19 +542,34 @@ def render_comparison_result(comp_data):
     # then role(assistant), text and data is message 1 and so on.
 
 def render_chat_history():
-    """Loops through and displays all past chat messages and structured data tables."""
+    """Loops through and renders standard history, updating internal component references safely."""
     for msg_idx, message in enumerate(st.session_state.chat_history):
         with st.chat_message(message["role"]):
+            # Render the header or conversational message body text first
             st.markdown(message["text"])
             
+            # --- STRUCTURED DATA PAYLOAD ROUTING LAYERS ---
+            
+            # 1. Standard Property Search Grid Matrix
             if "data" in message:
                 render_search_results_table(message["data"], msg_idx)
                 
+            # 2. Multi-Node Stacking Comparison Result
             elif "comparison_data" in message:
                 render_comparison_result(message["comparison_data"])
                 
+            # 3. Micro-Rental Performance Dataframe
             elif "rental_data" in message:
                 render_dataframe(message["rental_data"])
+                
+            # 4. Deep Analytical Custom Grid Frameworks
+            elif any(k in message for k in ["prediction_data", "negotiation_data", "valuation_data", "advisor_data"]):
+                render_extended_data_grids(message)
+                
+            # 5. Fallback Safety Gate
+            else:
+                # This explicitly ensures simple text strings pass without executing anything else
+                pass
 
 
 def handle_new_chat_input():

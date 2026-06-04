@@ -120,49 +120,49 @@
 
 #==========================================================================================
 
-#==================================
-# mcp_enrichment_service.py
-#==================================
+# #==================================
+# # mcp_enrichment_service.py
+# #==================================
 
-import pandas as pd
-from src.agents.risk_agent import run_risk_agent
-from src.agents.future_agent import run_future_agent
-from src.agents.rental_agent import run_rental_agent
-from src.agents.analysis_agent import run_analysis
-from src.agents.negotiation_agent import run_negotiation_agent
-from src.recommender.hybrid_recommender import apply_hybrid_ranking
+# import pandas as pd
+# from src.agents.risk_agent import run_risk_agent
+# from src.agents.future_agent import run_future_agent
+# from src.agents.rental_agent import run_rental_agent
+# from src.agents.analysis_agent import run_analysis
+# from src.agents.negotiation_agent import run_negotiation_agent
+# from src.recommender.hybrid_recommender import apply_hybrid_ranking
 
 
-def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
-    """Enrich selected properties by running them through various analysis agents."""
+# def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
+#     """Enrich selected properties by running them through various analysis agents."""
     
-    df = selected_df.copy()
+#     df = selected_df.copy()
     
-    # MCP properties do not come from cosine similarity search; set default.
-    df["cosine_similarity"] = 1.0
-    df = apply_hybrid_ranking(df, intent={}, slider_weights=None)
+#     # MCP properties do not come from cosine similarity search; set default.
+#     df["cosine_similarity"] = 1.0
+#     df = apply_hybrid_ranking(df, intent={}, slider_weights=None)
 
-    # Define agents to run sequentially
-    # Format: (agent_function, name_for_logging/debugging)
-    agents = [
-        (run_analysis, "analysis"),
-        (run_negotiation_agent, "negotiation"),
-        (run_risk_agent, "risk"),
-        (run_future_agent, "future"),
-        (run_rental_agent, "rental")
-    ]
+#     # Define agents to run sequentially
+#     # Format: (agent_function, name_for_logging/debugging)
+#     agents = [
+#         (run_analysis, "analysis"),
+#         (run_negotiation_agent, "negotiation"),
+#         (run_risk_agent, "risk"),
+#         (run_future_agent, "future"),
+#         (run_rental_agent, "rental")
+#     ]
 
-    for agent_func, name in agents:
-        res = agent_func(df)
+#     for agent_func, name in agents:
+#         res = agent_func(df)
         
-        # Skip if result is None or an empty collection/dataframe
-        if res is None or (isinstance(res, (list, pd.DataFrame)) and len(res) == 0):
-            continue
+#         # Skip if result is None or an empty collection/dataframe
+#         if res is None or (isinstance(res, (list, pd.DataFrame)) and len(res) == 0):
+#             continue
             
-        # Convert to DataFrame if the agent returned a list of dicts
-        res_df = res if isinstance(res, pd.DataFrame) else pd.DataFrame(res)
+#         # Convert to DataFrame if the agent returned a list of dicts
+#         res_df = res if isinstance(res, pd.DataFrame) else pd.DataFrame(res)
         
-        # Merge the enrichment data
-        df = df.merge(res_df, on="id", how="left")
+#         # Merge the enrichment data
+#         df = df.merge(res_df, on="id", how="left")
 
-    return df
+#     return df

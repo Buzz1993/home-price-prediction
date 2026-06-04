@@ -1,0 +1,197 @@
+# =====================================================================
+# src/services/mcp_real_estate_service.py (Imports section verification)
+# =====================================================================
+
+import pandas as pd
+from src.data.data_store import master_df
+
+# Clean connection to your standalone comparison engine bridge
+from src.services.comparison_service import run_comparison
+
+# Legacy agent imports
+from src.agents.analysis_agent import run_analysis
+from src.agents.negotiation_agent import run_negotiation_agent
+from src.agents.risk_agent import run_risk_agent
+from src.agents.future_agent import run_future_agent
+from src.agents.rental_agent import run_rental_agent
+from src.agents.advisor_agent import run_advisor_agent
+from src.services.prediction_service import predict_property_price
+from src.recommender.hybrid_recommender import apply_hybrid_ranking
+
+
+# =====================================================================
+# 1. CORE PIPELINE ENRICHMENT COMPONENT
+# =====================================================================
+def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
+    """Enrich selected properties by running them through various analysis agents."""
+    df = selected_df.copy()
+    
+    # MCP properties do not come from cosine similarity search; set default.
+    df["cosine_similarity"] = 1.0
+    df = apply_hybrid_ranking(df, intent={}, slider_weights=None)
+
+    # Define agents to run sequentially
+    # Format: (agent_function, name_for_logging/debugging)
+    agents = [
+        (run_analysis, "analysis"),
+        (run_negotiation_agent, "negotiation"),
+        (run_risk_agent, "risk"),
+        (run_future_agent, "future"),
+        (run_rental_agent, "rental")
+    ]
+
+    for agent_func, name in agents:
+        res = agent_func(df)
+        
+        # Skip if result is None or an empty collection/dataframe
+        if res is None or (isinstance(res, (list, pd.DataFrame)) and len(res) == 0):
+            continue
+            
+        # Convert to DataFrame if the agent returned a list of dicts
+        res_df = res if isinstance(res, pd.DataFrame) else pd.DataFrame(res)
+        
+        # Merge the enrichment data
+        df = df.merge(res_df, on="id", how="left")
+
+    return df
+
+
+# =====================================================================
+# 2. MULTI-NODE INVESTMENT COMPARISON SERVICE
+# =====================================================================
+def run_mcp_comparison(property_ids: list[str]):
+    """Load selected properties, enrich them, and run comparison."""
+    # Filter master dataframe for the requested IDs
+    selected_df = master_df[master_df["id"].isin(property_ids)].copy()
+
+    # Need at least 2 properties to perform a comparison
+    if len(selected_df) < 2:
+        return selected_df, selected_df
+
+    # Enrich and compare
+    enriched_df = enrich_properties(selected_df)
+    return run_comparison(enriched_df)
+
+
+# =====================================================================
+# 3. ASSET RENTAL MATRIX SERVICE
+# =====================================================================
+def run_mcp_rental(property_ids: list[str]) -> pd.DataFrame:
+    """Isolates targets from master data pool and evaluates micro-rental performance yield."""
+    selected_df = master_df[master_df["id"].astype(str).isin([str(x) for x in property_ids])].copy()
+    if selected_df.empty:
+        return pd.DataFrame()
+        
+    return run_rental_agent(selected_df)
+
+
+# =====================================================================
+# 4. FASTAPI PREDICTIVE VALUATION MODEL SERVICE (FIXED)
+# =====================================================================
+def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
+    """
+    Slices properties from master_df and runs external pipeline server forecasting calls.
+    Ensures strict fallback visibility and maps IDs safely to avoid pipeline leakage.
+    """
+    # Enforce clear element-wise string conversion to eliminate indexing mismatches
+    target_ids = [str(pid).strip().lower() for pid in property_ids]
+    
+    # Slice matching properties out of master memory registry safely
+    selected_df = master_df[master_df["id"].astype(str).str.strip().str.lower().isin(target_ids)].copy()
+    results = []
+    
+    if selected_df.empty:
+        print(f"⚠️ MCP Prediction Notice: Zero matching records identified for IDs: {property_ids}")
+        return pd.DataFrame(columns=["id", "location", "original_price", "predicted_price", "margin_diff"])
+    
+    for _, row in selected_df.iterrows():
+        original_price = row.get("price", row.get("PRICE", 0))
+        p_id = row.get("id", row.get("ID", "Unknown"))
+        
+        # Ensure the row object contains clean uppercase/lowercase tags expected by prediction_service
+        input_row = row.copy()
+        input_row["id"] = str(p_id).strip()
+        
+        # Explicitly drop variants of price target from evaluation payloads to stop leakage
+        if "PRICE" in input_row.index:
+            input_row = input_row.drop("PRICE")
+        if "price" in input_row.index:
+            input_row = input_row.drop("price")
+            
+        print(f"🔮 Dispatching MCP scoring payload to inference model engine for Asset ID: {p_id}...")
+        prediction_result = predict_property_price(input_row)
+        
+        if prediction_result["success"]:
+            pred_data = prediction_result["prediction"]
+            # Extract from model output dictionary structure safely
+            predicted_price = pred_data.get("predicted_price")
+            
+            # If the endpoint returned none or an empty dictionary fallback match string
+            if predicted_price is None:
+                print(f"⚠️ Model API warning for {p_id}: 'predicted_price' key missing from return object. Triggering identity fallback.")
+                predicted_price = original_price
+            else:
+                print(f"✅ Prediction Successful for {p_id}: Model Output Price = ₹{predicted_price} Cr")
+        else:
+            # Fallback to base pricing metrics on pipeline system disconnects
+            print(f"❌ Model Pipeline Disconnect on Asset {p_id}: {prediction_result.get('error', 'Unknown Error State')}")
+            predicted_price = original_price
+            
+        results.append({
+            "id": p_id,
+            "location": row.get("location", "Unknown"),
+            "original_price": float(original_price),
+            "predicted_price": round(float(predicted_price), 2),
+            "margin_diff": round(float(predicted_price) - float(original_price), 2)
+        })
+        
+    return pd.DataFrame(results)
+
+
+# =====================================================================
+# 5. STRATEGIC NEGOTIATION & TALKING POINTS SERVICE
+# =====================================================================
+def run_mcp_negotiation(property_ids: list[str]) -> pd.DataFrame:
+    """Enriches context metrics and executes pricing leverage deduction matrices."""
+    selected_df = master_df[master_df["id"].astype(str).isin([str(x) for x in property_ids])].copy()
+    if selected_df.empty:
+        return pd.DataFrame()
+        
+    enriched_df = enrich_properties(selected_df)
+    return run_negotiation_agent(enriched_df)
+
+
+# =====================================================================
+# 6. MARKET FAIR-VALUE AND VALIDATION SERVICE
+# =====================================================================
+def run_mcp_valuation(property_ids: list[str]) -> pd.DataFrame:
+    """Maps pricing distribution margins to clean market data structures."""
+    selected_df = master_df[master_df["id"].astype(str).isin([str(x) for x in property_ids])].copy()
+    if selected_df.empty:
+        return pd.DataFrame()
+        
+    enriched_df = enrich_properties(selected_df)
+    analysis_list = run_analysis(enriched_df)
+    
+    # Merge analytics lists back to tracking frames
+    analysis_df = pd.DataFrame(analysis_list)
+    return enriched_df[["id", "project_name", "price", "costpersqft"]].merge(analysis_df, on="id", how="left")
+
+
+# =====================================================================
+# 7. PORTFOLIO ADVISORY & SUITABILITY STACKING SERVICE
+# =====================================================================
+def run_mcp_advisor(property_ids: list[str]) -> pd.DataFrame:
+    """Combines high-level stacking matrix evaluations with base recommendations."""
+    # Fallback safety if the user attempts to trigger advice with only 1 staged item
+    if len(property_ids) < 2:
+        raw_df = master_df[master_df["id"].isin(property_ids)].copy()
+        raw_df = enrich_properties(raw_df)
+        compare_df = pd.DataFrame([{
+            "id": pid, "overall_score": 0.50, "verdict": "👍 Balanced", "comparison_reason": "Context incomplete"
+        } for pid in property_ids])
+    else:
+        raw_df, compare_df = run_mcp_comparison(property_ids)
+        
+    advisor_df = run_advisor_agent(raw_df)
+    return advisor_df.merge(compare_df[["id", "overall_score", "verdict"]], on="id", how="left")

@@ -16,3 +16,4 @@ st.set_page_config(layout="wide", page_title="AI Intent Chatbot Workspace")
 
 # Run the UI workspace natively
 render_intent_chat_workspace()
+

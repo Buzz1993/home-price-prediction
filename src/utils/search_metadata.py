@@ -37,7 +37,7 @@ JUNK_WORDS = {
 
 
 def is_valid_tag(text, column_name):
-    """Filters out heavy text blocks, paragraphs, user reviews, raw dimensions, and small fragments."""
+    """Filters out descriptions, paragraphs, dimensions, or garbage junk values."""
     text_lower = text.lower().strip()
     
     if text_lower in JUNK_WORDS:
@@ -73,10 +73,7 @@ def is_valid_tag(text, column_name):
 
 
 def clean_and_split(text, column_name):
-    """Parses raw text data to extract pristine keyword arrays. Handles nested list strings, 
-
-    standardizes row separators, and removes dangling punctuation or bullet symbols.
-    """
+    """Parses, cleans, and splits raw string inputs into clean keyword arrays."""
     if not isinstance(text, str):
         text = str(text)
         
@@ -124,7 +121,7 @@ def clean_and_split(text, column_name):
 
 
 def extract_values(series, column_name):
-    """Processes an isolated series sequence, deduplicates tokens, and generates a sorted outcome list."""
+    """Extracts, deduplicates, and sorts unique tokens from a single dataframe column."""
     values = set()
     for item in series.dropna():
         extracted_tags = clean_and_split(item, column_name)
@@ -133,7 +130,7 @@ def extract_values(series, column_name):
 
 
 def build_search_metadata(df):
-    """Builds the complete mapped search metadata dictionary lookup for UI states."""
+    """Compiles unique, sorted values for all target metadata schema columns."""
     metadata = {}
     for col in KEEP_COLUMNS:
         if col not in df.columns:
@@ -148,6 +145,7 @@ def build_search_metadata(df):
 
 
 def main():
+    """Main pipeline execution to read data, generate metadata, and save to JSON."""
     # Dynamically navigate up 3 levels to locate your file architecture root block
     root_path = Path(__file__).resolve().parent.parent.parent
 

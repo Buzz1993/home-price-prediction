@@ -323,10 +323,7 @@ def extract_search_tokens(text: str):
 
 
 def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict:
-    """
-    Evaluates chat intent and syncs active requirements directly with 
-    your persistent SQLite database layers to handle conversational memory.
-    """
+    """Parses user requests to run property comparisons or rental analysis."""
 
     prompt_lower = user_prompt.lower().strip()
     words = prompt_lower.split()

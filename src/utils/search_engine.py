@@ -136,7 +136,7 @@ class RealEstateSearchEngine:
         
         # Cohesive groupings mapped to user search intents (All KEEP_COLUMNS accounted for)
         self.search_schema = {
-            "bhk": ["bhk_type", "extra_rooms"],  # Fixed 'extra_rooms' typo to match KEEP_COLUMNS
+            "bhk": ["bhk_type", "extra_rooms"],  
             "property_details": ["property_type", "status", "furnish", "construction", "ownership"],
             "specifications": ["facing", "flooring", "builder"],
             "amenities": ["amenities_mcp", "features_mcp", "amenities_text", "overlooking"],
@@ -147,10 +147,7 @@ class RealEstateSearchEngine:
         self._build_bm25_indexes()
 
     def _tokenize_row_field(self, text, column_name):
-        """
-        Reuses your exact clean_and_split logic from search_metadata.py
-        to ensure tokens generated for searching match your data structure.
-        """
+        """Cleans and breaks field text into individual word tokens."""
         if pd.isna(text):
             return []
         
@@ -184,10 +181,7 @@ class RealEstateSearchEngine:
         print("🚀 BM25 Search matrices successfully compiled!")
 
     def query(self, search_criteria: dict, min_matches: int = 2):
-        """
-        Evaluates a parsed user intent dictionary.
-        Filters out rows that don't satisfy the minimum match group threshold.
-        """
+        """Scores properties against criteria and filters by minimum category match rules."""
         num_properties = len(self.df)
         match_counts = [0] * num_properties
         total_scores = [0.0] * num_properties

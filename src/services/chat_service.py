@@ -153,7 +153,7 @@
 import re
 import json
 import pandas as pd
-from src.utils.search_engine import RealEstateSearchEngine
+from src.utils.search_engine import _build_bm25_indexes, query
 from src.mcp.tools.comparison_tools import compare_properties
 from src.llm.memory_store import SQLiteMemoryStore
 from src.mcp.tools.rental_tools import (
@@ -162,7 +162,7 @@ from src.mcp.tools.rental_tools import (
 import streamlit as st
 from src.data.data_store import master_df
 
-search_engine = RealEstateSearchEngine(master_df)
+search_state = _build_bm25_indexes(master_df)
 memory_store = SQLiteMemoryStore()
 
 USER_ID = "default_user"
@@ -456,7 +456,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
     # STEP 5: Fire BM25 Matrix Matcher + Pandas HARD FILTERING
     # -----------------------------------------------------------------
     determined_min_matches = 1 if (not extracted_criteria["amenities"] or not extracted_criteria["location"]) else 2
-    results_df = search_engine.query(extracted_criteria, min_matches=determined_min_matches)
+    results_df = query(search_state, extracted_criteria, min_matches=determined_min_matches)
     
     if results_df.empty:
         return {

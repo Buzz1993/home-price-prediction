@@ -16,4 +16,8 @@ def comparison_node(state):
     state["comparison_raw"] = raw_df 
     state["comparison_result"] = compare_df 
 
+    print("=" * 50)
+    print("comaprison_node selected_df columns:", selected_df.columns.tolist())
+    print("=" * 50)
+
     return state

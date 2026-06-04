@@ -116,6 +116,18 @@ def render_intent_chat_workspace():
                     st.write(f"**Justification Breakdown:** {comp_data['winner']['comparison_reason']}")
                     st.dataframe(pd.DataFrame(comp_data["rankings"]), hide_index=True)
 
+                elif "rental_data" in message:
+
+                    rental_df = pd.DataFrame(
+                        message["rental_data"]
+                    )
+
+                    st.dataframe(
+                        rental_df,
+                        use_container_width=True
+                    )
+
+
         # Capturing New Conversational Prompt Inputs
         if user_input := st.chat_input("Ask anything about properties..."):
             with st.chat_message("user"):
@@ -155,6 +167,20 @@ def render_intent_chat_workspace():
                         "text": bot_text,
                         "comparison_data": comp_data
                     })
+                    st.rerun()
+
+                elif response_payload["type"] == "rental":
+
+                    bot_text = "🏠 Rental Analysis Completed"
+
+                    st.markdown(bot_text)
+
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "text": bot_text,
+                        "rental_data": response_payload["content"]
+                    })
+
                     st.rerun()
 
     # -----------------------------------------------------------------

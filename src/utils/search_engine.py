@@ -123,7 +123,6 @@
 # src/utils/search_engine.py
 # =====================================================================
 
-from pathlib import Path
 import pandas as pd
 from rank_bm25 import BM25Okapi
 
@@ -131,9 +130,9 @@ from rank_bm25 import BM25Okapi
 from src.utils.search_metadata import clean_and_split
 
 class RealEstateSearchEngine:
-    def __init__(self, csv_path: Path):
+    def __init__(self, df: pd.DataFrame):
         print("📥 Loading real estate dataset into search memory...")
-        self.df = pd.read_csv(csv_path).reset_index(drop=True)
+        self.df = df.reset_index(drop=True)
         
         # Cohesive groupings mapped to user search intents (All KEEP_COLUMNS accounted for)
         self.search_schema = {

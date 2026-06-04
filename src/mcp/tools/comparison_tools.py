@@ -1,17 +1,11 @@
+# =====================================================================
 # src/mcp/tools/comparison_tools.py
+# =====================================================================
 
 import json
 
-import pandas as pd
-from pathlib import Path
-from src.services.comparison_service import (
-    run_comparison
-)
-
-ROOT_PATH = Path(__file__).resolve().parents[3]
-
-master_df = pd.read_csv(
-    ROOT_PATH / "data" / "cleaned" / "final_combined_mcp_data.csv"
+from src.services.mcp_comparison_service import (
+    run_mcp_comparison
 )
 
 
@@ -23,14 +17,7 @@ def compare_properties(
     return investment ranking.
     """
 
-    selected_df = master_df[
-        master_df["id"].astype(str).isin(
-            [str(x) for x in property_ids]
-        )
-    ].copy()
-
-    if len(selected_df) < 2:
-
+    if len(property_ids) < 2:
         return json.dumps(
             {
                 "error":
@@ -39,20 +26,23 @@ def compare_properties(
             indent=2
         )
 
-    raw_df, compare_df = run_comparison(
-        selected_df
+    raw_df, compare_df = run_mcp_comparison(
+        property_ids
     )
+
+    if compare_df.empty:
+        return json.dumps(
+            {
+                "error":
+                "Comparison returned no results"
+            },
+            indent=2
+        )
 
     compare_df = compare_df.sort_values(
         "overall_score",
         ascending=False
     )
-
-    if compare_df.empty:
-        return json.dumps(
-            {"error": "Comparison returned no results"},
-            indent=2
-        )
 
     winner = compare_df.iloc[0]
 

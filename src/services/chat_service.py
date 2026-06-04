@@ -152,17 +152,17 @@
 # ===============================
 import re
 import json
-from pathlib import Path
 import pandas as pd
 from src.utils.search_engine import RealEstateSearchEngine
 from src.mcp.tools.comparison_tools import compare_properties
 from src.llm.memory_store import SQLiteMemoryStore
+from src.mcp.tools.rental_tools import (
+    get_rental_analysis
+)
+import streamlit as st
+from src.data.data_store import master_df
 
-# Initialize structural resources
-ROOT_PATH = Path(__file__).resolve().parents[2]
-DATA_FILE = ROOT_PATH / "data" / "cleaned" / "final_combined_mcp_data.csv"
-
-search_engine = RealEstateSearchEngine(DATA_FILE)
+search_engine = RealEstateSearchEngine(master_df)
 memory_store = SQLiteMemoryStore()
 
 USER_ID = "default_user"
@@ -327,7 +327,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
     Evaluates chat intent and syncs active requirements directly with 
     your persistent SQLite database layers to handle conversational memory.
     """
-    import streamlit as st
+
     prompt_lower = user_prompt.lower().strip()
     words = prompt_lower.split()
     
@@ -354,6 +354,36 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
         return {
             "type": "comparison",
             "content": comparison_data
+        }
+    
+    rental_keywords = [
+        "rent",
+        "rental",
+        "yield",
+        "income"
+    ]
+
+    if any(
+        k in prompt_lower
+        for k in rental_keywords
+    ):
+
+        if len(session_state_tray) < 1:
+            return {
+                "type": "text",
+                "content":
+                "Please add property to tray first."
+            }
+
+        rental_json = get_rental_analysis(
+            session_state_tray
+        )
+
+        return {
+            "type": "rental",
+            "content": json.loads(
+                rental_json
+            )
         }
 
     # -----------------------------------------------------------------

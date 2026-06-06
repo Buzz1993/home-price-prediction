@@ -10,7 +10,7 @@
 # if str(ROOT_DIR) not in sys.path:
 #     sys.path.insert(0, str(ROOT_DIR))
 
-# from mcp.server.fastmcp import FastMCP
+# from fastmcp import FastMCP
 # import src.mcp.tools.property_tools as tools
 # from src.core.search_registry import CACHED_SEARCH_METADATA
 
@@ -145,13 +145,12 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 import src.mcp.tools.property_tools as tools
 from src.core.search_registry import CACHED_SEARCH_METADATA
 
 mcp = FastMCP(
-    "Real Estate Analytical Intent Engine",
-    dependencies=["pandas", "numpy", "rank_bm25", "requests"]
+    "Real Estate Analytical Intent Engine"
 )
 
 # =====================================================================

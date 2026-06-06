@@ -260,7 +260,7 @@ def property_investment_advisor() -> str:
     3. Isolate the unique property IDs returned from the discovery step and invoke 'get_properties_by_ids' to fetch all specifications in a single batch pass.
     4. Pass the extracted entities downstream through 'compare_properties' and 'get_investment_advice' scoring layers.
     5. Present comprehensive responses formatting parameters cleanly using Indian Rupee (₹) denomination specifications. Highlight systematic asset risks explicitly alongside gross yield projections.
-    """
+    """ 
 
 
 

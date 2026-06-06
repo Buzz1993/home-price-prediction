@@ -140,7 +140,7 @@ from src.services.mcp_real_estate_service import (
 
 # Tight field filters to optimize context window storage
 SEARCH_RESULTS_WHITELIST = [
-    "id", "project_name", "price", "location", "bhk_type", "search_score"
+    "id", "project_name", "price", "location", "bhk_type", "amenities_mcp", "search_score"
 ]
 
 PROPERTY_DETAIL_WHITELIST = [

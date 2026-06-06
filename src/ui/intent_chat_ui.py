@@ -316,7 +316,7 @@ from src.services.chat_service import parse_intent_and_execute
 # ---------------------------------------------------------------------
 # UI CONFIGURATION & DISPLAY CONSTANTS
 # ---------------------------------------------------------------------
-SEARCH_DISPLAY_COLUMNS = ["Select", "id", "price", "bhk_type", "location", "amenities_mcp", "search_score"]
+SEARCH_DISPLAY_COLUMNS = ["Select", "id", "price", "bhk_type", "location", "search_score"]
 
 RESPONSE_CONFIG = {
     "text": (None, None),

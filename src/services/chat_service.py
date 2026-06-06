@@ -838,7 +838,8 @@ import pandas as pd
 import streamlit as st
 
 import src.mcp.tools.property_tools as tools
-from src.core.search_registry import GLOBAL_MASTER_DF
+# ADDED: Explicitly import CACHED_SEARCH_METADATA to handle keyword sweeps
+from src.core.search_registry import GLOBAL_MASTER_DF, CACHED_SEARCH_METADATA
 from src.llm.memory_store import SQLiteMemoryStore
 from src.llm.deepseek_client import ask_deepseek
 
@@ -882,16 +883,38 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
         return {"type": "advisor", "content": tools.get_investment_advice(session_state_tray)}
 
     # -----------------------------------------------------------------
-    # STEP 2: DYNAMIC CONTEXT token GENERATION
+    # STEP 2: DYNAMIC CONTEXT TOKEN GENERATION (FIXED & BHK HARD SYNCED)
     # -----------------------------------------------------------------
     extracted_criteria = {"bhk": None, "amenities": None, "location": None}
+    
+    # 1. Regex Extraction for BHK (e.g., "2bhk", "3 bhk")
+    # FIX: Append "bhk" directly to the isolated digit to pass an exact criteria match string
     match = re.search(r'(\d+)\s*bhk', prompt_lower)
     if match:
-        extracted_criteria["bhk"] = match.group(1)
+        extracted_criteria["bhk"] = f"{match.group(1)}bhk"
         
-    # Standardize modular semantic boundary scanning
-    from src.services.chat_service_legacy_extractor import extract_search_tokens_and_build_criteria
-    extracted_criteria = extract_search_tokens_and_build_criteria(user_prompt, prompt_lower, memory_store, USER_ID)
+    # 2. Local Keyword Extraction via Pristine Metadata Cache
+    matched_locations = []
+    matched_amenities = []
+    
+    known_locations = CACHED_SEARCH_METADATA.get("location", [])
+    known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
+    
+    # Scan for known locations in the prompt
+    for loc in known_locations:
+        if str(loc).lower() in prompt_lower:
+            matched_locations.append(loc)
+            
+    # Scan for known amenities/features in the prompt
+    for amenity in known_amenities:
+        if str(amenity).lower() in prompt_lower:
+            matched_amenities.append(amenity)
+            
+    # Join matches together cleanly into flat search criteria strings for the BM25 query engine
+    if matched_locations:
+        extracted_criteria["location"] = " ".join(matched_locations)
+    if matched_amenities:
+        extracted_criteria["amenities"] = " ".join(matched_amenities)
 
     # -----------------------------------------------------------------
     # STEP 3: HIGH-SPEED LOCAL SEARCH HANDLING

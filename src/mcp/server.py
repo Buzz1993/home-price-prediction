@@ -267,9 +267,13 @@ def property_investment_advisor() -> str:
 # 🚀 CONTAINERIZED PRODUCTION-READY RUNTIME GATE
 # =====================================================================
 
+print("SERVER FILE LOADED")
+
 if __name__ == "__main__":
-    # Force SSE (HTTP) server configuration instead of stdio tracking to survive cloud runtime execution
+    print("INSIDE MAIN BLOCK")
+
     target_port = int(os.environ.get("PORT", 8000))
-    
-    print(f"Starting FastMCP Production Server Bridge via SSE on port: {target_port}...", flush=True)
+
+    print(f"PORT={target_port}")
+
     mcp.run(transport="sse", port=target_port)

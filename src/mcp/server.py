@@ -263,17 +263,5 @@ def property_investment_advisor() -> str:
     """
 
 
-# =====================================================================
-# 🚀 CONTAINERIZED PRODUCTION-READY RUNTIME GATE
-# =====================================================================
 
-print("SERVER FILE LOADED")
 
-if __name__ == "__main__":
-    print("INSIDE MAIN BLOCK")
-
-    target_port = int(os.environ.get("PORT", 8000))
-
-    print(f"PORT={target_port}")
-
-    mcp.run(transport="sse", port=target_port)

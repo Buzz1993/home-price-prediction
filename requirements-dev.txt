@@ -70,6 +70,7 @@ reportlab
 ddgs
 
 mcp
+fastmcp>=3.4.2
 
 rapidfuzz>=3.0.0
 rank-bm25

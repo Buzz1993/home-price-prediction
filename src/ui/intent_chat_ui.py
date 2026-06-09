@@ -457,8 +457,8 @@ def handle_search_result_selection(edited_df):
 
 def render_search_results_table(results_list, msg_idx):
     """Displays search results in an interactive table with selection checkboxes."""
-    df_raw = build_search_dataframe(results_list)
-    df_display = df_raw[SEARCH_DISPLAY_COLUMNS] 
+    df_raw = build_search_dataframe(results_list) # Converts raw search data into a table and shows a TICK if the property is already in the tray, and NO TICK if it isn't
+    df_display = df_raw[SEARCH_DISPLAY_COLUMNS] # Rearrange columns so the selection checkbox stays on the far left
 
     st.write("🎯 **Search Results:** Check rows to stage them in your active evaluation tray:")
     
@@ -471,7 +471,7 @@ def render_search_results_table(results_list, msg_idx):
         column_config=SEARCH_COLUMN_CONFIG,
         use_container_width=True
     )
-    handle_search_result_selection(edited_df)
+    handle_search_result_selection(edited_df) # Detect user changes inside the interactive table block and update the tray state accordingly
 
 
 def render_comparison_result(comp_data):
@@ -491,7 +491,7 @@ def render_comparison_result(comp_data):
 
 
 def render_extended_data_grids(message):
-    """Processes newly declared payload formats inside your active conversation log streams."""
+    """Display prediction, negotiation, valuation, and advisor results in Streamlit UI."""
     if "prediction_data" in message:
         pred_df = pd.DataFrame(message["prediction_data"])
         st.dataframe(pred_df.style.format({"original_price": "₹{:.2f} Cr", "predicted_price": "₹{:.2f} Cr", "margin_diff": "₹{:.2f} Cr"}), hide_index=True, use_container_width=True)
@@ -550,25 +550,24 @@ def render_chat_history():
             
             # --- STRUCTURED DATA PAYLOAD ROUTING LAYERS ---
             
-            # 1. Standard Property Search Grid Matrix
-            if "data" in message:
-                render_search_results_table(message["data"], msg_idx)
+            # 1. Standard Search Results with Interactive Selection Checkboxes
+            if "data" in message: 
+                render_search_results_table(message["data"], msg_idx) # get a table of search results with checkboxes
                 
             # 2. Multi-Node Stacking Comparison Result
             elif "comparison_data" in message:
-                render_comparison_result(message["comparison_data"])
+                render_comparison_result(message["comparison_data"]) # get a formatted comparison result with winner details and ranking table
                 
             # 3. Micro-Rental Performance Dataframe
             elif "rental_data" in message:
-                render_dataframe(message["rental_data"])
+                render_dataframe(message["rental_data"]) # get a simple dataframe showing rental performance metrics for the properties under analysis
                 
             # 4. Deep Analytical Custom Grid Frameworks
-            elif any(k in message for k in ["prediction_data", "negotiation_data", "valuation_data", "advisor_data"]):
-                render_extended_data_grids(message)
+            elif any(k in message for k in ["prediction_data", "negotiation_data", "valuation_data", "advisor_data"]): 
+                render_extended_data_grids(message) 
                 
             # 5. Fallback Safety Gate
             else:
-                # This explicitly ensures simple text strings pass without executing anything else
                 pass
 
 
@@ -589,7 +588,7 @@ def handle_new_chat_input():
         with st.spinner("Processing node routing matrices..."): 
             response = parse_intent_and_execute(user_input, st.session_state.comparison_tray)
             
-        # 5. Take the data received back from the backend and format it as an assistant reply
+        # 5. Process and display the assistant (LLM) response.
         with st.chat_message("assistant"):
             process_response(response)  # Formats data (shows text, search tables, or comparison grids)
             st.rerun()                  # Refresh the screen to cleanly show the updated conversation

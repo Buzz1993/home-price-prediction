@@ -285,10 +285,9 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_cached_enrichment(property_ids: list[str]) -> pd.DataFrame:
-    """
-    Resolves property inputs against strict single-row dataframe segments.
-    Preserves structural metadata schemas natively by leveraging row transpositions.
-    """
+    
+    """If a property's enriched data is already in memory, use it. Otherwise, calculate it once, store it in cache, and reuse it later."""
+
     global ENRICHMENT_CACHE
     
     # Standardize incoming elements cleanly

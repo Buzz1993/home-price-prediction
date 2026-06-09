@@ -857,27 +857,27 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict
             return {"type": "text", "content": "⚠️ I need at least 2 properties in your tray to run an investment comparison."}
         return {"type": "comparison", "content": tools.compare_properties(session_state_tray)}
         
-    if any(k in prompt_lower for k in ["rent", "rental", "yield", "income"]):
+    if any(k in prompt_lower for k in ["rent", "rental", "tenant", "lease", "yield", "rental yield", "monthly rent", "annual rent", "rental estimate", "rental income", "income property", "yield", "income"]): 
         if len(session_state_tray) < 1:
             return {"type": "text", "content": "⚠️ Please add at least one target property to your evaluation tray first."}
         return {"type": "rental", "content": tools.get_rental_analysis(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["predict", "prediction", "forecast", "estimated price"]):
+    if any(k in prompt_lower for k in ["predict", "prediction", "predicted price", "estimated price", "price estimate", "price prediction", "property value", "future price", "what should this cost", "forecast"]):
         if len(session_state_tray) < 1:
             return {"type": "text", "content": "⚠️ Your evaluation tray is empty. Stage properties to run predictions."}
         return {"type": "prediction", "content": tools.get_price_prediction(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["negotiate", "negotiation", "discount", "leverage", "target price"]):
+    if any(k in prompt_lower for k in ["negotiate", "negotiation", "negotiable", "discount", "best price", "reduce price", "target price", "deal", "bargain", "leverage"]):
         if len(session_state_tray) < 1:
             return {"type": "text", "content": "⚠️ No context found in evaluation tray. Stage items first."}
         return {"type": "negotiation", "content": tools.get_negotiation_strategy(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["overpriced", "undervalued", "fair value", "valuation"]):
+    if any(k in prompt_lower for k in ["overpriced", "undervalued", "valuation", "fair value", "fair price", "worth buying", "worth it", "market value"]):
         if len(session_state_tray) < 1:
             return {"type": "text", "content": "⚠️ Insufficient context. Stage properties to calculate valuation parameters."}
         return {"type": "valuation", "content": tools.get_valuation_analysis(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["should i buy", "investment advice", "advisor", "suitability", "positives"]):
+    if any(k in prompt_lower for k in ["should i buy", "buy this property", "is this a good investment", "investment advice", "recommendation", "final advice", "which property should i buy", "best investment", "best property", "advisor", "why did you mark", "why buy", "show exact scores", "show scores", "advisor score", "buy decision", "investment decision", "recommendation reason", "why recommendation", "suitability", "positives"]):
         if len(session_state_tray) < 1:
             return {"type": "text", "content": "⚠️ Please stage matching properties in your comparison tray first."}
         return {"type": "advisor", "content": tools.get_investment_advice(session_state_tray)}

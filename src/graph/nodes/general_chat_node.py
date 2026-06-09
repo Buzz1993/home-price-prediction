@@ -243,7 +243,7 @@
 # ===============================
 
 from src.llm.deepseek_client import ask_deepseek
-from src.services.chat_service import build_context
+from src.services.chat_service_legacy import build_context
 
 
 def general_chat_node(state):

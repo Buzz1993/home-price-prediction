@@ -689,7 +689,7 @@ def render_intent_chat_workspace():
     main_chat_col, sidebar_tray_col = st.columns([3, 1])
     
     with main_chat_col:
-        st.title("💬 Real Estate Intent Discovery Assistant")
+        st.title("🧠 EstateMind Copilot")
         st.caption("Ask questions naturally: e.g., 'Want 2bhk property with cctv near goregaon railway station'")
         st.write("---")
         

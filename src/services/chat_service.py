@@ -827,123 +827,452 @@
 #     }
 
 #=======================================================================================================================================================================
-# ================================
-# chat_service.py
-# ================================
-"""
-Refactored Streamlit Chat Processing Engine.
-Cleaned up faulty variable exports to ensure high-speed runtime execution.
-"""
+# # ================================
+# # chat_service.py
+# # ================================
+# """
+# Refactored Streamlit Chat Processing Engine.
+# Cleaned up faulty variable exports to ensure high-speed runtime execution.
+# """
+# import re
+# import json
+# import pandas as pd
+# import streamlit as st
+
+# import src.mcp.tools.property_tools as tools
+# # ADDED: Explicitly import CACHED_SEARCH_METADATA to handle keyword sweeps
+# from src.core.search_registry import GLOBAL_MASTER_DF, CACHED_SEARCH_METADATA
+# from src.llm.memory_store import SQLiteMemoryStore
+# from src.llm.deepseek_client import ask_deepseek
+
+# memory_store = SQLiteMemoryStore()
+# USER_ID = "default_user"
+
+# def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict:
+#     prompt_lower = user_prompt.lower().strip()
+#     # This function reads the user's question, figures out what analysis they want (comparison, rental, prediction, negotiation, valuation, or investment advice), 
+#     # checks if enough properties are available in the tray, and then calls the appropriate tool to generate the result.
+
+#     if any(k in prompt_lower for k in ["compare", "ranking", "rank"]):
+#         if len(session_state_tray) < 2:
+#             return {"type": "text", "content": "⚠️ I need at least 2 properties in your tray to run an investment comparison."}
+#         return {"type": "comparison", "content": tools.compare_properties(session_state_tray)}
+        
+#     if any(k in prompt_lower for k in ["rent", "rental", "tenant", "lease", "yield", "rental yield", "monthly rent", "annual rent", "rental estimate", "rental income", "income property", "yield", "income"]): 
+#         if len(session_state_tray) < 1:
+#             return {"type": "text", "content": "⚠️ Please add at least one target property to your evaluation tray first."}
+#         return {"type": "rental", "content": tools.get_rental_analysis(session_state_tray)}
+
+#     if any(k in prompt_lower for k in ["predict", "prediction", "predicted price", "estimated price", "price estimate", "price prediction", "property value", "future price", "what should this cost", "forecast"]):
+#         if len(session_state_tray) < 1:
+#             return {"type": "text", "content": "⚠️ Your evaluation tray is empty. Stage properties to run predictions."}
+#         return {"type": "prediction", "content": tools.get_price_prediction(session_state_tray)}
+
+#     if any(k in prompt_lower for k in ["negotiate", "negotiation", "negotiable", "discount", "best price", "reduce price", "target price", "deal", "bargain", "leverage"]):
+#         if len(session_state_tray) < 1:
+#             return {"type": "text", "content": "⚠️ No context found in evaluation tray. Stage items first."}
+#         return {"type": "negotiation", "content": tools.get_negotiation_strategy(session_state_tray)}
+
+#     if any(k in prompt_lower for k in ["overpriced", "undervalued", "valuation", "fair value", "fair price", "worth buying", "worth it", "market value"]):
+#         if len(session_state_tray) < 1:
+#             return {"type": "text", "content": "⚠️ Insufficient context. Stage properties to calculate valuation parameters."}
+#         return {"type": "valuation", "content": tools.get_valuation_analysis(session_state_tray)}
+
+#     if any(k in prompt_lower for k in ["should i buy", "buy this property", "is this a good investment", "investment advice", "recommendation", "final advice", "which property should i buy", "best investment", "best property", "advisor", "why did you mark", "why buy", "show exact scores", "show scores", "advisor score", "buy decision", "investment decision", "recommendation reason", "why recommendation", "suitability", "positives"]):
+#         if len(session_state_tray) < 1:
+#             return {"type": "text", "content": "⚠️ Please stage matching properties in your comparison tray first."}
+#         return {"type": "advisor", "content": tools.get_investment_advice(session_state_tray)}
+
+#     # -----------------------------------------------------------------
+#     # STEP 2: DYNAMIC CONTEXT TOKEN GENERATION (FIXED & BHK HARD SYNCED)
+#     # -----------------------------------------------------------------
+#     extracted_criteria = {"bhk": None, "amenities": None, "location": None}
+    
+#     # 1. Regex Extraction for BHK (e.g., "2bhk", "3 bhk")
+#     # FIX: Append "bhk" directly to the isolated digit to pass an exact criteria match string
+#     match = re.search(r'(\d+)\s*bhk', prompt_lower)
+#     if match:
+#         extracted_criteria["bhk"] = f"{match.group(1)}bhk"
+        
+#     # 2. Local Keyword Extraction via Pristine Metadata Cache
+#     matched_locations = []
+#     matched_amenities = []
+    
+#     known_locations = CACHED_SEARCH_METADATA.get("location", [])
+#     known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
+    
+#     # Scan for known locations in the prompt
+#     for loc in known_locations:
+#         if str(loc).lower() in prompt_lower:
+#             matched_locations.append(loc)
+            
+#     # Scan for known amenities/features in the prompt
+#     for amenity in known_amenities:
+#         if str(amenity).lower() in prompt_lower:
+#             matched_amenities.append(amenity)
+            
+#     # Join matches together cleanly into flat search criteria strings for the BM25 query engine
+#     if matched_locations:
+#         extracted_criteria["location"] = " ".join(matched_locations)
+#     if matched_amenities:
+#         extracted_criteria["amenities"] = " ".join(matched_amenities)
+
+#     # -----------------------------------------------------------------
+#     # STEP 3: HIGH-SPEED LOCAL SEARCH HANDLING
+#     # -----------------------------------------------------------------
+#     if extracted_criteria["location"] or extracted_criteria["amenities"] or extracted_criteria["bhk"]:
+#         results = tools.search_properties(
+#             bhk=extracted_criteria["bhk"], 
+#             amenities=extracted_criteria["amenities"], 
+#             location=extracted_criteria["location"]
+#         )
+#         if results:
+#             return {
+#                 "type": "search_results",
+#                 "content": results,
+#                 "current_query_state": extracted_criteria
+#             }
+#         else:
+#             return {"type": "text", "content": f"❌ Zero properties matched your search parameters: `{extracted_criteria}`."}
+
+#     # -----------------------------------------------------------------
+#     # STEP 4: SEMANTIC DEEPSEEK AGENT FALLBACK LAYER
+#     # -----------------------------------------------------------------
+#     staged_context = GLOBAL_MASTER_DF[GLOBAL_MASTER_DF["id"].isin(session_state_tray)].head(3).to_string(index=False) if session_state_tray else "No active properties staged."
+#     chat_prompt = f"""You are an expert real estate consultant. Answer the inquiry directly.
+    
+#     ACTIVE CONTEXT ROWS IN USER MEMORY TRAY:
+#     {staged_context}
+    
+#     USER REQUEST INPUTS: {user_prompt}
+#     Provide structured clear insights utilizing Indian Rupee (₹) denominations.
+#     """
+#     return {"type": "text", "content": ask_deepseek(chat_prompt)}
+
+
+#==========================================================================================================================================================================================
+
+# =====================================================================
+# chat_service.py (PRODUCTION ARCHITECTURE - FIXED MATCH QUALITY)
+# =====================================================================
+
 import re
 import json
 import pandas as pd
 import streamlit as st
 
 import src.mcp.tools.property_tools as tools
-# ADDED: Explicitly import CACHED_SEARCH_METADATA to handle keyword sweeps
 from src.core.search_registry import GLOBAL_MASTER_DF, CACHED_SEARCH_METADATA
 from src.llm.memory_store import SQLiteMemoryStore
 from src.llm.deepseek_client import ask_deepseek
+from src.recommender.hybrid_recommender import apply_hybrid_ranking
 
 memory_store = SQLiteMemoryStore()
 USER_ID = "default_user"
 
-def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict:
-    prompt_lower = user_prompt.lower().strip()
-    # This function reads the user's question, figures out what analysis they want (comparison, rental, prediction, negotiation, valuation, or investment advice), 
-    # checks if enough properties are available in the tray, and then calls the appropriate tool to generate the result.
+# =====================================================================
+# CONFIGURATION MATRICES
+# =====================================================================
 
+# Structural hard constraints
+FILTER_INTENTS = {
+    "bhk_pattern":      r"(\d+)\s*bhk",
+    "known_locations":  "location",      
+    "known_amenities":  "amenities_mcp"  
+}
+
+# Cleaned naming mapping dictionary to uppercase standard
+RANKING_TARGET_MAPS = {
+    "low budget":      {"price": 1.0},
+    "luxury":          {"amenities": 1.0, "area": 0.8, "location": 0.4}, 
+    "spacious":        {"area": 1.0},
+    "good amenities":  {"amenities": 1.0},
+    "connectivity":    {"connectivity": 1.0, "distance": 0.6},
+    "location":        {"location": 1.0},
+    "investment":      {"price": 1.0, "location": 0.5},
+    "family":          {"location": 1.0, "area": 0.5}
+}
+
+RANKING_WORD_LISTS = {
+    "low budget":      ["low budget", "cheap", "affordable", "under budget", "value for money", "pocket friendly", "lowest price", "pocket-friendly", "economical"],
+    "luxury":          ["luxury", "premium", "posh", "high end", "elite", "luxurious", "expensive", "high-end", "ultra-premium"],
+    "spacious":        ["spacious", "big size", "large area", "huge", "roomy", "bigger rooms", "carpet area", "massive square feet"],
+    "good amenities": ["good amenities", "premium community features", "high-end facilities"],
+    "connectivity":    ["near station", "metro", "railway", "connectivity", "public transport", "highway", "link road", "walkable", "easy commuting", "commuting is easier", "access to office", "less travel time", "save travel time"],
+    "location":        ["great location", "prime location", "well located", "center of city", "heart of mumbai"],
+    "investment":      ["investment", "good yield", "resale value", "future growth", "high return", "roi", "appreciation"],
+    "family":          ["family oriented", "safe neighborhood", "school proximity", "gated community"]
+}
+
+# Advanced Modifier Token Layers
+NEGATIONS = [r"not\b", r"don't\b", r"do\s+not\b", r"without\b", r"avoid\b", r"no\b", r"never\b"]
+
+INTENSITY_MODIFIERS = {
+    "extremely": 2.0, "super": 1.5, "very": 1.4, "highly": 1.4,
+    "good": 1.1, "great": 1.2, "prime": 1.2, "ultra": 2.0
+}
+
+# Followup Continuity Tracking Layers
+FOLLOWUP_TERMS = [
+    r"similar\b", r"show\s+more\b", r"cheaper\b", r"better\b", 
+    r"closer\b", r"other\s+options\b", r"nearer\b", r"also\b"
+]
+
+# =====================================================================
+# SAFE MEMORY INTERACTION LAYER
+# =====================================================================
+
+def fetch_safe_historical_context(store_instance, user_id: str) -> dict:
+    """
+    Safely bridges SQLiteMemoryStore hook differences 
+    by testing available persistence method hooks.
+    """
+    for method_name in ["get_latest_context", "load", "get_context", "get_history"]:
+        if hasattr(store_instance, method_name):
+            method = getattr(store_instance, method_name)
+            try:
+                result = method(user_id)
+                if isinstance(result, str):
+                    return json.loads(result)
+                if isinstance(result, dict):
+                    return result
+            except Exception:
+                continue
+                
+    return {}
+
+
+def persist_safe_historical_context(store_instance, user_id: str, payload: dict) -> bool:
+    """
+    Dynamically maps execution payload write states into memory stores 
+    regardless of variations in contract execution naming signatures.
+    """
+    for method_name in ["save", "store", "persist", "set_context", "update_context"]:
+        if hasattr(store_instance, method_name):
+            method = getattr(store_instance, method_name)
+            try:
+                # Try saving as raw dict object first
+                method(user_id, payload)
+                return True
+            except Exception:
+                try:
+                    # Fallback to JSON serialized string if the table schemas require text primitives
+                    method(user_id, json.dumps(payload))
+                    return True
+                except Exception:
+                    continue
+    return False
+
+
+def is_followup_query(prompt_lower: str) -> bool:
+    """Isolates context checks exclusively to explicit historical continuations."""
+    return any(re.search(term, prompt_lower) for term in FOLLOWUP_TERMS)
+
+
+def synthesize_ranking_weights(prompt_lower: str) -> tuple:
+    """
+    Replaced misleading confidence indicator values with accurate 
+    match_quality analytics flags based on target keyword precision.
+    """
+    base_weights = {
+        "price": 0.0, "area": 0.0, "amenities": 0.0,
+        "location": 0.0, "connectivity": 0.0, "distance": 0.0
+    }
+    
+    intent_quality_logs = {}
+    
+    for intent_name, keywords in RANKING_WORD_LISTS.items():
+        for keyword in keywords:
+            pattern = r"\b" + re.escape(keyword) + r"\b"
+            match = re.search(pattern, prompt_lower)
+            
+            if match:
+                start_idx = match.start()
+                preceding_chunk = prompt_lower[max(0, start_idx - 30):start_idx].strip()
+                
+                if any(re.search(neg, preceding_chunk) for neg in NEGATIONS):
+                    continue 
+                
+                strength_score = 1.0
+                for modifier, multiplier in INTENSITY_MODIFIERS.items():
+                    occurrences = len(re.findall(r"\b" + re.escape(modifier) + r"\b", preceding_chunk))
+                    if occurrences > 0:
+                        strength_score += (multiplier - 1.0) * occurrences
+                
+                quality_metric = 0.95 if keyword in ["low budget", "luxury", "spacious", "metro"] else 0.85
+                
+                intent_quality_logs[intent_name] = {
+                    "intent": intent_name,
+                    "strength": round(strength_score, 2),
+                    "match_quality": quality_metric
+                }
+                break 
+
+    for intent_name, metrics in intent_quality_logs.items():
+        target_map = RANKING_TARGET_MAPS.get(intent_name, {})
+        for feature, feature_weight in target_map.items():
+            if feature in base_weights:
+                base_weights[feature] += (metrics["strength"] * feature_weight)
+
+    return base_weights, intent_quality_logs
+
+
+def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current_ui_sliders: dict = None, user_changed_sliders: bool = False) -> dict:
+    """
+    Main entry point executing structural search filters alongside ranking preferences.
+    """
+    prompt_lower = user_prompt.lower().strip()
+
+    # -----------------------------------------------------------------
+    # STEP 1: RESOLVE HISTORICAL AMNESTY BOUNDARIES (FIXED RETRIEVAL)
+    # -----------------------------------------------------------------
+    historical_context = fetch_safe_historical_context(memory_store, USER_ID)
+    
+    if is_followup_query(prompt_lower):
+        historical_filters = historical_context.get("filters", {})
+        historical_weights = historical_context.get("weights", {})
+    else:
+        historical_filters = {}
+        historical_weights = {}
+
+    # -----------------------------------------------------------------
+    # STEP 2: ROUTE AGENT METRIC ACTIONS
+    # -----------------------------------------------------------------
     if any(k in prompt_lower for k in ["compare", "ranking", "rank"]):
         if len(session_state_tray) < 2:
             return {"type": "text", "content": "⚠️ I need at least 2 properties in your tray to run an investment comparison."}
         return {"type": "comparison", "content": tools.compare_properties(session_state_tray)}
-        
-    if any(k in prompt_lower for k in ["rent", "rental", "tenant", "lease", "yield", "rental yield", "monthly rent", "annual rent", "rental estimate", "rental income", "income property", "yield", "income"]): 
+
+    if any(k in prompt_lower for k in ["rent", "rental", "tenant", "lease", "yield", "rental yield", "monthly rent"]):
         if len(session_state_tray) < 1:
             return {"type": "text", "content": "⚠️ Please add at least one target property to your evaluation tray first."}
         return {"type": "rental", "content": tools.get_rental_analysis(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["predict", "prediction", "predicted price", "estimated price", "price estimate", "price prediction", "property value", "future price", "what should this cost", "forecast"]):
+    if any(k in prompt_lower for k in ["predict", "prediction", "predicted price", "estimated price"]):
         if len(session_state_tray) < 1:
             return {"type": "text", "content": "⚠️ Your evaluation tray is empty. Stage properties to run predictions."}
         return {"type": "prediction", "content": tools.get_price_prediction(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["negotiate", "negotiation", "negotiable", "discount", "best price", "reduce price", "target price", "deal", "bargain", "leverage"]):
-        if len(session_state_tray) < 1:
-            return {"type": "text", "content": "⚠️ No context found in evaluation tray. Stage items first."}
-        return {"type": "negotiation", "content": tools.get_negotiation_strategy(session_state_tray)}
-
-    if any(k in prompt_lower for k in ["overpriced", "undervalued", "valuation", "fair value", "fair price", "worth buying", "worth it", "market value"]):
-        if len(session_state_tray) < 1:
-            return {"type": "text", "content": "⚠️ Insufficient context. Stage properties to calculate valuation parameters."}
-        return {"type": "valuation", "content": tools.get_valuation_analysis(session_state_tray)}
-
-    if any(k in prompt_lower for k in ["should i buy", "buy this property", "is this a good investment", "investment advice", "recommendation", "final advice", "which property should i buy", "best investment", "best property", "advisor", "why did you mark", "why buy", "show exact scores", "show scores", "advisor score", "buy decision", "investment decision", "recommendation reason", "why recommendation", "suitability", "positives"]):
-        if len(session_state_tray) < 1:
-            return {"type": "text", "content": "⚠️ Please stage matching properties in your comparison tray first."}
-        return {"type": "advisor", "content": tools.get_investment_advice(session_state_tray)}
-
     # -----------------------------------------------------------------
-    # STEP 2: DYNAMIC CONTEXT TOKEN GENERATION (FIXED & BHK HARD SYNCED)
+    # STEP 3: SEPARATED STRUCTURAL FILTER EXTRACTION
     # -----------------------------------------------------------------
-    extracted_criteria = {"bhk": None, "amenities": None, "location": None}
-    
-    # 1. Regex Extraction for BHK (e.g., "2bhk", "3 bhk")
-    # FIX: Append "bhk" directly to the isolated digit to pass an exact criteria match string
-    match = re.search(r'(\d+)\s*bhk', prompt_lower)
-    if match:
-        extracted_criteria["bhk"] = f"{match.group(1)}bhk"
-        
-    # 2. Local Keyword Extraction via Pristine Metadata Cache
+    extracted_filters = {"bhk": None, "amenities": None, "location": None}
+
+    bhk_match = re.search(FILTER_INTENTS["bhk_pattern"], prompt_lower)
+    if bhk_match:
+        extracted_filters["bhk"] = f"{bhk_match.group(1)}bhk"
+    else:
+        extracted_filters["bhk"] = historical_filters.get("bhk")
+
     matched_locations = []
-    matched_amenities = []
-    
     known_locations = CACHED_SEARCH_METADATA.get("location", [])
-    known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
-    
-    # Scan for known locations in the prompt
     for loc in known_locations:
-        if str(loc).lower() in prompt_lower:
+        if re.search(r"\b" + re.escape(str(loc).lower()) + r"\b", prompt_lower):
             matched_locations.append(loc)
-            
-    # Scan for known amenities/features in the prompt
-    for amenity in known_amenities:
-        if str(amenity).lower() in prompt_lower:
-            matched_amenities.append(amenity)
-            
-    # Join matches together cleanly into flat search criteria strings for the BM25 query engine
+
     if matched_locations:
-        extracted_criteria["location"] = " ".join(matched_locations)
+        extracted_filters["location"] = " ".join(matched_locations)
+    else:
+        extracted_filters["location"] = historical_filters.get("location")
+
+    matched_amenities = []
+    known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
+    for amenity in known_amenities:
+        if re.search(r"\b" + re.escape(str(amenity).lower()) + r"\b", prompt_lower):
+            matched_amenities.append(amenity)
+
     if matched_amenities:
-        extracted_criteria["amenities"] = " ".join(matched_amenities)
+        extracted_filters["amenities"] = " ".join(matched_amenities)
+    else:
+        extracted_filters["amenities"] = historical_filters.get("amenities")
 
     # -----------------------------------------------------------------
-    # STEP 3: HIGH-SPEED LOCAL SEARCH HANDLING
+    # STEP 4: SEPARATED PREFERENCE EXTRACTION & BLENDED EVALUATION
     # -----------------------------------------------------------------
-    if extracted_criteria["location"] or extracted_criteria["amenities"] or extracted_criteria["bhk"]:
-        results = tools.search_properties(
-            bhk=extracted_criteria["bhk"], 
-            amenities=extracted_criteria["amenities"], 
-            location=extracted_criteria["location"]
+    if extracted_filters["location"] or extracted_filters["amenities"] or extracted_filters["bhk"]:
+        
+        raw_results = tools.search_properties(
+            bhk=extracted_filters["bhk"],
+            amenities=extracted_filters["amenities"],
+            location=extracted_filters["location"],
+            limit=30
         )
-        if results:
+        
+        if raw_results:
+            results_df = pd.DataFrame(raw_results)
+            
+            matched_full_df = GLOBAL_MASTER_DF[GLOBAL_MASTER_DF["id"].isin(results_df["id"])].copy()
+            matched_full_df = matched_full_df.merge(results_df[["id", "search_score"]], on="id", how="left")
+            matched_full_df = matched_full_df.rename(columns={"search_score": "cosine_similarity"})
+
+            # Generate weights vectors alongside tracking metadata
+            synthesized_chat_weights, quality_metadata = synthesize_ranking_weights(prompt_lower)
+            
+            
+            if sum(synthesized_chat_weights.values()) == 0 and historical_weights:
+                synthesized_chat_weights = historical_weights
+
+            # =====================================================================
+            # PRODUCTION RUNTIME DEBUG TELEMETRY 
+            # =====================================================================
+            print("\n" + "="*50)
+            print("🔍 RUNTIME RANKING TELEMETRY (BEFORE HYBRID RANKING)")
+            print(f"INTENT WEIGHTS TYPE : {type(synthesized_chat_weights)}")
+            print(f"INTENT WEIGHTS RAW  : {synthesized_chat_weights}")
+            print(f"SLIDER WEIGHTS TYPE : {type(current_ui_sliders)}")
+            print(f"SLIDER WEIGHTS RAW  : {current_ui_sliders}")
+            print("="*50 + "\n")
+
+            # Execute unified ranker using true state tracking ratios
+            ranked_df = apply_hybrid_ranking(
+                similar_df=matched_full_df, 
+                intent_weights=synthesized_chat_weights, 
+                slider_weights=current_ui_sliders, 
+                alpha=0.65,
+                user_changed_sliders=user_changed_sliders
+            )
+
+            # Record operational tracking history safely using multi-signature fallback interface
+            persist_safe_historical_context(
+                store_instance=memory_store,
+                user_id=USER_ID,
+                payload={
+                    "query": user_prompt,
+                    "weights": synthesized_chat_weights,
+                    "filters": extracted_filters,
+                    "quality_logs": quality_metadata
+                }
+            )
+
+            ranked_df = ranked_df.rename(columns={"hybrid_score": "search_score"})
+            ranked_df["amenities_mcp"] = ranked_df.get("amenities_mcp", "")
+            
+            final_cols = ["id", "price", "bhk_type", "location", "amenities_mcp", "search_score", "why_recommended"]
+            display_cols = [c for c in final_cols if c in ranked_df.columns]
+            
+            final_records = ranked_df[display_cols].head(5).to_dict(orient="records")
+
             return {
                 "type": "search_results",
-                "content": results,
-                "current_query_state": extracted_criteria
+                "content": final_records,
+                "current_query_state": {
+                    "active_filters": extracted_filters,
+                    "chat_preference_weights": synthesized_chat_weights,
+                    "quality_metadata": quality_metadata
+                }
             }
         else:
-            return {"type": "text", "content": f"❌ Zero properties matched your search parameters: `{extracted_criteria}`."}
+            return {"type": "text", "content": f"❌ Zero properties matched infrastructure specifications: `{extracted_filters}`."}
 
     # -----------------------------------------------------------------
-    # STEP 4: SEMANTIC DEEPSEEK AGENT FALLBACK LAYER
+    # STEP 5: DEEPSEEK GENERIC CHAT FALLBACK
     # -----------------------------------------------------------------
     staged_context = GLOBAL_MASTER_DF[GLOBAL_MASTER_DF["id"].isin(session_state_tray)].head(3).to_string(index=False) if session_state_tray else "No active properties staged."
     chat_prompt = f"""You are an expert real estate consultant. Answer the inquiry directly.
-    
+
     ACTIVE CONTEXT ROWS IN USER MEMORY TRAY:
     {staged_context}
-    
+
     USER REQUEST INPUTS: {user_prompt}
     Provide structured clear insights utilizing Indian Rupee (₹) denominations.
     """

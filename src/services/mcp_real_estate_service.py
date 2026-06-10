@@ -201,6 +201,295 @@
 #============================================================================================
 #some improvments in above code 
 
+# # =====================================================================
+# # src/services/mcp_real_estate_service.py (PRISTINE DATATYPES & THREADED)
+# # =====================================================================
+
+# import pandas as pd
+# from threading import Lock
+# from src.data.data_store import master_df
+
+# # Connection to standalone comparison engine bridge
+# from src.services.comparison_service import run_comparison
+
+# # Legacy agent core execution engines
+# from src.agents.analysis_agent import run_analysis
+# from src.agents.negotiation_agent import run_negotiation_agent
+# from src.agents.risk_agent import run_risk_agent
+# from src.agents.future_agent import run_future_agent
+# from src.agents.rental_agent import run_rental_agent
+# from src.agents.advisor_agent import run_advisor_agent
+# from src.services.prediction_service import predict_property_price
+# from src.recommender.hybrid_recommender import apply_hybrid_ranking
+
+# # ---------------------------------------------------------------------
+# # 📍 THREAD-SAFE CONCURRENCY GUARDED MEMORY CACHE REGISTER
+# # ---------------------------------------------------------------------
+# ENRICHMENT_CACHE = {}
+# CACHE_LOCK = Lock()
+
+
+# def clear_enrichment_cache():
+#     """
+#     Manually invalidates the runtime memory storage layer cleanly across threads.
+#     Essential for hot-reloading changes to agent files during active development.
+#     """
+#     global ENRICHMENT_CACHE
+#     with CACHE_LOCK:
+#         ENRICHMENT_CACHE.clear()
+#     print("🧹 MCP enrichment cache cleared successfully across active threads!")
+
+
+# def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
+#     """
+#     enrich_properties() takes the original property dataframe and enriches it by adding important calculated columns from the ranking, analysis, risk, 
+#     future growth, rental, and negotiation modules, returning a single dataframe containing both the original property data and all generated insights.
+#     """
+#     if selected_df.empty:
+#         return selected_df
+
+#     df = selected_df.copy()
+    
+#     # MCP does not perform similarity search like the recommendation engine.
+#     # Set cosine_similarity = 1.0 for all properties so we can reuse the
+#     # existing hybrid ranking pipeline and generate ranking-related fields.
+#     df["cosine_similarity"] = 1.0
+#     df = apply_hybrid_ranking(df, intent={}, slider_weights=None)
+
+#     # Order arranged so negotiation can parse calculated risk/growth/valuation outputs
+#     agents = [
+#         (run_analysis, "analysis"),
+#         (run_risk_agent, "risk"),
+#         (run_future_agent, "future"),
+#         (run_rental_agent, "rental"),
+#         (run_negotiation_agent, "negotiation")  # Executes last with full contextual layout
+#     ]
+
+#     for agent_func, name in agents:
+#         try:
+#             res = agent_func(df)
+#             if res is None or (isinstance(res, (list, pd.DataFrame)) and len(res) == 0):
+#                 continue
+                
+#             res_df = res if isinstance(res, pd.DataFrame) else pd.DataFrame(res)
+            
+#             # Prevent schema fragmentation on multiple merge iterations
+#             overlap_cols = [c for c in res_df.columns if c in df.columns and c != "id"]
+#             if overlap_cols:
+#                 res_df = res_df.drop(columns=overlap_cols)
+                
+#             df = df.merge(res_df, on="id", how="left")
+#         except Exception as e:
+#             print(f"⚠️ Bypass Warning: Agent [{name}] failed baseline execution matrix: {str(e)}")
+#             continue
+
+#     return df
+
+
+# def get_cached_enrichment(property_ids: list[str]) -> pd.DataFrame:
+    
+#     """If a property's enriched data is already in memory, use it. Otherwise, calculate it once, store it in cache, and reuse it later."""
+
+#     global ENRICHMENT_CACHE
+    
+#     # Standardize incoming elements cleanly
+#     target_ids = [str(pid).strip() for pid in property_ids if pid]
+    
+#     cached_frames = []
+#     missing_ids = []
+    
+#     # 1. Thread-safe read checkpoint mapping processed memory blocks
+#     with CACHE_LOCK:
+#         for pid in target_ids:
+#             if pid in ENRICHMENT_CACHE:
+#                 cached_frames.append(ENRICHMENT_CACHE[pid])
+#             else:
+#                 missing_ids.append(pid)
+            
+#     # 2. Compute missing assets exclusively on cache misses
+#     if missing_ids:
+#         print(f"🧩 Cache Miss: Slicing and orchestrating enrichment for {len(missing_ids)} unique properties...")
+        
+#         raw_missing_df = master_df[master_df["id"].astype(str).str.strip().isin(missing_ids)].copy()
+        
+#         if not raw_missing_df.empty:
+#             enriched_missing_df = enrich_properties(raw_missing_df)
+            
+#             # FIXED: Restored clean iterrows loop with strict dataframe transposition to protect types
+#             with CACHE_LOCK:
+#                 for _, row in enriched_missing_df.iterrows():
+#                     pid_key = str(row["id"]).strip()
+                    
+#                     # Transpose cleanly into a single-row tracking frame, locking down explicit dtypes
+#                     single_row_df = row.to_frame().T
+                    
+#                     # Store exact schema block to guarantee clean future frame concatenations
+#                     ENRICHMENT_CACHE[pid_key] = single_row_df
+#                     cached_frames.append(single_row_df)
+
+#     # 3. Secure type alignment through uniform master axis concatenation
+#     if not cached_frames:
+#         return pd.DataFrame()
+        
+#     return pd.concat(cached_frames, ignore_index=True)
+
+
+# # =====================================================================
+# # 2. MULTI-NODE INVESTMENT COMPARISON SERVICE
+# # =====================================================================
+# def run_mcp_comparison(property_ids: list[str]):
+#     """This function fetches all enriched data(enriched_df)i.e row data for the selected properties and then sends that data to the comparison model to calculate rankings and scores."""
+#     enriched_df = get_cached_enrichment(property_ids)
+
+#     if len(enriched_df) < 2:
+#         return enriched_df, enriched_df
+
+#     return run_comparison(enriched_df)
+
+
+# # =====================================================================
+# # 3. ASSET RENTAL MATRIX SERVICE (ZERO RE-COMPUTATION)
+# # =====================================================================
+# def run_mcp_rental(property_ids: list[str]) -> pd.DataFrame:
+#     """Extracts pre-computed asset yield variables straight out of cached states."""
+#     enriched_df = get_cached_enrichment(property_ids)
+#     if enriched_df.empty:
+#         return pd.DataFrame()
+        
+#     rental_schema = [
+#         "id",
+#         "monthly_rent_estimate",
+#         "annual_rent",
+#         "rental_yield_percent",
+#         "demand_level",
+#         "investment_rating",
+#         "rental_strategy"
+#     ]
+    
+#     valid_cols = [c for c in rental_schema if c in enriched_df.columns]
+#     return enriched_df[valid_cols]
+
+
+# # =====================================================================
+# # 4. FASTAPI PREDICTIVE VALUATION MODEL SERVICE
+# # =====================================================================
+# def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
+#     """
+#     Slices targets using optimized cache tracking and dispatches data 
+#     directly to inference prediction models safely.
+#     """
+#     enriched_df = get_cached_enrichment(property_ids)
+#     results = []
+    
+#     if enriched_df.empty:
+#         return pd.DataFrame(columns=["id", "location", "original_price", "predicted_price", "margin_diff"])
+    
+#     for _, row in enriched_df.iterrows():
+#         original_price = row.get("price", row.get("PRICE", 0))
+#         p_id = row.get("id", row.get("ID", "Unknown"))
+        
+#         input_row = row.copy()
+#         input_row["id"] = str(p_id).strip()
+        
+#         # Eliminate data leakage points prior to inference
+#         for price_key in ["PRICE", "price"]:
+#             if price_key in input_row.index:
+#                 input_row = input_row.drop(price_key)
+                
+#         print(f"🔮 Dispatching cached parameters to FastAPI endpoint for Asset ID: {p_id}...")
+#         prediction_result = predict_property_price(input_row)
+        
+#         if prediction_result["success"]:
+#             pred_data = prediction_result["prediction"]
+#             predicted_price = pred_data.get("predicted_price")
+#             if predicted_price is None:
+#                 predicted_price = original_price
+#         else:
+#             predicted_price = original_price
+            
+#         results.append({
+#             "id": p_id,
+#             "location": row.get("location", "Unknown"),
+#             "original_price": float(original_price),
+#             "predicted_price": round(float(predicted_price), 2),
+#             "margin_diff": round(float(predicted_price) - float(original_price), 2)
+#         })
+        
+#     return pd.DataFrame(results)
+
+
+# # =====================================================================
+# # 5. STRATEGIC NEGOTIATION & TALKING POINTS SERVICE (ZERO RE-COMPUTATION)
+# # =====================================================================
+# def run_mcp_negotiation(property_ids: list[str]) -> pd.DataFrame:
+#     """Bypasses rule agent computation passes by returning compiled metric keys directly."""
+#     enriched_df = get_cached_enrichment(property_ids)
+#     if enriched_df.empty:
+#         return pd.DataFrame()
+        
+#     negotiation_schema = [
+#         "id",
+#         "negotiation_power",
+#         "suggested_discount_percent",
+#         "target_price",
+#         "price_position",
+#         "strategy",
+#         "talking_points"
+#     ]
+    
+#     valid_cols = [c for c in negotiation_schema if c in enriched_df.columns]
+#     return enriched_df[valid_cols]
+
+
+# # =====================================================================
+# # 6. MARKET FAIR-VALUE AND VALIDATION SERVICE (ZERO RE-COMPUTATION)
+# # =====================================================================
+# def run_mcp_valuation(property_ids: list[str]) -> pd.DataFrame:
+#     """Bypasses re-analysis by pulling benchmark variance indicators from cache."""
+#     enriched_df = get_cached_enrichment(property_ids)
+#     if enriched_df.empty:
+#         return pd.DataFrame()
+        
+#     valuation_schema = [
+#         "id",
+#         "project_name",
+#         "price",
+#         "costpersqft",
+#         "analysis_flag",
+#         "analysis_msg",
+#         "analysis_severity"
+#     ]
+    
+#     valid_cols = [c for c in valuation_schema if c in enriched_df.columns]
+#     return enriched_df[valid_cols]
+
+
+# # =====================================================================
+# # 7. PORTFOLIO ADVISORY & SUITABILITY STACKING SERVICE
+# # =====================================================================
+# def run_mcp_advisor(property_ids: list[str]) -> pd.DataFrame:
+#     """Uses cached tables to render direct decision portfolio summaries."""
+#     enriched_df = get_cached_enrichment(property_ids)
+    
+#     if len(property_ids) < 2:
+#         compare_df = pd.DataFrame([{
+#             "id": pid, "overall_score": 0.50, "verdict": "👍 Balanced", "comparison_reason": "Context incomplete"
+#         } for pid in property_ids])
+#     else:
+#         _, compare_df = run_mcp_comparison(property_ids)
+        
+#     advisor_df = run_advisor_agent(enriched_df)
+    
+#     # Drop colliding metadata elements if present prior to joining fields
+#     dup_cols = [c for c in compare_df.columns if c in advisor_df.columns and c != "id"]
+#     if dup_cols:
+#         compare_df = compare_df.drop(columns=dup_cols)
+        
+#     return advisor_df.merge(compare_df[["id", "overall_score", "verdict"]], on="id", how="left")
+
+
+#======================================================================================================================================================================================
+
 # =====================================================================
 # src/services/mcp_real_estate_service.py (PRISTINE DATATYPES & THREADED)
 # =====================================================================
@@ -254,7 +543,12 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
     # Set cosine_similarity = 1.0 for all properties so we can reuse the
     # existing hybrid ranking pipeline and generate ranking-related fields.
     df["cosine_similarity"] = 1.0
-    df = apply_hybrid_ranking(df, intent={}, slider_weights=None)
+    df = apply_hybrid_ranking(
+        similar_df=df,
+        intent_weights={},
+        slider_weights=None,
+        user_changed_sliders=False
+    )
 
     # Order arranged so negotiation can parse calculated risk/growth/valuation outputs
     agents = [
@@ -310,7 +604,8 @@ def get_cached_enrichment(property_ids: list[str]) -> pd.DataFrame:
     if missing_ids:
         print(f"🧩 Cache Miss: Slicing and orchestrating enrichment for {len(missing_ids)} unique properties...")
         
-        raw_missing_df = master_df[master_df["id"].astype(str).str.strip().isin(missing_ids)].copy()
+        #master_df is final_combined_mcp_data from data_store.py
+        raw_missing_df = master_df[master_df["id"].astype(str).str.strip().isin(missing_ids)].copy() # Ensure the ID slicing is clean and matches the standardized keys used in cache mapping
         
         if not raw_missing_df.empty:
             enriched_missing_df = enrich_properties(raw_missing_df)

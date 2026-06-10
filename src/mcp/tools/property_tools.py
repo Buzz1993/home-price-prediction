@@ -278,7 +278,9 @@
 #     return {"status": "success", "message": "Global downstream property agent enrichment caches successfully flushed."}
 
 #======================================================================================================================================================================
-
+# ==============================
+# src/mcp/tools/property_tools.py
+# ==============================
 """
 Unified Real Estate Analytical Tools Layer.
 Enforces whitelists across search results and batch detail projections to maintain token efficiency.
@@ -372,7 +374,7 @@ def get_properties_by_ids(property_ids: list[str]) -> list[dict]:
 # =====================================================================
 
 def compare_properties(property_ids: list[str]) -> dict:
-    """Compare multiple properties side-by-side using advanced stacking matrix scores."""
+    """This function takes multiple property IDs, compares them, ranks them by overall score, and returns the best property (winner) along with the full ranking list."""
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if len(target_ids) < 2:
         return {"error": "Analytical stacking comparison metrics require at least 2 distinct property IDs."}

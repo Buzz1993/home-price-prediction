@@ -525,18 +525,65 @@ def render_extended_data_grids(message):
 # ---------------------------------------------------------------------
 
 #chat history can be like this 
-    # {
-    #      "role": "user", 
-    #      "text": "Show me 2BHK options under 2 Cr near Goregaon."
-    # },
-    # {
-    #      "role": "assistant", 
-    #      "text": "Here are the highest ranking properties matching your parameters:",
-    #      "data": [
-    #          {"id": "PROP-101", "price": 1.85, "bhk_type": "2 BHK", "location": "Goregaon East"},
-    #          {"id": "PROP-102", "price": 1.95, "bhk_type": "2 BHK", "location": "Goregaon West"}
-    #      ]
-    # },
+# [
+#     {
+#         "role": "user",
+#         "text": "Show me 2BHK options under 2 Cr near Goregaon."
+#     },
+#     {
+#         "role": "assistant",
+#         "text": "Here are the highest ranking properties matching your parameters:",
+#         "data": [
+#             {
+#                 "id": "PROP-101",
+#                 "price": 1.85,
+#                 "bhk_type": "2 BHK",
+#                 "location": "Goregaon East"
+#             },
+#             {
+#                 "id": "PROP-102",
+#                 "price": 1.95,
+#                 "bhk_type": "2 BHK",
+#                 "location": "Goregaon West"
+#             }
+#         ]
+#     },
+#     {
+#         "role": "user",
+#         "text": "Compare these properties."
+#     },
+#     {
+#         "role": "assistant",
+#         "text": "Comparison completed. PROP-101 ranks highest overall.",
+#         "comparison_data": {
+#             "winner": "PROP-101",
+#             "ranking": [
+#                 {"property_id": "PROP-101", "score": 92},
+#                 {"property_id": "PROP-102", "score": 87}
+#             ]
+#         }
+#     },
+#     {
+#         "role": "user",
+#         "text": "Show rental performance for PROP-101."
+#     },
+#     {
+#         "role": "assistant",
+#         "text": "Rental performance summary:",
+#         "rental_data": [
+#             {
+#                 "year": 2024,
+#                 "monthly_rent": 45000,
+#                 "rental_yield": 3.2
+#             },
+#             {
+#                 "year": 2025,
+#                 "monthly_rent": 48000,
+#                 "rental_yield": 3.4
+#             }
+#         ]
+#     }
+# ]
 
     # msg_idx is the index for that message and message is the actual message content like shown above where 1st role(user) and text is become message 0 
     # then role(assistant), text and data is message 1 and so on.
@@ -564,7 +611,7 @@ def render_chat_history():
                 
             # 4. Deep Analytical Custom Grid Frameworks
             elif any(k in message for k in ["prediction_data", "negotiation_data", "valuation_data", "advisor_data"]): 
-                render_extended_data_grids(message) 
+                render_extended_data_grids(message)  #Display prediction, negotiation, valuation, and advisor results in Streamlit UI
                 
             # 5. Fallback Safety Gate
             else:

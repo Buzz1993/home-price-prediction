@@ -827,7 +827,9 @@
 #     }
 
 #=======================================================================================================================================================================
-
+# ================================
+# chat_service.py
+# ================================
 """
 Refactored Streamlit Chat Processing Engine.
 Cleaned up faulty variable exports to ensure high-speed runtime execution.
@@ -848,10 +850,9 @@ USER_ID = "default_user"
 
 def parse_intent_and_execute(user_prompt: str, session_state_tray: list) -> dict:
     prompt_lower = user_prompt.lower().strip()
-    
-    # -----------------------------------------------------------------
-    # STEP 1: ROUTING RE-ANALYSIS PATHS STRAIGHT TO UNIQUE SOURCE OF TRUTH
-    # -----------------------------------------------------------------
+    # This function reads the user's question, figures out what analysis they want (comparison, rental, prediction, negotiation, valuation, or investment advice), 
+    # checks if enough properties are available in the tray, and then calls the appropriate tool to generate the result.
+
     if any(k in prompt_lower for k in ["compare", "ranking", "rank"]):
         if len(session_state_tray) < 2:
             return {"type": "text", "content": "⚠️ I need at least 2 properties in your tray to run an investment comparison."}

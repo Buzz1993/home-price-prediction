@@ -242,15 +242,17 @@ def clear_enrichment_cache():
 
 def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Internal raw processing engine.
-    Sequentially passes frames through modules using a strict upstream dependency execution order.
+    enrich_properties() takes the original property dataframe and enriches it by adding important calculated columns from the ranking, analysis, risk, 
+    future growth, rental, and negotiation modules, returning a single dataframe containing both the original property data and all generated insights.
     """
     if selected_df.empty:
         return selected_df
 
     df = selected_df.copy()
     
-    # Seeding uniform base metric constraints for non-vector paths
+    # MCP does not perform similarity search like the recommendation engine.
+    # Set cosine_similarity = 1.0 for all properties so we can reuse the
+    # existing hybrid ranking pipeline and generate ranking-related fields.
     df["cosine_similarity"] = 1.0
     df = apply_hybrid_ranking(df, intent={}, slider_weights=None)
 
@@ -336,7 +338,7 @@ def get_cached_enrichment(property_ids: list[str]) -> pd.DataFrame:
 # 2. MULTI-NODE INVESTMENT COMPARISON SERVICE
 # =====================================================================
 def run_mcp_comparison(property_ids: list[str]):
-    """Loads cache context layers and invokes core relative scoring models."""
+    """This function fetches all enriched data(enriched_df)i.e row data for the selected properties and then sends that data to the comparison model to calculate rankings and scores."""
     enriched_df = get_cached_enrichment(property_ids)
 
     if len(enriched_df) < 2:

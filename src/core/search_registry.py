@@ -64,7 +64,9 @@
 # CACHED_SEARCH_METADATA = _load_static_metadata_cache()
 
 #==========================================================================================================================================================================
-
+# ===============================
+# search_registry.py
+# ===============================
 """
 Centralized Search Registry.
 Completely decoupled module containing zero local dependencies to eliminate circular paths.

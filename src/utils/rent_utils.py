@@ -13,10 +13,10 @@ def calculate_rent(row):
         if rent_min == 0 or rent_max == 0 or area == 0:
             return None, None
 
-        min_rent = int(rent_min * area)
-        max_rent = int(rent_max * area)
+        estimated_rent_min = int(rent_min * area)
+        estimated_rent_max = int(rent_max * area)
 
-        return min_rent, max_rent
+        return estimated_rent_min, estimated_rent_max
 
     except:
         return None, None

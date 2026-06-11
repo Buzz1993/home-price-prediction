@@ -139,12 +139,6 @@ def run_rental_agent(df: pd.DataFrame):
         # PROPERTY DATA
         # -----------------------------
         price = row.get("price", 0)
-
-        # rent_min = minimum expected monthly rent
-        # rent_max = maximum expected monthly rent
-        rent_min = row.get("rent_min", 0)
-        rent_max = row.get("rent_max", 0)
-
         # -----------------------------
         # FUTURE AGENT OUTPUTS
         # -----------------------------
@@ -178,18 +172,32 @@ def run_rental_agent(df: pd.DataFrame):
 
         locality_rating = row.get("locality_rating",0)
 
+        # print("="*50)
+        # print("dataframe data",df.columns.tolist())
+        # print("="*50)
+
+
         # -----------------------------
         # 1. RENT ESTIMATION
         # -----------------------------
-        # Use dataset rental range
-        if rent_min > 0 and rent_max > 0:
-            monthly_rent = ((rent_min + rent_max) / 2) * 1000
+
+        estimated_rent_min = row.get("estimated_rent_min", 0)
+        estimated_rent_max = row.get("estimated_rent_max", 0)
+
+        # Use property-specific rent estimate
+        if estimated_rent_min > 0 and estimated_rent_max > 0:
+            monthly_rent = (
+                estimated_rent_min +
+                estimated_rent_max
+            ) / 2
 
         else:
             # fallback rent estimation
-            # based on property price
-            monthly_rent = ((price * 10000000)* 0.0025/ 12)
-        annual_rent = (monthly_rent * 12)
+            monthly_rent = (
+                (price * 10000000) * 0.0025 / 12
+            )
+
+        annual_rent = monthly_rent * 12
 
         # -----------------------------
         # 2. RENTAL YIELD

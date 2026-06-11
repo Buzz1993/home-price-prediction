@@ -511,6 +511,8 @@ from src.agents.advisor_agent import run_advisor_agent
 from src.services.prediction_service import predict_property_price
 from src.recommender.hybrid_recommender import apply_hybrid_ranking
 
+from src.utils.rent_utils import calculate_rent
+
 # ---------------------------------------------------------------------
 # 📍 THREAD-SAFE CONCURRENCY GUARDED MEMORY CACHE REGISTER
 # ---------------------------------------------------------------------
@@ -549,6 +551,15 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
         slider_weights=None,
         user_changed_sliders=False
     )
+
+    df[["estimated_rent_min", "estimated_rent_max"]] = df.apply(
+        lambda row: pd.Series(calculate_rent(row)),
+        axis=1
+    )
+
+    print("3"*50)
+    print("df columns list full", df.columns.tolist())
+    print("3"*50)
 
     # Order arranged so negotiation can parse calculated risk/growth/valuation outputs
     agents = [

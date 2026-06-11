@@ -12,8 +12,8 @@ from src.utils.rent_utils import calculate_rent
 import pandas as pd
 
 def add_rent_columns(df):
-        #add min_rent and max_rent columns to Similar Properties dataframe by applying calculate_rent function on each row
-        df[["min_rent", "max_rent"]] = df.apply(
+        #add estimated_rent_min and estimated_rent_max columns to Similar Properties dataframe by applying calculate_rent function on each row
+        df[["estimated_rent_min", "estimated_rent_max"]] = df.apply(
             lambda row: pd.Series(calculate_rent(row)),
             axis=1
         )
@@ -39,7 +39,15 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
     recs["similar"] = apply_hybrid_ranking(recs["similar"], intent, slider_weights) #rank similar properties based on hybrid score (cosine similarity + weighted business score) and 
                                                                                     #add column as "hybrid_score" to Similar Properties dataframe
 
-    recs["similar"] = add_rent_columns(recs["similar"]) #add min_rent and max_rent columns to Similar Properties dataframe by applying calculate_rent function on each row
+    print("1"*50)
+    print("SIMILAR DATAFRAME COLUMNS",recs["similar"].columns.tolist())
+    print("1"*50)
+
+    recs["similar"] = add_rent_columns(recs["similar"]) #add estimated_rent_min and estimated_rent_max columns to Similar Properties dataframe by applying calculate_rent function on each row
+
+    print("2"*50)
+    print("SIMILAR DATAFRAME COLUMNS",recs["similar"].columns.tolist())
+    print("2"*50)
 
     # Agents
     analysis_results = run_analysis(recs["similar"]) #run analysis agent on similar properties to get analysis results in list of dict - "id", "analysis_flag", "analysis_msg", "analysis_severity"

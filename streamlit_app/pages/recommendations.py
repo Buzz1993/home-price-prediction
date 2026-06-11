@@ -188,7 +188,7 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     #negotiation_power, suggested_discount_percent, target_price, price_position, strategy, talking_points (from negotiation agent results)
     #monthly_rent_estimate, annual_rent, rental_yield_percent, demand_level, investment_rating, rental_strategy (from rental agent results)
     #price_score, area_score, amenities_score, location_score, connectivity_score, distance_score, weighted_score,why_recommended,hybrid_score (from hybrid ranking calculations) i.e from hybrid_recommender.py
-    #min_rent, max_rent (from search agent))
+    #estimated_rent_min, estimated_rent_max (from search agent))
     #print("=============================")
     # print(st.session_state.threads) # get empty dictionary {} when we run the search(after clicking on search button) for the first time as no thread is created yet
 

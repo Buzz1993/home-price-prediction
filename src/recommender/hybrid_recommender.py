@@ -457,12 +457,12 @@ def compute_weighted_score(df, weights):
     distance_norm = normalize(temp["distance_to_center_km"])
 
     # Score assignment (Inverting lower-is-better metrics like price and distance)
-    temp["price_score"] = (1 - price_norm) * weights.get("price", 0)
-    temp["area_score"] = area_norm * weights.get("area", 0)
-    temp["amenities_score"] = amenities_norm * weights.get("amenities", 0)
-    temp["location_score"] = location_norm * weights.get("location", 0)
-    temp["connectivity_score"] = connectivity_norm * weights.get("connectivity", 0)
-    temp["distance_score"] = (1 - distance_norm) * weights.get("distance", 0)
+    temp["price_score"] = (1 - price_norm) * weights.get("price", 0) # Cheaper property gets a higher score.
+    temp["area_score"] = area_norm * weights.get("area", 0) # Larger area gets a higher score.
+    temp["amenities_score"] = amenities_norm * weights.get("amenities", 0) # More amenities get a higher score.
+    temp["location_score"] = location_norm * weights.get("location", 0) # Better locality rating gets a higher score.
+    temp["connectivity_score"] = connectivity_norm * weights.get("connectivity", 0) # Better commuting rating gets a higher score.
+    temp["distance_score"] = (1 - distance_norm) * weights.get("distance", 0) # Closer to city center gets a higher score.
 
     temp["weighted_score"] = (
         temp["price_score"] + temp["area_score"] + temp["amenities_score"] +
@@ -485,9 +485,11 @@ def apply_hybrid_ranking(similar_df, intent_weights=None, slider_weights=None, a
     )
     temp = compute_weighted_score(similar_df, resolved_weights)
 
+    #for recommendation flow cosine_similarity is not 1 it is diff for each property, but for the mcp flow cosine cosine_similarity = 1.0 for all properties
     temp["hybrid_score"] = (
         alpha * temp["cosine_similarity"] +
         (1 - alpha) * temp["weighted_score"]
     )
 
-    return temp.sort_values("hybrid_score", ascending=False)
+    return temp.sort_values("hybrid_score", ascending=False) # sort the recommended properties based on hybrid score in descending order so that the property with 
+                                                             # highest hybrid score comes at the top of the recommendation list

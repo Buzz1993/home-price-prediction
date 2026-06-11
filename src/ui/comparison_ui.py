@@ -198,7 +198,7 @@ def render_comparison(df, edited_selected):
     # ==============================
     st.subheader("💰 Rental Estimate")
 
-    rent_view = raw_df.loc[:, ["id", "area", "min_rent", "max_rent"]].copy()
+    rent_view = raw_df.loc[:, ["id", "area", "estimated_rent_min", "estimated_rent_max"]].copy()
     st.dataframe(rent_view, width="stretch")
 
     # ==============================

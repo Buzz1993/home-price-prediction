@@ -718,9 +718,15 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
                 
         print(f"🔮 Dispatching cached parameters to FastAPI endpoint for Asset ID: {p_id}...")
 
+        # print("\n========== MCP ROW ==========")
+        # print(row)
+        # print("=============================\n")
 
         # Call prediction model.
         prediction_result = predict_property_price(input_row)
+        # print("\n========== PREDICTION RESULT ==========")
+        # print(prediction_result)
+        # print("=======================================\n")
         
         # If prediction fails, mark as "Prediction Failed".
         # If prediction value is missing, mark as "Prediction Missing".

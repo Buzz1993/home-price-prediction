@@ -263,7 +263,7 @@ def main():
     """
     Runs full property recommendation UI and logic.
     """
-    print("start of main")
+    #print("start of main")
     st.set_page_config(layout="wide")
     st.title("🏠 Property Recommendation System")
 

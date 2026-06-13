@@ -335,6 +335,9 @@ def get_rental_analysis(property_ids: list[str]) -> list[dict]:
 @mcp.tool()
 def get_price_prediction(property_ids: list[str]) -> list[dict]:
     """Invokes external ML core pipeline inference models to forecast market valuation differences."""
+    print("\n🔥 MCP TOOL CALLED: get_price_prediction")
+    print("Property IDs:", property_ids)
+    print("🔥")
     return tools.get_price_prediction(property_ids)
 
 

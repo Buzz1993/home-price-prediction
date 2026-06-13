@@ -567,23 +567,24 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
         (run_risk_agent, "risk"),
         (run_future_agent, "future"),
         (run_rental_agent, "rental"),
-        (run_negotiation_agent, "negotiation")  # Executes last with full contextual layout
+        (run_negotiation_agent, "negotiation")  
     ]
 
     for agent_func, name in agents:
         try:
             res = agent_func(df)
+            #Skip empty results
             if res is None or (isinstance(res, (list, pd.DataFrame)) and len(res) == 0):
                 continue
                 
             res_df = res if isinstance(res, pd.DataFrame) else pd.DataFrame(res)
             
-            # Prevent schema fragmentation on multiple merge iterations
+            # Prevent duplicate columns
             overlap_cols = [c for c in res_df.columns if c in df.columns and c != "id"]
             if overlap_cols:
-                res_df = res_df.drop(columns=overlap_cols)
+                res_df = res_df.drop(columns=overlap_cols) # drop duplicate columns
                 
-            df = df.merge(res_df, on="id", how="left")
+            df = df.merge(res_df, on="id", how="left") 
         except Exception as e:
             print(f"⚠️ Bypass Warning: Agent [{name}] failed baseline execution matrix: {str(e)}")
             continue
@@ -593,15 +594,18 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
 
 def get_cached_enrichment(property_ids: list[str]) -> pd.DataFrame:
     
-    """If a property's enriched data is already in memory, use it. Otherwise, calculate it once, store it in cache, and reuse it later."""
+    """
+    If a property's enriched data is already in memory, use it. Otherwise, calculate it once, store it in cache, and reuse it later.
+    also this function returns all properties requested by the chatbot 
+    """
 
     global ENRICHMENT_CACHE
     
     # Standardize incoming elements cleanly
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     
-    cached_frames = []
-    missing_ids = []
+    cached_frames = [] #Properties already enriched
+    missing_ids = [] #Properties not yet enriched
     
     # 1. Thread-safe read checkpoint mapping processed memory blocks
     with CACHE_LOCK:
@@ -619,24 +623,29 @@ def get_cached_enrichment(property_ids: list[str]) -> pd.DataFrame:
         raw_missing_df = master_df[master_df["id"].astype(str).str.strip().isin(missing_ids)].copy() # Ensure the ID slicing is clean and matches the standardized keys used in cache mapping
         
         if not raw_missing_df.empty:
-            enriched_missing_df = enrich_properties(raw_missing_df)
+            # Run all enrichment agents on only the uncached properties
+            # (risk, future growth, rental, negotiation, etc.)
+            enriched_missing_df = enrich_properties(raw_missing_df) 
             
-            # FIXED: Restored clean iterrows loop with strict dataframe transposition to protect types
+            # Save newly enriched properties into cache
             with CACHE_LOCK:
                 for _, row in enriched_missing_df.iterrows():
                     pid_key = str(row["id"]).strip()
                     
-                    # Transpose cleanly into a single-row tracking frame, locking down explicit dtypes
+                    # Convert row → dataframe
                     single_row_df = row.to_frame().T
                     
-                    # Store exact schema block to guarantee clean future frame concatenations
+                    # Store enriched property dataframe in cache
                     ENRICHMENT_CACHE[pid_key] = single_row_df
+
+                    # Also add it to the result list that will be returned
                     cached_frames.append(single_row_df)
 
-    # 3. Secure type alignment through uniform master axis concatenation
+    # If no properties were found (cached or newly enriched), return an empty dataframe.
     if not cached_frames:
         return pd.DataFrame()
-        
+
+    # Combine all cached and newly enriched property dataframes into one final dataframe and return it.        
     return pd.concat(cached_frames, ignore_index=True)
 
 
@@ -657,7 +666,12 @@ def run_mcp_comparison(property_ids: list[str]):
 # 3. ASSET RENTAL MATRIX SERVICE (ZERO RE-COMPUTATION)
 # =====================================================================
 def run_mcp_rental(property_ids: list[str]) -> pd.DataFrame:
-    """Extracts pre-computed asset yield variables straight out of cached states."""
+    """
+    Get rental analysis for requested properties.
+    Uses cached enriched data and returns only
+    rental-related columns without re-running
+    the rental agent.
+    """
     enriched_df = get_cached_enrichment(property_ids)
     if enriched_df.empty:
         return pd.DataFrame()
@@ -703,15 +717,38 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
                 input_row = input_row.drop(price_key)
                 
         print(f"🔮 Dispatching cached parameters to FastAPI endpoint for Asset ID: {p_id}...")
+
+
+        # Call prediction model.
         prediction_result = predict_property_price(input_row)
         
-        if prediction_result["success"]:
-            pred_data = prediction_result["prediction"]
-            predicted_price = pred_data.get("predicted_price")
-            if predicted_price is None:
-                predicted_price = original_price
-        else:
-            predicted_price = original_price
+        # If prediction fails, mark as "Prediction Failed".
+        # If prediction value is missing, mark as "Prediction Missing".
+        # Otherwise use the predicted price for further calculations.
+        if not prediction_result["success"]:
+            results.append({
+                "id": p_id,
+                "location": row.get("location", "Unknown"),
+                "original_price": float(original_price),
+                "predicted_price": None,
+                "margin_diff": None,
+                "status": "Prediction Failed"
+            })
+            continue
+
+        pred_data = prediction_result["prediction"]
+        predicted_price = pred_data.get("predicted_price")
+
+        if predicted_price is None:
+            results.append({
+                "id": p_id,
+                "location": row.get("location", "Unknown"),
+                "original_price": float(original_price),
+                "predicted_price": None,
+                "margin_diff": None,
+                "status": "Prediction Missing"
+            })
+            continue
             
         results.append({
             "id": p_id,

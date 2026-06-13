@@ -42,3 +42,5 @@ class SQLiteMemoryStore:
                                                #and one user can have multiple memories, so we need unique IDs for each memory row. UUID is used to create that unique memory ID.
         )
         self.conn.commit()
+
+

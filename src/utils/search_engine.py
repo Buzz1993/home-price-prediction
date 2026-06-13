@@ -233,109 +233,23 @@
 
 #===================================================================================================================================================================================================================
 
-# # =====================================================================
-# # src/utils/search_engine.py
-# # =====================================================================
-
-# import pandas as pd
-# from rank_bm25 import BM25Okapi
-# from src.utils.search_metadata import clean_and_split
-
-# # Cohesive groupings mapped to user search intents
-# SEARCH_SCHEMA = {
-#     "bhk": ["bhk_type", "extra_rooms"],  
-#     "property_details": ["property_type", "status", "furnish", "construction", "ownership"],
-#     "specifications": ["facing", "flooring", "builder"],
-#     "amenities": ["amenities_mcp", "features_mcp", "amenities_text", "overlooking"],
-#     "location": ["location", "city", "transportation_hubs_clean", "project_name", "nearest_mcp"]
-# }
-
-
-# def _tokenize_row_field(text, column_name: str) -> list[str]:
-#     """Cleans and breaks field text into individual flat word tokens."""
-#     if pd.isna(text):
-#         return []
-    
-#     return [
-#         word 
-#         for phrase in clean_and_split(str(text), column_name) 
-#         for word in str(phrase).split()
-#     ]
-
-
-# def _build_bm25_indexes(df: pd.DataFrame) -> dict:
-#     """Pre-computes in-memory search matrices and returns the engine state."""
-#     print(f"🧠 Compiling tokenized BM25 indexes for {len(df):,} rows...")
-    
-#     clean_df = df.reset_index(drop=True)
-#     indexes = {}
-
-#     for category, columns in SEARCH_SCHEMA.items():
-#         valid_cols = [col for col in columns if col in clean_df.columns]
-        
-#         corpus = [
-#             [token for col in valid_cols for token in _tokenize_row_field(row[col], col)]
-#             for _, row in clean_df.iterrows()
-#         ]
-        
-#         indexes[category] = BM25Okapi(corpus)
-        
-#     print("🚀 BM25 Search matrices successfully compiled!")
-#     return {"df": clean_df, "indexes": indexes}
-
-
-# def query(engine_state: dict, search_criteria: dict, min_matches: int = 2) -> pd.DataFrame:
-#     """Scores properties against criteria and filters by minimum category match rules."""
-#     df = engine_state["df"]
-#     indexes = engine_state["indexes"]
-    
-#     num_properties = len(df)
-#     match_counts = [0] * num_properties
-#     total_scores = [0.0] * num_properties
-
-#     for category, query_str in search_criteria.items():
-#         if not query_str or category not in indexes:
-#             continue
-            
-#         query_tokens = _tokenize_row_field(query_str, "features_mcp")
-#         if not query_tokens:
-#             continue
-            
-#         scores = indexes[category].get_scores(query_tokens)
-        
-#         for idx, score in enumerate(scores):
-#             if score > 0.0:
-#                 match_counts[idx] += 1
-#                 total_scores[idx] += score
-
-#     matched_records = [
-#         {"row_idx": idx, "criteria_matched": match_counts[idx], "search_score": total_scores[idx]}
-#         for idx in range(num_properties)
-#         if match_counts[idx] >= min_matches
-#     ]
-        
-#     if not matched_records:
-#         return pd.DataFrame()
-
-#     results_df = pd.DataFrame(matched_records).sort_values(
-#         by=["criteria_matched", "search_score"], 
-#         ascending=[False, False]
-#     )
-    
-#     final_df = results_df.merge(df, left_on="row_idx", right_index=True)
-#     return final_df.drop(columns=["row_idx"])
-
-#============================================================================================================================================================================
-# ============================
-# search_engine.py
-# ============================
-
-# ===================================================================== 
-# REFACTORED: src/utils/search_engine.py (PURE EXECUTION ENGINE)
+# =====================================================================
+# src/utils/search_engine.py
 # =====================================================================
 
 import pandas as pd
+from rank_bm25 import BM25Okapi
 from src.utils.search_metadata import clean_and_split
+
+# Cohesive groupings mapped to user search intents
+SEARCH_SCHEMA = {
+    "bhk": ["bhk_type", "extra_rooms"],  
+    "property_details": ["property_type", "status", "furnish", "construction", "ownership"],
+    "specifications": ["facing", "flooring", "builder"],
+    "amenities": ["amenities_mcp", "features_mcp", "amenities_text", "overlooking"],
+    "location": ["location", "city", "transportation_hubs_clean", "project_name", "nearest_mcp"]
+}
+
 
 def _tokenize_row_field(text, column_name: str) -> list[str]:
     """Cleans and breaks field text into individual flat word tokens."""
@@ -348,8 +262,30 @@ def _tokenize_row_field(text, column_name: str) -> list[str]:
         for word in str(phrase).split()
     ]
 
+
+def _build_bm25_indexes(df: pd.DataFrame) -> dict:
+    """Pre-computes in-memory search matrices and returns the engine state."""
+    print(f"🧠 Compiling tokenized BM25 indexes for {len(df):,} rows...")
+    
+    clean_df = df.reset_index(drop=True)
+    indexes = {}
+
+    for category, columns in SEARCH_SCHEMA.items():
+        valid_cols = [col for col in columns if col in clean_df.columns]
+        
+        corpus = [
+            [token for col in valid_cols for token in _tokenize_row_field(row[col], col)]
+            for _, row in clean_df.iterrows()
+        ]
+        
+        indexes[category] = BM25Okapi(corpus)
+        
+    print("🚀 BM25 Search matrices successfully compiled!")
+    return {"df": clean_df, "indexes": indexes}
+
+
 def query(engine_state: dict, search_criteria: dict, min_matches: int = 2) -> pd.DataFrame:
-    """Scores properties against criteria using a pre-computed external engine state."""
+    """Scores properties against criteria and filters by minimum category match rules."""
     df = engine_state["df"]
     indexes = engine_state["indexes"]
     
@@ -388,3 +324,5 @@ def query(engine_state: dict, search_criteria: dict, min_matches: int = 2) -> pd
     
     final_df = results_df.merge(df, left_on="row_idx", right_index=True)
     return final_df.drop(columns=["row_idx"])
+
+

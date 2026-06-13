@@ -12,7 +12,6 @@
 import streamlit as st
 import pandas as pd
 
-from src.utils.selection_utils import update_selection
 
 
 # =============================
@@ -152,6 +151,20 @@ def render_selected_panel():
     #print("================================")
     #print("edited selected", edited_selected)
     return edited_selected #return dataframe of selected properties with "Compare" and "Delete" columns to track user actions in the comparison tray
+
+
+
+
+def update_selection(selected_keys, edited_df):
+
+    current_selected = set(
+        edited_df[edited_df["Select"] == True].index
+    )
+
+    added = current_selected - selected_keys
+    removed = selected_keys - current_selected
+
+    return current_selected, added, removed
 
 
 # =============================

@@ -59,6 +59,7 @@ def load_system():
 # SESSION STATE INITIALIZATION
 # =============================
 def init_session_state():
+
     # =============================
     # Initialize all session variables
     # =============================
@@ -142,6 +143,7 @@ def reset_filters(default_filters):
 # SEARCH HANDLER
 # =============================
 def handle_search(df, X_processed, filters, intent, slider_weights, mode):
+
     # =============================
     # Run search + create/update thread
     # =============================
@@ -261,7 +263,7 @@ def main():
     """
     Runs full property recommendation UI and logic.
     """
-
+    print("start of main")
     st.set_page_config(layout="wide")
     st.title("🏠 Property Recommendation System")
 

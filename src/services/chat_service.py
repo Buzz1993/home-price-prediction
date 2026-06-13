@@ -952,8 +952,338 @@
 
 #==========================================================================================================================================================================================
 
+# # =====================================================================
+# # chat_service.py (PRODUCTION ARCHITECTURE - FIXED MATCH QUALITY)
+# # =====================================================================
+
+# import re
+# import json
+# import pandas as pd
+# import streamlit as st
+
+# import src.mcp.tools.property_tools as tools
+# from src.core.search_registry import GLOBAL_MASTER_DF, CACHED_SEARCH_METADATA
+# from src.llm.memory_store import SQLiteMemoryStore
+# from src.llm.deepseek_client import ask_deepseek
+# from src.recommender.hybrid_recommender import apply_hybrid_ranking
+
+# memory_store = SQLiteMemoryStore()
+# USER_ID = "default_user"
+
+# # =====================================================================
+# # CONFIGURATION MATRICES
+# # =====================================================================
+
+# # Structural hard constraints
+# FILTER_INTENTS = {
+#     "bhk_pattern":      r"(\d+)\s*bhk",
+#     "known_locations":  "location",      
+#     "known_amenities":  "amenities_mcp"  
+# }
+
+# # Cleaned naming mapping dictionary to uppercase standard
+# RANKING_TARGET_MAPS = {
+#     "low budget":      {"price": 1.0},
+#     "luxury":          {"amenities": 1.0, "area": 0.8, "location": 0.4}, 
+#     "spacious":        {"area": 1.0},
+#     "good amenities":  {"amenities": 1.0},
+#     "connectivity":    {"connectivity": 1.0, "distance": 0.6},
+#     "location":        {"location": 1.0},
+#     "investment":      {"price": 1.0, "location": 0.5},
+#     "family":          {"location": 1.0, "area": 0.5}
+# }
+
+# RANKING_WORD_LISTS = {
+#     "low budget":      ["low budget", "cheap", "affordable", "under budget", "value for money", "pocket friendly", "lowest price", "pocket-friendly", "economical"],
+#     "luxury":          ["luxury", "premium", "posh", "high end", "elite", "luxurious", "expensive", "high-end", "ultra-premium"],
+#     "spacious":        ["spacious", "big size", "large area", "huge", "roomy", "bigger rooms", "carpet area", "massive square feet"],
+#     "good amenities": ["good amenities", "premium community features", "high-end facilities"],
+#     "connectivity":    ["near station", "metro", "railway", "connectivity", "public transport", "highway", "link road", "walkable", "easy commuting", "commuting is easier", "access to office", "less travel time", "save travel time"],
+#     "location":        ["great location", "prime location", "well located", "center of city", "heart of mumbai"],
+#     "investment":      ["investment", "good yield", "resale value", "future growth", "high return", "roi", "appreciation"],
+#     "family":          ["family oriented", "safe neighborhood", "school proximity", "gated community"]
+# }
+
+# # Advanced Modifier Token Layers
+# NEGATIONS = [r"not\b", r"don't\b", r"do\s+not\b", r"without\b", r"avoid\b", r"no\b", r"never\b"]
+
+# INTENSITY_MODIFIERS = {
+#     "extremely": 2.0, "super": 1.5, "very": 1.4, "highly": 1.4,
+#     "good": 1.1, "great": 1.2, "prime": 1.2, "ultra": 2.0
+# }
+
+# # Followup Continuity Tracking Layers
+# FOLLOWUP_TERMS = [
+#     r"similar\b", r"show\s+more\b", r"cheaper\b", r"better\b", 
+#     r"closer\b", r"other\s+options\b", r"nearer\b", r"also\b"
+# ]
+
+# # =====================================================================
+# # SAFE MEMORY INTERACTION LAYER
+# # =====================================================================
+
+# def fetch_safe_historical_context(store_instance, user_id: str) -> dict:
+#     """
+#     Safely bridges SQLiteMemoryStore hook differences 
+#     by testing available persistence method hooks.
+#     """
+#     for method_name in ["get_latest_context", "load", "get_context", "get_history"]:
+#         if hasattr(store_instance, method_name):
+#             method = getattr(store_instance, method_name)
+#             try:
+#                 result = method(user_id)
+#                 if isinstance(result, str):
+#                     return json.loads(result)
+#                 if isinstance(result, dict):
+#                     return result
+#             except Exception:
+#                 continue
+                
+#     return {}
+
+
+# def persist_safe_historical_context(store_instance, user_id: str, payload: dict) -> bool:
+#     """
+#     Dynamically maps execution payload write states into memory stores 
+#     regardless of variations in contract execution naming signatures.
+#     """
+#     for method_name in ["save", "store", "persist", "set_context", "update_context"]:
+#         if hasattr(store_instance, method_name):
+#             method = getattr(store_instance, method_name)
+#             try:
+#                 # Try saving as raw dict object first
+#                 method(user_id, payload)
+#                 return True
+#             except Exception:
+#                 try:
+#                     # Fallback to JSON serialized string if the table schemas require text primitives
+#                     method(user_id, json.dumps(payload))
+#                     return True
+#                 except Exception:
+#                     continue
+#     return False
+
+
+# def is_followup_query(prompt_lower: str) -> bool:
+#     """Isolates context checks exclusively to explicit historical continuations."""
+#     return any(re.search(term, prompt_lower) for term in FOLLOWUP_TERMS)
+
+
+# def synthesize_ranking_weights(prompt_lower: str) -> tuple:
+#     """
+#     Replaced misleading confidence indicator values with accurate 
+#     match_quality analytics flags based on target keyword precision.
+#     """
+#     base_weights = {
+#         "price": 0.0, "area": 0.0, "amenities": 0.0,
+#         "location": 0.0, "connectivity": 0.0, "distance": 0.0
+#     }
+    
+#     intent_quality_logs = {}
+    
+#     for intent_name, keywords in RANKING_WORD_LISTS.items():
+#         for keyword in keywords:
+#             pattern = r"\b" + re.escape(keyword) + r"\b"
+#             match = re.search(pattern, prompt_lower)
+            
+#             if match:
+#                 start_idx = match.start()
+#                 preceding_chunk = prompt_lower[max(0, start_idx - 30):start_idx].strip()
+                
+#                 if any(re.search(neg, preceding_chunk) for neg in NEGATIONS):
+#                     continue 
+                
+#                 strength_score = 1.0
+#                 for modifier, multiplier in INTENSITY_MODIFIERS.items():
+#                     occurrences = len(re.findall(r"\b" + re.escape(modifier) + r"\b", preceding_chunk))
+#                     if occurrences > 0:
+#                         strength_score += (multiplier - 1.0) * occurrences
+                
+#                 quality_metric = 0.95 if keyword in ["low budget", "luxury", "spacious", "metro"] else 0.85
+                
+#                 intent_quality_logs[intent_name] = {
+#                     "intent": intent_name,
+#                     "strength": round(strength_score, 2),
+#                     "match_quality": quality_metric
+#                 }
+#                 break 
+
+#     for intent_name, metrics in intent_quality_logs.items():
+#         target_map = RANKING_TARGET_MAPS.get(intent_name, {})
+#         for feature, feature_weight in target_map.items():
+#             if feature in base_weights:
+#                 base_weights[feature] += (metrics["strength"] * feature_weight)
+
+#     return base_weights, intent_quality_logs
+
+
+# def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current_ui_sliders: dict = None, user_changed_sliders: bool = False) -> dict:
+#     """
+#     Main entry point executing structural search filters alongside ranking preferences.
+#     """
+#     prompt_lower = user_prompt.lower().strip()
+
+#     # -----------------------------------------------------------------
+#     # STEP 1: RESOLVE HISTORICAL AMNESTY BOUNDARIES (FIXED RETRIEVAL)
+#     # -----------------------------------------------------------------
+#     historical_context = fetch_safe_historical_context(memory_store, USER_ID)
+    
+#     if is_followup_query(prompt_lower):
+#         historical_filters = historical_context.get("filters", {})
+#         historical_weights = historical_context.get("weights", {})
+#     else:
+#         historical_filters = {}
+#         historical_weights = {}
+
+#     # -----------------------------------------------------------------
+#     # STEP 2: ROUTE AGENT METRIC ACTIONS
+#     # -----------------------------------------------------------------
+#     if any(k in prompt_lower for k in ["compare", "ranking", "rank"]):
+#         if len(session_state_tray) < 2:
+#             return {"type": "text", "content": "⚠️ I need at least 2 properties in your tray to run an investment comparison."}
+#         print("✅  mcp compare get trigger")
+#         return {"type": "comparison", "content": tools.compare_properties(session_state_tray)}
+
+#     if any(k in prompt_lower for k in ["rent", "rental", "tenant", "lease", "yield", "rental yield", "monthly rent"]):
+#         if len(session_state_tray) < 1:
+#             return {"type": "text", "content": "⚠️ Please add at least one target property to your evaluation tray first."}
+#         return {"type": "rental", "content": tools.get_rental_analysis(session_state_tray)}
+
+#     if any(k in prompt_lower for k in ["predict", "prediction", "predicted price", "estimated price"]):
+#         if len(session_state_tray) < 1:
+#             return {"type": "text", "content": "⚠️ Your evaluation tray is empty. Stage properties to run predictions."}
+#         return {"type": "prediction", "content": tools.get_price_prediction(session_state_tray)}
+
+#     # -----------------------------------------------------------------
+#     # STEP 3: SEPARATED STRUCTURAL FILTER EXTRACTION
+#     # -----------------------------------------------------------------
+#     extracted_filters = {"bhk": None, "amenities": None, "location": None}
+
+#     bhk_match = re.search(FILTER_INTENTS["bhk_pattern"], prompt_lower)
+#     if bhk_match:
+#         extracted_filters["bhk"] = f"{bhk_match.group(1)}bhk"
+#     else:
+#         extracted_filters["bhk"] = historical_filters.get("bhk")
+
+#     matched_locations = []
+#     known_locations = CACHED_SEARCH_METADATA.get("location", [])
+#     for loc in known_locations:
+#         if re.search(r"\b" + re.escape(str(loc).lower()) + r"\b", prompt_lower):
+#             matched_locations.append(loc)
+
+#     if matched_locations:
+#         extracted_filters["location"] = " ".join(matched_locations)
+#     else:
+#         extracted_filters["location"] = historical_filters.get("location")
+
+#     matched_amenities = []
+#     known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
+#     for amenity in known_amenities:
+#         if re.search(r"\b" + re.escape(str(amenity).lower()) + r"\b", prompt_lower):
+#             matched_amenities.append(amenity)
+
+#     if matched_amenities:
+#         extracted_filters["amenities"] = " ".join(matched_amenities)
+#     else:
+#         extracted_filters["amenities"] = historical_filters.get("amenities")
+
+#     # -----------------------------------------------------------------
+#     # STEP 4: SEPARATED PREFERENCE EXTRACTION & BLENDED EVALUATION
+#     # -----------------------------------------------------------------
+#     if extracted_filters["location"] or extracted_filters["amenities"] or extracted_filters["bhk"]:
+        
+#         raw_results = tools.search_properties(
+#             bhk=extracted_filters["bhk"],
+#             amenities=extracted_filters["amenities"],
+#             location=extracted_filters["location"],
+#             limit=30
+#         )
+        
+#         if raw_results:
+#             results_df = pd.DataFrame(raw_results)
+            
+#             matched_full_df = GLOBAL_MASTER_DF[GLOBAL_MASTER_DF["id"].isin(results_df["id"])].copy()
+#             matched_full_df = matched_full_df.merge(results_df[["id", "search_score"]], on="id", how="left")
+#             matched_full_df = matched_full_df.rename(columns={"search_score": "cosine_similarity"})
+
+#             # Generate weights vectors alongside tracking metadata
+#             synthesized_chat_weights, quality_metadata = synthesize_ranking_weights(prompt_lower)
+            
+            
+#             if sum(synthesized_chat_weights.values()) == 0 and historical_weights:
+#                 synthesized_chat_weights = historical_weights
+
+#             # =====================================================================
+#             # PRODUCTION RUNTIME DEBUG TELEMETRY 
+#             # =====================================================================
+#             print("\n" + "="*50)
+#             print("🔍 RUNTIME RANKING TELEMETRY (BEFORE HYBRID RANKING)")
+#             print(f"INTENT WEIGHTS TYPE : {type(synthesized_chat_weights)}")
+#             print(f"INTENT WEIGHTS RAW  : {synthesized_chat_weights}")
+#             print(f"SLIDER WEIGHTS TYPE : {type(current_ui_sliders)}")
+#             print(f"SLIDER WEIGHTS RAW  : {current_ui_sliders}")
+#             print("="*50 + "\n")
+
+#             # Execute unified ranker using true state tracking ratios
+#             ranked_df = apply_hybrid_ranking(
+#                 similar_df=matched_full_df, 
+#                 intent_weights=synthesized_chat_weights, 
+#                 slider_weights=current_ui_sliders, 
+#                 alpha=0.65,
+#                 user_changed_sliders=user_changed_sliders
+#             )
+
+#             # Record operational tracking history safely using multi-signature fallback interface
+#             persist_safe_historical_context(
+#                 store_instance=memory_store,
+#                 user_id=USER_ID,
+#                 payload={
+#                     "query": user_prompt,
+#                     "weights": synthesized_chat_weights,
+#                     "filters": extracted_filters,
+#                     "quality_logs": quality_metadata
+#                 }
+#             )
+
+#             ranked_df = ranked_df.rename(columns={"hybrid_score": "search_score"})
+#             ranked_df["amenities_mcp"] = ranked_df.get("amenities_mcp", "")
+            
+#             final_cols = ["id", "price", "bhk_type", "location", "amenities_mcp", "search_score", "why_recommended"]
+#             display_cols = [c for c in final_cols if c in ranked_df.columns]
+            
+#             final_records = ranked_df[display_cols].head(5).to_dict(orient="records")
+
+#             return {
+#                 "type": "search_results",
+#                 "content": final_records,
+#                 "current_query_state": {
+#                     "active_filters": extracted_filters,
+#                     "chat_preference_weights": synthesized_chat_weights,
+#                     "quality_metadata": quality_metadata
+#                 }
+#             }
+#         else:
+#             return {"type": "text", "content": f"❌ Zero properties matched infrastructure specifications: `{extracted_filters}`."}
+
+#     # -----------------------------------------------------------------
+#     # STEP 5: DEEPSEEK GENERIC CHAT FALLBACK
+#     # -----------------------------------------------------------------
+#     staged_context = GLOBAL_MASTER_DF[GLOBAL_MASTER_DF["id"].isin(session_state_tray)].head(3).to_string(index=False) if session_state_tray else "No active properties staged."
+#     chat_prompt = f"""You are an expert real estate consultant. Answer the inquiry directly.
+
+#     ACTIVE CONTEXT ROWS IN USER MEMORY TRAY:
+#     {staged_context}
+
+#     USER REQUEST INPUTS: {user_prompt}
+#     Provide structured clear insights utilizing Indian Rupee (₹) denominations.
+#     """
+#     return {"type": "text", "content": ask_deepseek(chat_prompt)}
+
+
+#==================================================================================================================================================================================================
+
 # =====================================================================
-# chat_service.py (PRODUCTION ARCHITECTURE - FIXED MATCH QUALITY)
+# chat_service.py (PRODUCTION ARCHITECTURE - UNIFIED SEMANTIC ENGINE)
 # =====================================================================
 
 import re
@@ -974,17 +1304,17 @@ USER_ID = "default_user"
 # CONFIGURATION MATRICES
 # =====================================================================
 
-# Structural hard constraints
+# Structural hard constraints (used by Fallback Layer 2)
 FILTER_INTENTS = {
     "bhk_pattern":      r"(\d+)\s*bhk",
-    "known_locations":  "location",      
-    "known_amenities":  "amenities_mcp"  
+    "known_locations":  "location",
+    "known_amenities":  "amenities_mcp"
 }
 
-# Cleaned naming mapping dictionary to uppercase standard
+# Cleaned naming mapping dictionary to uppercase standard (Fallback Layer 2)
 RANKING_TARGET_MAPS = {
     "low budget":      {"price": 1.0},
-    "luxury":          {"amenities": 1.0, "area": 0.8, "location": 0.4}, 
+    "luxury":          {"amenities": 1.0, "area": 0.8, "location": 0.4},
     "spacious":        {"area": 1.0},
     "good amenities":  {"amenities": 1.0},
     "connectivity":    {"connectivity": 1.0, "distance": 0.6},
@@ -997,14 +1327,14 @@ RANKING_WORD_LISTS = {
     "low budget":      ["low budget", "cheap", "affordable", "under budget", "value for money", "pocket friendly", "lowest price", "pocket-friendly", "economical"],
     "luxury":          ["luxury", "premium", "posh", "high end", "elite", "luxurious", "expensive", "high-end", "ultra-premium"],
     "spacious":        ["spacious", "big size", "large area", "huge", "roomy", "bigger rooms", "carpet area", "massive square feet"],
-    "good amenities": ["good amenities", "premium community features", "high-end facilities"],
+    "good amenities":  ["good amenities", "premium community features", "high-end facilities"],
     "connectivity":    ["near station", "metro", "railway", "connectivity", "public transport", "highway", "link road", "walkable", "easy commuting", "commuting is easier", "access to office", "less travel time", "save travel time"],
     "location":        ["great location", "prime location", "well located", "center of city", "heart of mumbai"],
     "investment":      ["investment", "good yield", "resale value", "future growth", "high return", "roi", "appreciation"],
     "family":          ["family oriented", "safe neighborhood", "school proximity", "gated community"]
 }
 
-# Advanced Modifier Token Layers
+# Advanced Modifier Token Layers (Fallback Layer 2)
 NEGATIONS = [r"not\b", r"don't\b", r"do\s+not\b", r"without\b", r"avoid\b", r"no\b", r"never\b"]
 
 INTENSITY_MODIFIERS = {
@@ -1014,9 +1344,46 @@ INTENSITY_MODIFIERS = {
 
 # Followup Continuity Tracking Layers
 FOLLOWUP_TERMS = [
-    r"similar\b", r"show\s+more\b", r"cheaper\b", r"better\b", 
-    r"closer\b", r"other\s+options\b", r"nearer\b", r"also\b"
+
+    r"similar\b",
+    r"show\s+more\b",
+
+    r"another\b",
+    r"different\b",
+    r"alternative\b",
+    r"next\b",
+
+    r"cheaper\b",
+    r"better\b",
+    r"closer\b",
+    r"nearer\b",
+
+    r"other\s+options\b",
+    r"more\s+options\b",
+
+    r"also\b",
+    r"above\b",
+
 ]
+
+# =====================================================================
+# SEMANTIC IMPORTANCE CONFIGURATION LAYER
+# =====================================================================
+
+# Semantic importance value mapping to standard weight floats
+IMPORTANCE_TO_WEIGHT = {
+    "very_high": 1.5,
+    "high":      1.0,
+    "medium":    0.5,
+    "low":       0.2,
+    "none":      0.0
+}
+
+# Master fallback default matrix for unmapped or empty inferences
+DEFAULT_BLANK_WEIGHTS = {
+    "price": 0.0, "area": 0.0, "amenities": 0.0,
+    "location": 0.0, "connectivity": 0.0, "distance": 0.0
+}
 
 # =====================================================================
 # SAFE MEMORY INTERACTION LAYER
@@ -1024,7 +1391,7 @@ FOLLOWUP_TERMS = [
 
 def fetch_safe_historical_context(store_instance, user_id: str) -> dict:
     """
-    Safely bridges SQLiteMemoryStore hook differences 
+    Safely bridges SQLiteMemoryStore hook differences
     by testing available persistence method hooks.
     """
     for method_name in ["get_latest_context", "load", "get_context", "get_history"]:
@@ -1038,13 +1405,13 @@ def fetch_safe_historical_context(store_instance, user_id: str) -> dict:
                     return result
             except Exception:
                 continue
-                
+
     return {}
 
 
 def persist_safe_historical_context(store_instance, user_id: str, payload: dict) -> bool:
     """
-    Dynamically maps execution payload write states into memory stores 
+    Dynamically maps execution payload write states into memory stores
     regardless of variations in contract execution naming signatures.
     """
     for method_name in ["save", "store", "persist", "set_context", "update_context"]:
@@ -1069,16 +1436,301 @@ def is_followup_query(prompt_lower: str) -> bool:
     return any(re.search(term, prompt_lower) for term in FOLLOWUP_TERMS)
 
 
-def synthesize_ranking_weights(prompt_lower: str) -> tuple:
+# =====================================================================
+# HIGH-FIDELITY RECOMMENDATION GENERATOR
+# =====================================================================
+
+def generate_custom_recommendation_reason(row: pd.Series, preferences: dict) -> str:
     """
-    Replaced misleading confidence indicator values with accurate 
-    match_quality analytics flags based on target keyword precision.
+    Analyzes user-specified soft preferences and matching property attributes to construct
+    highly detailed, natural explanations for recommendations programmatically in Python.
     """
-    base_weights = {
-        "price": 0.0, "area": 0.0, "amenities": 0.0,
-        "location": 0.0, "connectivity": 0.0, "distance": 0.0
-    }
-    
+    reasons = []
+
+    price_pref = preferences.get("price_importance", "none")
+    amenities_pref = preferences.get("amenities_importance", "none")
+    connectivity_pref = preferences.get("connectivity_importance", "none")
+    area_pref = preferences.get("area_importance", "none")
+    location_pref = preferences.get("location_importance", "none")
+
+    # 1. Budget Preference Evaluation
+    if price_pref in ["high", "very_high"]:
+        reasons.append("aligns closely with your goal of finding budget-friendly, affordable housing")
+
+    # 2. Amenities Preference Evaluation
+    if amenities_pref in ["high", "very_high"] and hasattr(row, "amenities_mcp") and str(row.amenities_mcp).strip():
+        reasons.append("provides high-quality localized community lifestyle facilities and modern amenities")
+
+    # 3. Connectivity Preference Evaluation
+    if connectivity_pref in ["high", "very_high"]:
+        reasons.append("offers strategic proximity to transit networks, simplifying daily commutes")
+
+    # 4. Spatial Preference Evaluation
+    if area_pref in ["high", "very_high"]:
+        reasons.append("features spacious layout plans with larger, more generous carpet areas")
+
+    # 5. Elite/Prime Location Preference Evaluation
+    if location_pref in ["high", "very_high"]:
+        reasons.append("positions you in a premium, highly coveted, and well-located neighborhood")
+
+    # Synthesize tailored descriptions securely
+    if reasons:
+        cleaned_reasons = []
+        for r in reasons:
+            r_clean = r.strip()
+            # Format and adjust uppercase letters if we have chained reasoning phrases
+            if cleaned_reasons and r_clean and r_clean[0].isupper():
+                r_clean = r_clean[0].lower() + r_clean[1:]
+            cleaned_reasons.append(r_clean)
+
+        explanation = "This property is highly recommended because it " + ", and it ".join(cleaned_reasons) + f" located in {row.get('location', 'Mumbai')}."
+    else:
+        explanation = f"Matches your parameters in {row.get('location', 'Mumbai')} with a competitive price and standard features."
+
+    return explanation
+
+
+# =====================================================================
+# DUAL-LAYER UNIFIED INTENT EXTRACTOR (LLM + REGEX FALLBACK)
+# =====================================================================
+
+def extract_intent_and_preferences(user_prompt: str, historical_filters: dict = None, historical_weights: dict = None) -> dict:
+    """
+    Unified extraction layer. Attempts to resolve both hard filters (bhk, location, amenities)
+    and soft ranking preferences in a single high-efficiency LLM call. Falls back dynamically
+    to robust regex heuristics if the API layer fails.
+
+    Returns:
+        dict: {
+            "filters": {"bhk": str/None, "location": str/None, "amenities": str/None},
+            "preferences": {"price_importance": str, "amenities_importance": str, ...},
+            "weights": dict (mapped weights),
+            "source": str ("llm_unified_parser" or "regex_fallback")
+        }
+    """
+    prompt_lower = user_prompt.lower().strip()
+    historical_filters = historical_filters or {}
+    historical_weights = historical_weights or {}
+
+    # -----------------------------------------------------------------
+    # LAYER 1: LLM SEMANTIC INTENT EXTRACTION
+    # -----------------------------------------------------------------
+    system_parsing_instruction = """You are an advanced real estate semantic interpretation engine.
+Your task is to parse user queries into HARD CONSTRAINTS (strict filters) and SOFT PREFERENCES (ranking weights).
+
+Return EXACTLY a single JSON object matching this schema, without any conversational preamble or Markdown wraps.
+
+{
+  "filters": {
+    "bhk": "Ex: '2bhk', '3bhk' or null if not explicitly mentioned",
+    "location": "Ex: 'Thane', 'Andheri' or null if no location specified",
+    "amenities": "Ex: 'gym, pool', 'clubhouse' or null if no specific facilities are requested"
+  },
+  "preferences": {
+    "price_importance": "Set to 'high'/'very_high' if user wants cheap, affordable, low cost, or pocket-friendly. Otherwise 'none'/'low'/'medium'",
+    "amenities_importance": "Set to 'high'/'very_high' if they prioritize facilities like gym, pool, security, clubhouse. Otherwise 'none'/'low'/'medium'",
+    "location_importance": "Allowed values: ['very_high', 'high', 'medium', 'low', 'none']. Use: 'none' for a normal location mention, 'medium' if a good location is preferred, 'high' for a prime/premium location, and 'very_high' for an elite/ultra-premium location",
+    "connectivity_importance": "Set to 'high'/'very_high' if commuting near a metro, station, highway or link road is prioritized. Otherwise 'none'/'low'/'medium'",
+    "area_importance": "Set to 'high'/'very_high' if they seek big rooms, spacious size, or huge carpet areas. Otherwise 'none'/'low'/'medium'"
+  }
+}
+
+IMPORTANT LOCATION RULE (PREVENT DOUBLE-COUNTING):
+If a user merely specifies a geographic location (e.g. 'Thane', 'Andheri', 'Powai', 'Navi Mumbai', 'Kandivali') without describing it with terms like 'prime', 'heart of city', 'posh area', or 'great central spot':
+1. Map that location value strictly into filters.location
+2. Set preferences.location_importance to 'none'
+Set preferences.location_importance to 'high' or 'very_high' ONLY if they are explicitly demanding high-prestige, premium, elite, or ultra-central geographic placements.
+"""
+
+    llm_payload_prompt = f"{system_parsing_instruction}\n\nUSER REQUEST: {user_prompt}\nJSON OUTPUT:"
+
+    try:
+        llm_raw_response = ask_deepseek(
+            llm_payload_prompt
+        ).strip()
+
+        # Clean potential markdown formatting
+        if llm_raw_response.startswith("```"):
+
+            llm_raw_response = re.sub(
+                r"^```(?:json)?\s*",
+                "",
+                llm_raw_response
+            )
+
+            llm_raw_response = re.sub(
+                r"\s*```$",
+                "",
+                llm_raw_response
+            )
+
+        json_match = re.search(r"\{.*\}", llm_raw_response, re.DOTALL)
+        if json_match:
+            llm_raw_response = json_match.group(0)
+            
+        parsed_data = json.loads(llm_raw_response)
+
+        print("\n===== LLM RAW RESPONSE =====")
+        print(llm_raw_response)
+        print("============================\n")
+
+        filters = parsed_data.get(
+            "filters",
+            {"bhk": None, "location": None, "amenities": None}
+        )
+
+        bhk_match = re.search(
+            r"(\d+)\s*bhk",
+            prompt_lower
+        )
+
+        if bhk_match:
+            filters["bhk"] = f"{bhk_match.group(1)}bhk"
+
+        # ==================================================
+        # LOCATION FALLBACK USING METADATA
+        # ==================================================
+        if not filters.get("location"):
+
+            known_locations = CACHED_SEARCH_METADATA.get("location", [])
+
+            for loc in known_locations:
+
+                if pd.isna(loc):
+                    continue
+
+                loc_lower = str(loc).lower().strip()
+
+                if loc_lower and re.search(
+                    r"\b" + re.escape(loc_lower) + r"\b",
+                    prompt_lower
+                ):
+                    filters["location"] = loc
+                    break
+
+        # ==================================================
+        # CITY FALLBACK
+        # ==================================================
+        if not filters.get("location"):
+
+            known_cities = ["mumbai", "thane", "navi mumbai", "palghar"]
+
+            for city in known_cities:
+
+                if re.search(
+                    r"\b" + re.escape(city) + r"\b",
+                    prompt_lower
+                ):
+                    filters["location"] = city.title()
+                    break
+
+        preferences = parsed_data.get("preferences", {})
+
+        print("\n===== LOCATION FALLBACK =====")
+        print("Detected Location:", filters.get("location"))
+        print("=============================\n")
+
+        # ==================================================
+        # AMENITIES PREFERENCE FALLBACK
+        # ==================================================
+
+        # Generic amenities intent
+        if any(
+            word in prompt_lower
+            for word in [
+                "amenities",
+                "facility",
+                "facilities"
+            ]
+        ):
+            preferences["amenities_importance"] = "high"
+
+        # Specific amenity names from metadata
+        known_amenities = CACHED_SEARCH_METADATA.get(
+            "amenities_mcp",
+            []
+        )
+
+        for amenity in known_amenities:
+
+            if pd.isna(amenity):
+                continue
+
+            amenity_text = str(amenity).lower().strip()
+
+            if amenity_text and amenity_text in prompt_lower:
+                preferences["amenities_importance"] = "high"
+                break
+
+        # Map preference importances directly into numerical weights
+        synthesized_weights = {
+            "price":        IMPORTANCE_TO_WEIGHT.get(preferences.get("price_importance"), 0.0),
+            "amenities":    IMPORTANCE_TO_WEIGHT.get(preferences.get("amenities_importance"), 0.0),
+            "location":     IMPORTANCE_TO_WEIGHT.get(preferences.get("location_importance"), 0.0),
+            "connectivity": IMPORTANCE_TO_WEIGHT.get(preferences.get("connectivity_importance"), 0.0),
+            "area":         IMPORTANCE_TO_WEIGHT.get(preferences.get("area_importance"), 0.0),
+            "distance":     0.6 if preferences.get("connectivity_importance") in ["high", "very_high"] else 0.0
+        }
+
+        print("\n===== AMENITIES FALLBACK =====")
+        print("Amenities Importance:", preferences.get("amenities_importance"))
+        print("Amenities Weight:", synthesized_weights["amenities"])
+        print("==============================\n")
+        
+        # Handle followup logic integration
+        if is_followup_query(prompt_lower):
+            for k, v in historical_filters.items():
+                if not filters.get(k):
+                    filters[k] = v
+            if sum(synthesized_weights.values()) == 0:
+                synthesized_weights = historical_weights
+                
+        return {
+            "filters": filters,
+            "preferences": preferences,
+            "weights": synthesized_weights,
+            "source": "llm_unified_parser"
+        }
+        
+    except Exception as e:
+        print(f"⚠️ Layer 1 LLM Unified Parsing Exception: {str(e)}. Defaulting to Layer 2 Regex Heuristics.")
+
+    # -----------------------------------------------------------------
+    # LAYER 2: DETERMINISTIC REGEX HEURISTIC FALLBACK
+    # -----------------------------------------------------------------
+    extracted_filters = {"bhk": None, "amenities": None, "location": None}
+
+    # Extract BHK constraints
+    bhk_match = re.search(FILTER_INTENTS["bhk_pattern"], prompt_lower)
+    if bhk_match:
+        extracted_filters["bhk"] = f"{bhk_match.group(1)}bhk"
+    else:
+        extracted_filters["bhk"] = historical_filters.get("bhk")
+
+    # Extract Location constraints using master taxonomy metadata
+    matched_locations = []
+    known_locations = CACHED_SEARCH_METADATA.get("location", [])
+    for loc in known_locations:
+        if re.search(r"\b" + re.escape(str(loc).lower()) + r"\b", prompt_lower):
+            matched_locations.append(loc)
+    if matched_locations:
+        extracted_filters["location"] = " ".join(matched_locations)
+    else:
+        extracted_filters["location"] = historical_filters.get("location")
+
+    # Extract Amenity constraints using master taxonomy metadata
+    matched_amenities = []
+    known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
+    for amenity in known_amenities:
+        if re.search(r"\b" + re.escape(str(amenity).lower()) + r"\b", prompt_lower):
+            matched_amenities.append(amenity)
+    if matched_amenities:
+        extracted_filters["amenities"] = " ".join(matched_amenities)
+    else:
+        extracted_filters["amenities"] = historical_filters.get("amenities")
+
+    # Synthesize preferences via Regex mappings
+    base_weights = DEFAULT_BLANK_WEIGHTS.copy()
     intent_quality_logs = {}
     
     for intent_name, keywords in RANKING_WORD_LISTS.items():
@@ -1104,7 +1756,8 @@ def synthesize_ranking_weights(prompt_lower: str) -> tuple:
                 intent_quality_logs[intent_name] = {
                     "intent": intent_name,
                     "strength": round(strength_score, 2),
-                    "match_quality": quality_metric
+                    "match_quality": quality_metric,
+                    "source": "regex_keyword_fallback"
                 }
                 break 
 
@@ -1114,21 +1767,54 @@ def synthesize_ranking_weights(prompt_lower: str) -> tuple:
             if feature in base_weights:
                 base_weights[feature] += (metrics["strength"] * feature_weight)
 
-    return base_weights, intent_quality_logs
+    # Reconstruct preferences format to mimic LLM layer structure
+    synthesized_preferences = {
+        "price_importance":        "high" if base_weights["price"] >= 1.0 else "none",
+        "amenities_importance":    "high" if base_weights["amenities"] >= 1.0 else "none",
+        "location_importance":     "high" if base_weights["location"] >= 1.0 else "none",
+        "connectivity_importance": "high" if base_weights["connectivity"] >= 1.0 else "none",
+        "area_importance":         "high" if base_weights["area"] >= 1.0 else "none"
+    }
 
+    return {
+        "filters": extracted_filters,
+        "preferences": synthesized_preferences,
+        "weights": base_weights,
+        "source": "regex_fallback"
+    }
+
+
+# =====================================================================
+# MAIN PIPELINE ENTRY POINT
+# =====================================================================
 
 def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current_ui_sliders: dict = None, user_changed_sliders: bool = False) -> dict:
     """
-    Main entry point executing structural search filters alongside ranking preferences.
+    Main entry point executing structured search filters alongside ranking preferences.
     """
     prompt_lower = user_prompt.lower().strip()
+
+    print("\n===== USER QUERY =====")
+    print(user_prompt)
+    print("======================\n")
 
     # -----------------------------------------------------------------
     # STEP 1: RESOLVE HISTORICAL AMNESTY BOUNDARIES (FIXED RETRIEVAL)
     # -----------------------------------------------------------------
-    historical_context = fetch_safe_historical_context(memory_store, USER_ID)
-    
-    if is_followup_query(prompt_lower):
+    historical_context = fetch_safe_historical_context(
+        memory_store,
+        USER_ID
+    )
+
+    is_followup = is_followup_query(prompt_lower)
+
+    print("\n===== FOLLOWUP DEBUG =====")
+    print("User Query:", user_prompt)
+    print("Detected Followup:", is_followup)
+    print("Historical Context:", historical_context)
+    print("==========================\n")
+
+    if is_followup:
         historical_filters = historical_context.get("filters", {})
         historical_weights = historical_context.get("weights", {})
     else:
@@ -1154,42 +1840,27 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
         return {"type": "prediction", "content": tools.get_price_prediction(session_state_tray)}
 
     # -----------------------------------------------------------------
-    # STEP 3: SEPARATED STRUCTURAL FILTER EXTRACTION
+    # STEP 3: EXECUTE UNIFIED EXTRACTION (FILTERS + PREFERENCES)
     # -----------------------------------------------------------------
-    extracted_filters = {"bhk": None, "amenities": None, "location": None}
-
-    bhk_match = re.search(FILTER_INTENTS["bhk_pattern"], prompt_lower)
-    if bhk_match:
-        extracted_filters["bhk"] = f"{bhk_match.group(1)}bhk"
-    else:
-        extracted_filters["bhk"] = historical_filters.get("bhk")
-
-    matched_locations = []
-    known_locations = CACHED_SEARCH_METADATA.get("location", [])
-    for loc in known_locations:
-        if re.search(r"\b" + re.escape(str(loc).lower()) + r"\b", prompt_lower):
-            matched_locations.append(loc)
-
-    if matched_locations:
-        extracted_filters["location"] = " ".join(matched_locations)
-    else:
-        extracted_filters["location"] = historical_filters.get("location")
-
-    matched_amenities = []
-    known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
-    for amenity in known_amenities:
-        if re.search(r"\b" + re.escape(str(amenity).lower()) + r"\b", prompt_lower):
-            matched_amenities.append(amenity)
-
-    if matched_amenities:
-        extracted_filters["amenities"] = " ".join(matched_amenities)
-    else:
-        extracted_filters["amenities"] = historical_filters.get("amenities")
+    extracted_intent = extract_intent_and_preferences(user_prompt, historical_filters, historical_weights)
+    extracted_filters = extracted_intent["filters"]
+    print("\n===== EXTRACTED INTENT =====")
+    print(extracted_intent)
+    print("============================\n")
+    synthesized_chat_weights = extracted_intent["weights"]
+    preferences = extracted_intent["preferences"]
+    extraction_source = extracted_intent["source"]
 
     # -----------------------------------------------------------------
-    # STEP 4: SEPARATED PREFERENCE EXTRACTION & BLENDED EVALUATION
+    # STEP 4: BLENDED RETRIEVAL, RANKING, AND DYNAMIC EXPLANATION
     # -----------------------------------------------------------------
     if extracted_filters["location"] or extracted_filters["amenities"] or extracted_filters["bhk"]:
+
+        print("\n===== SEARCH PARAMETERS =====")
+        print("BHK      :", extracted_filters["bhk"])
+        print("Location :", extracted_filters["location"])
+        print("Amenities:", extracted_filters["amenities"])
+        print("=============================\n")
         
         raw_results = tools.search_properties(
             bhk=extracted_filters["bhk"],
@@ -1199,16 +1870,26 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
         )
         
         if raw_results:
+
+            print("\n===== RAW SEARCH RESULTS =====")
+            print("Count:", len(raw_results))
+
+            for r in raw_results[:5]:
+                print(
+                    r.get("id"),
+                    r.get("location"),
+                    r.get("bhk_type")
+                )
+
+            print("==============================\n")
+
             results_df = pd.DataFrame(raw_results)
             
             matched_full_df = GLOBAL_MASTER_DF[GLOBAL_MASTER_DF["id"].isin(results_df["id"])].copy()
             matched_full_df = matched_full_df.merge(results_df[["id", "search_score"]], on="id", how="left")
             matched_full_df = matched_full_df.rename(columns={"search_score": "cosine_similarity"})
 
-            # Generate weights vectors alongside tracking metadata
-            synthesized_chat_weights, quality_metadata = synthesize_ranking_weights(prompt_lower)
-            
-            
+            # Ensure weights logic handles empty state fallbacks
             if sum(synthesized_chat_weights.values()) == 0 and historical_weights:
                 synthesized_chat_weights = historical_weights
 
@@ -1216,14 +1897,13 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
             # PRODUCTION RUNTIME DEBUG TELEMETRY 
             # =====================================================================
             print("\n" + "="*50)
-            print("🔍 RUNTIME RANKING TELEMETRY (BEFORE HYBRID RANKING)")
-            print(f"INTENT WEIGHTS TYPE : {type(synthesized_chat_weights)}")
+            print(f"🔍 RUNTIME RANKING TELEMETRY (SOURCE: {extraction_source.upper()})")
+            print(f"EXTRACTED FILTERS   : {extracted_filters}")
             print(f"INTENT WEIGHTS RAW  : {synthesized_chat_weights}")
-            print(f"SLIDER WEIGHTS TYPE : {type(current_ui_sliders)}")
             print(f"SLIDER WEIGHTS RAW  : {current_ui_sliders}")
             print("="*50 + "\n")
 
-            # Execute unified ranker using true state tracking ratios
+            # Execute unified ranker using calculated weights
             ranked_df = apply_hybrid_ranking(
                 similar_df=matched_full_df, 
                 intent_weights=synthesized_chat_weights, 
@@ -1232,7 +1912,12 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
                 user_changed_sliders=user_changed_sliders
             )
 
-            # Record operational tracking history safely using multi-signature fallback interface
+            # Programmatically inject naturalized recommendation reasons
+            ranked_df["why_recommended"] = ranked_df.apply(
+                lambda row: generate_custom_recommendation_reason(row, preferences), axis=1
+            )
+
+            # Record operational tracking history safely inside SQLite store
             persist_safe_historical_context(
                 store_instance=memory_store,
                 user_id=USER_ID,
@@ -1240,7 +1925,8 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
                     "query": user_prompt,
                     "weights": synthesized_chat_weights,
                     "filters": extracted_filters,
-                    "quality_logs": quality_metadata
+                    "preferences": preferences,
+                    "extraction_source": extraction_source
                 }
             )
 
@@ -1258,7 +1944,8 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
                 "current_query_state": {
                     "active_filters": extracted_filters,
                     "chat_preference_weights": synthesized_chat_weights,
-                    "quality_metadata": quality_metadata
+                    "preferences_telemetry": preferences,
+                    "extraction_source": extraction_source
                 }
             }
         else:

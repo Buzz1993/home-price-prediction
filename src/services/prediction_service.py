@@ -357,39 +357,57 @@
 #===================================================================================================================================================================================
 
 
-# ===============================
+
+# ==========================================
 # prediction_service.py
-# ===============================
+# ==========================================
 
-import requests
-import pandas as pd
-from pathlib import Path
 import sys
+from pathlib import Path
 import traceback
+import joblib
 import numpy as np
+import pandas as pd
+from sklearn.pipeline import Pipeline
 
+# ------------------------------------------
+# PATH & SYSTEM PATH CONFIGURATION
+# ------------------------------------------
 ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT_DIR))
 
+# ==========================================
+# MODEL ARTIFACTS LOADING (ONCE GLOBALLY)
+# ==========================================
+ARTIFACTS_DIR = ROOT_DIR / "cache" / "artifacts_auto"
 
-PREDICT_API_URL = "http://127.0.0.1:8000/predict"
+CLEANER_PATH = ARTIFACTS_DIR / "cleaner_full_for_te.pkl"
+TE_PATH = ARTIFACTS_DIR / "te_full.pkl"
+PREPROCESSOR_PATH = ARTIFACTS_DIR / "preprocessor.joblib"
+MODEL_PATH = ARTIFACTS_DIR / "final_model.joblib"
 
-RAW_DATA_PATH = (
-    ROOT_DIR
-    / "data"
-    / "raw"
-    / "f_original magicbricks cleaned 12022 data.csv"
-)
+# Load the serialised pipeline steps
+cleaner_full = joblib.load(CLEANER_PATH)
+te_full = joblib.load(TE_PATH)
+preprocessor = joblib.load(PREPROCESSOR_PATH)
+model = joblib.load(MODEL_PATH)
+
+TE_COLS = ["builder", "project_name", "location"]
+
+# Bind components into a unified execution pipeline
+model_pipe = Pipeline([
+    ("preprocessor", preprocessor),
+    ("model", model)
+])
+
 
 # ==========================================
 # SAFE JSON SANITIZER
 # ==========================================
 def sanitize_payload(row_dict):
-
     clean = {}
 
     for k, v in row_dict.items():
-
         # ---------------------------------
         # REMOVE NaN / None
         # ---------------------------------
@@ -400,7 +418,6 @@ def sanitize_payload(row_dict):
         # REMOVE inf / -inf
         # ---------------------------------
         if isinstance(v, (float, np.floating)):
-
             if np.isinf(v):
                 continue
 
@@ -425,77 +442,99 @@ def sanitize_payload(row_dict):
     return clean
 
 
+# ==========================================
+# TARGET ENCODING HELPER
+# ==========================================
+def apply_te(df):
+    df = df.copy()
 
+    # Fill structural missing features to avoid schema mismatches
+    for col in TE_COLS:
+        if col not in df.columns:
+            df[col] = np.nan
+
+    # Transform targets using the cleaner artifact
+    X_clean = cleaner_full.transform(df[TE_COLS].copy())
+
+    # Encode cleaned target columns
+    X_te_df = te_full.transform(X_clean)
+
+    # Re-attach target encoded outputs back to active payload
+    for col in TE_COLS:
+        df[f"{col}_te"] = X_te_df[col].values
+
+    # Drop the original categorical columns since they are now encoded
+    df.drop(columns=TE_COLS, inplace=True, errors="ignore")
+
+    return df
+
+
+# ==========================================
+# DIRECT LOCAL PREDICTION SERVICE
+# ==========================================
 def predict_property_price(property_row):
-
     try:
+        print("\n🚀 DIRECT MODEL PREDICTION")
+        print("No FastAPI")
+        print("No CSV lookup")
+        print("No localhost:8000")
 
-        print("\n🚀 NEW PREDICTION FLOW")
-        print("Using property_row directly (NO CSV LOOKUP)")
-
-        # ==========================================
-        # BUILD PAYLOAD FROM MCP PROPERTY ROW
-        # ==========================================
+        # ----------------------------------
+        # PROPERTY ROW -> DICT
+        # ----------------------------------
         raw_payload = property_row.to_dict()
-
         payload = sanitize_payload(raw_payload)
 
         print("\n===== PAYLOAD SIZE =====")
         print(len(payload))
         print("========================\n")
 
-        # ==========================================
-        # CALL FASTAPI PREDICTION SERVER
-        # ==========================================
-        response = requests.post(
-            PREDICT_API_URL,
-            json=payload,
-            timeout=60
-        )
+        # ----------------------------------
+        # SINGLE ROW DATAFRAME
+        # ----------------------------------
+        X = pd.DataFrame([payload])
 
-        print("\n===== FASTAPI RESPONSE =====")
-        print("STATUS:", response.status_code)
-        print("BODY:", response.text)
-        print("============================\n")
+        # ----------------------------------
+        # TARGET ENCODING
+        # ----------------------------------
+        X = apply_te(X)
 
-        if response.status_code != 200:
-            return {
-                "success": False,
-                "error": f"Prediction API failed ({response.status_code})",
-                "response": response.text
-            }
+        print("\n===== MODEL INPUT COLUMNS =====")
+        print(X.columns.tolist())
+        print("===============================")
 
-        data = response.json()
+        print("\n===== MODEL INPUT SHAPE =====")
+        print(X.shape)
+        print("=============================")
+
+        # ----------------------------------
+        # PREDICT
+        # ----------------------------------
+        pred_log = model_pipe.predict(X)
+
+        # Reverse the log transformation (log1p -> expm1)
+        predicted_price = float(np.expm1(pred_log)[0])
+
+        print("\n===== PREDICTION =====")
+        print(predicted_price)
+        print("======================\n")
 
         return {
             "success": True,
-            "prediction": data
+            "prediction": {
+                "predicted_price": round(predicted_price, 2),
+                "unit": "Cr"
+            }
         }
 
     except Exception as e:
-
         print("\n========== FULL ERROR ==========")
         traceback.print_exc()
         print("================================\n")
 
-        error_msg = str(e)
-
-        if (
-            "127.0.0.1:8000" in error_msg
-            or "Failed to establish a new connection" in error_msg
-            or "actively refused" in error_msg
-        ):
-
-            return {
-                "success": False,
-                "error": (
-                    "Prediction server is not running.\n\n"
-                    "Please start the FastAPI prediction server using:\n"
-                    "python -m uvicorn app:app --reload --port 8000"
-                )
-            }
-
         return {
             "success": False,
-            "error": f"Prediction failed: {error_msg}"
+            "error": str(e)
         }
+
+

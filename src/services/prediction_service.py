@@ -377,28 +377,103 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT_DIR))
 
 # ==========================================
-# MODEL ARTIFACTS LOADING (ONCE GLOBALLY)
+# CONFIGURATION & GLOBAL STATE
 # ==========================================
 ARTIFACTS_DIR = ROOT_DIR / "cache" / "artifacts_auto"
-
-CLEANER_PATH = ARTIFACTS_DIR / "cleaner_full_for_te.pkl"
-TE_PATH = ARTIFACTS_DIR / "te_full.pkl"
-PREPROCESSOR_PATH = ARTIFACTS_DIR / "preprocessor.joblib"
-MODEL_PATH = ARTIFACTS_DIR / "final_model.joblib"
-
-# Load the serialised pipeline steps
-cleaner_full = joblib.load(CLEANER_PATH)
-te_full = joblib.load(TE_PATH)
-preprocessor = joblib.load(PREPROCESSOR_PATH)
-model = joblib.load(MODEL_PATH)
-
 TE_COLS = ["builder", "project_name", "location"]
 
-# Bind components into a unified execution pipeline
-model_pipe = Pipeline([
-    ("preprocessor", preprocessor),
-    ("model", model)
-])
+# Artifact mapping: { Logical Name: Actual Filename in MLflow }
+REQUIRED_ARTIFACTS = {
+    "cleaner": "cleaner_full_for_te.pkl",
+    "te": "te_full.pkl",
+    "preprocessor": "preprocessor.joblib",
+    "model": "final_model.joblib"
+}
+
+# Persistent in-memory cache for app lifecycle
+_CACHED_ARTIFACTS = None
+
+
+def download_explicit_artifacts(run_id):
+    """
+    Downloads each artifact explicitly by name from MLflow to guarantee
+    they are placed directly into ARTIFACTS_DIR without nested run folders.
+    """
+    import mlflow
+    
+    print(f"📦 Fetching 4 explicit components from Run ID: {run_id}")
+    for log_name, file_name in REQUIRED_ARTIFACTS.items():
+        print(f"       -> Downloading {file_name}...")
+        
+        # Explicitly pull the singular file asset
+        mlflow.artifacts.download_artifacts(
+            run_id=run_id,
+            artifact_path=file_name,
+            dst_path=str(ARTIFACTS_DIR)
+        )
+    print("✅ All explicit components downloaded and cached locally!")
+
+
+def get_or_download_artifacts():
+    """
+    Returns loaded components. If missing from disk, queries the 'DVC Pipeline'
+    experiment on MLflow, resolves the latest run, and pulls them down.
+    """
+    global _CACHED_ARTIFACTS
+    if _CACHED_ARTIFACTS is not None:
+        return _CACHED_ARTIFACTS
+
+    # Ensure local layout target exists
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Resolve exact local paths
+    local_paths = {name: ARTIFACTS_DIR / filename for name, filename in REQUIRED_ARTIFACTS.items()}
+    missing_artifacts = [name for name, path in local_paths.items() if not path.exists()]
+
+    if missing_artifacts:
+        print(f"⚠️ Missing local files: {missing_artifacts}.")
+        print("🕒 Cold start: Querying MLflow/DagsHub. First prediction will take 10-30s...")
+        try:
+            import mlflow
+            
+            # Fix Problem 2: Point directly to 'DVC Pipeline' matching evaluation.py
+            EXPERIMENT_NAME = "DVC Pipeline"
+            experiment = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
+            
+            if experiment is None:
+                raise ValueError(f"MLflow experiment '{EXPERIMENT_NAME}' not found. Check DagsHub UI.")
+            
+            # Fetch the latest successful run belonging to this experiment
+            runs = mlflow.search_runs(
+                experiment_ids=[experiment.experiment_id],
+                filter_string="status = 'FINISHED'",
+                order_by=["start_time DESC"],
+                max_results=1
+            )
+            
+            if runs.empty:
+                raise ValueError(f"No finished runs discovered inside experiment '{EXPERIMENT_NAME}'.")
+                
+            latest_run_id = runs.iloc[0]["run_id"]
+            
+            # Fix Problem 1: Direct targeted downloads
+            download_explicit_artifacts(latest_run_id)
+
+        except Exception as err:
+            print(f"❌ Critical failure while pulling artifacts from MLflow: {str(err)}")
+            raise err
+
+    # Load components safely into memory mapping
+    print("🧠 Initializing model components into memory map...")
+    _CACHED_ARTIFACTS = {name: joblib.load(path) for name, path in local_paths.items()}
+    
+    # Secure unified prediction pipeline
+    _CACHED_ARTIFACTS["model_pipe"] = Pipeline([
+        ("preprocessor", _CACHED_ARTIFACTS["preprocessor"]),
+        ("model", _CACHED_ARTIFACTS["model"])
+    ])
+
+    return _CACHED_ARTIFACTS
 
 
 # ==========================================
@@ -406,66 +481,40 @@ model_pipe = Pipeline([
 # ==========================================
 def sanitize_payload(row_dict):
     clean = {}
-
     for k, v in row_dict.items():
-        # ---------------------------------
-        # REMOVE NaN / None
-        # ---------------------------------
         if pd.isna(v):
             continue
-
-        # ---------------------------------
-        # REMOVE inf / -inf
-        # ---------------------------------
-        if isinstance(v, (float, np.floating)):
-            if np.isinf(v):
-                continue
-
-        # ---------------------------------
-        # REMOVE list/dict
-        # ---------------------------------
+        if isinstance(v, (float, np.floating)) and np.isinf(v):
+            continue
         if isinstance(v, (list, dict)):
             continue
 
-        # ---------------------------------
-        # SAFE NUMERIC CAST
-        # ---------------------------------
         if isinstance(v, (np.integer, int)):
             clean[k] = int(v)
-
         elif isinstance(v, (np.floating, float)):
             clean[k] = float(v)
-
         else:
             clean[k] = str(v)
-
     return clean
 
 
 # ==========================================
 # TARGET ENCODING HELPER
 # ==========================================
-def apply_te(df):
+def apply_te(df, artifacts):
     df = df.copy()
 
-    # Fill structural missing features to avoid schema mismatches
     for col in TE_COLS:
         if col not in df.columns:
             df[col] = np.nan
 
-    # Transform targets using the cleaner artifact
-    X_clean = cleaner_full.transform(df[TE_COLS].copy())
+    X_clean = artifacts["cleaner"].transform(df[TE_COLS].copy())
+    X_te_df = artifacts["te"].transform(X_clean)
 
-    # Encode cleaned target columns
-    X_te_df = te_full.transform(X_clean)
-
-    # Re-attach target encoded outputs back to active payload
     for col in TE_COLS:
         df[f"{col}_te"] = X_te_df[col].values
 
-    # Drop the original categorical columns since they are now encoded
     df.drop(columns=TE_COLS, inplace=True, errors="ignore")
-
     return df
 
 
@@ -474,50 +523,19 @@ def apply_te(df):
 # ==========================================
 def predict_property_price(property_row):
     try:
-        print("\n🚀 DIRECT MODEL PREDICTION")
-        print("No FastAPI")
-        print("No CSV lookup")
-        print("No localhost:8000")
+        print("\n🚀 DIRECT MODEL PREDICTION RUNNING")
+        
+        # Lazy initialization happens here at runtime
+        artifacts = get_or_download_artifacts()
 
-        # ----------------------------------
-        # PROPERTY ROW -> DICT
-        # ----------------------------------
         raw_payload = property_row.to_dict()
         payload = sanitize_payload(raw_payload)
 
-        print("\n===== PAYLOAD SIZE =====")
-        print(len(payload))
-        print("========================\n")
-
-        # ----------------------------------
-        # SINGLE ROW DATAFRAME
-        # ----------------------------------
         X = pd.DataFrame([payload])
+        X = apply_te(X, artifacts)
 
-        # ----------------------------------
-        # TARGET ENCODING
-        # ----------------------------------
-        X = apply_te(X)
-
-        print("\n===== MODEL INPUT COLUMNS =====")
-        print(X.columns.tolist())
-        print("===============================")
-
-        print("\n===== MODEL INPUT SHAPE =====")
-        print(X.shape)
-        print("=============================")
-
-        # ----------------------------------
-        # PREDICT
-        # ----------------------------------
-        pred_log = model_pipe.predict(X)
-
-        # Reverse the log transformation (log1p -> expm1)
+        pred_log = artifacts["model_pipe"].predict(X)
         predicted_price = float(np.expm1(pred_log)[0])
-
-        print("\n===== PREDICTION =====")
-        print(predicted_price)
-        print("======================\n")
 
         return {
             "success": True,
@@ -528,13 +546,10 @@ def predict_property_price(property_row):
         }
 
     except Exception as e:
-        print("\n========== FULL ERROR ==========")
+        print("\n========== ERROR LOGGED ==========")
         traceback.print_exc()
-        print("================================\n")
-
+        print("==================================\n")
         return {
             "success": False,
             "error": str(e)
         }
-
-

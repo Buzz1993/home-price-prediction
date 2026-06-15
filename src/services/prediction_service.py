@@ -379,7 +379,7 @@ sys.path.append(str(ROOT_DIR))
 # ==========================================
 # CONFIGURATION & GLOBAL STATE
 # ==========================================
-ARTIFACTS_DIR = ROOT_DIR / "cache" / "artifacts_auto"
+ARTIFACTS_DIR = ROOT_DIR / "cache" / "artifacts"
 TE_COLS = ["builder", "project_name", "location"]
 
 # Artifact mapping: { Logical Name: Actual Filename in MLflow }
@@ -394,84 +394,49 @@ REQUIRED_ARTIFACTS = {
 _CACHED_ARTIFACTS = None
 
 
-def download_explicit_artifacts(run_id):
-    """
-    Downloads each artifact explicitly by name from MLflow to guarantee
-    they are placed directly into ARTIFACTS_DIR without nested run folders.
-    """
-    import mlflow
-    
-    print(f"📦 Fetching 4 explicit components from Run ID: {run_id}")
-    for log_name, file_name in REQUIRED_ARTIFACTS.items():
-        print(f"       -> Downloading {file_name}...")
-        
-        # Explicitly pull the singular file asset
-        mlflow.artifacts.download_artifacts(
-            run_id=run_id,
-            artifact_path=file_name,
-            dst_path=str(ARTIFACTS_DIR)
-        )
-    print("✅ All explicit components downloaded and cached locally!")
-
-
 def get_or_download_artifacts():
     """
-    Returns loaded components. If missing from disk, queries the 'DVC Pipeline'
-    experiment on MLflow, resolves the latest run, and pulls them down.
+    Loads model artifacts from local cache folder.
+    No MLflow.
+    No DagsHub.
+    No downloads.
     """
+
     global _CACHED_ARTIFACTS
+
     if _CACHED_ARTIFACTS is not None:
         return _CACHED_ARTIFACTS
 
-    # Ensure local layout target exists
-    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    local_paths = {
+        name: ARTIFACTS_DIR / filename
+        for name, filename in REQUIRED_ARTIFACTS.items()
+    }
 
-    # Resolve exact local paths
-    local_paths = {name: ARTIFACTS_DIR / filename for name, filename in REQUIRED_ARTIFACTS.items()}
-    missing_artifacts = [name for name, path in local_paths.items() if not path.exists()]
+    missing_artifacts = [
+        str(path)
+        for path in local_paths.values()
+        if not path.exists()
+    ]
 
     if missing_artifacts:
-        print(f"⚠️ Missing local files: {missing_artifacts}.")
-        print("🕒 Cold start: Querying MLflow/DagsHub. First prediction will take 10-30s...")
-        try:
-            import mlflow
-            
-            # Fix Problem 2: Point directly to 'DVC Pipeline' matching evaluation.py
-            EXPERIMENT_NAME = "DVC Pipeline"
-            experiment = mlflow.get_experiment_by_name(EXPERIMENT_NAME)
-            
-            if experiment is None:
-                raise ValueError(f"MLflow experiment '{EXPERIMENT_NAME}' not found. Check DagsHub UI.")
-            
-            # Fetch the latest successful run belonging to this experiment
-            runs = mlflow.search_runs(
-                experiment_ids=[experiment.experiment_id],
-                filter_string="status = 'FINISHED'",
-                order_by=["start_time DESC"],
-                max_results=1
-            )
-            
-            if runs.empty:
-                raise ValueError(f"No finished runs discovered inside experiment '{EXPERIMENT_NAME}'.")
-                
-            latest_run_id = runs.iloc[0]["run_id"]
-            
-            # Fix Problem 1: Direct targeted downloads
-            download_explicit_artifacts(latest_run_id)
+        raise FileNotFoundError(
+            f"Missing prediction artifacts:\n{missing_artifacts}"
+        )
 
-        except Exception as err:
-            print(f"❌ Critical failure while pulling artifacts from MLflow: {str(err)}")
-            raise err
+    print("\n🧠 Loading prediction artifacts...")
+    print(f"📂 Artifact Folder: {ARTIFACTS_DIR}")
 
-    # Load components safely into memory mapping
-    print("🧠 Initializing model components into memory map...")
-    _CACHED_ARTIFACTS = {name: joblib.load(path) for name, path in local_paths.items()}
-    
-    # Secure unified prediction pipeline
+    _CACHED_ARTIFACTS = {
+        name: joblib.load(path)
+        for name, path in local_paths.items()
+    }
+
     _CACHED_ARTIFACTS["model_pipe"] = Pipeline([
         ("preprocessor", _CACHED_ARTIFACTS["preprocessor"]),
         ("model", _CACHED_ARTIFACTS["model"])
     ])
+
+    print("✅ Prediction artifacts loaded successfully")
 
     return _CACHED_ARTIFACTS
 

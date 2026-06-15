@@ -2491,11 +2491,10 @@ def parse_intent_and_execute(
     user_changed_sliders: bool = False
 ) -> dict:
 
-    """
-    Main entry point executing structured search filters alongside ranking preferences.
-    """
-
     prompt_lower = user_prompt.lower().strip()
+
+    # Lazy initialization
+    store = get_memory_store()
 
     print("\n===== USER QUERY =====")
     print(user_prompt)

@@ -430,94 +430,12 @@ def predict_property_price(property_row):
 
     try:
 
-        # print("\n========== PROPERTY ROW ==========")
-        # print(property_row)
-        # print("=================================\n")
-
-        # print("\n========== PROPERTY ROW INDEX ==========")
-        # print(property_row.index.tolist())
-        # print("=======================================\n")
+        print("\n🚀 NEW PREDICTION FLOW")
+        print("Using property_row directly (NO CSV LOOKUP)")
 
         # ==========================================
-        # LOAD ORIGINAL RAW DATA
+        # BUILD PAYLOAD FROM MCP PROPERTY ROW
         # ==========================================
-
-        raw_df = pd.read_csv(
-            RAW_DATA_PATH,
-            low_memory=False
-        )
-
-        # print("\n========== RAW DF COLUMNS ==========")
-        # print(raw_df.columns.tolist())
-        # print("===================================\n")
-
-        if "id" in property_row.index:
-            property_id = property_row["id"]
-
-        elif "ID" in property_row.index:
-            property_id = property_row["ID"]
-
-        else:
-            return {
-                "success": False,
-                "error": "No property ID column found"
-            }
-
-        property_id = str(property_id).strip().lower()
-
-
-        # ==========================================
-        # HANDLE RAW CSV ID COLUMN SAFELY
-        # ==========================================
-        raw_df.columns = raw_df.columns.str.strip()
-
-        # print("\n========== RAW DF CLEANED COLUMNS ==========")
-        # print(raw_df.columns.tolist())
-        # print("===========================================\n")
-
-        raw_id_col = None
-
-        if "id" in raw_df.columns:
-            raw_id_col = "id"
-
-        elif "ID" in raw_df.columns:
-            raw_id_col = "ID"
-
-        else:
-            return {
-                "success": False,
-                "error": f"No ID column found in raw CSV. Columns: {raw_df.columns.tolist()}"
-            }
-
-        # print("RAW ID COLUMN:", raw_id_col)
-
-        matched_row = raw_df[
-            raw_df[raw_id_col]
-            .astype(str)
-            .str.strip()
-            .str.lower()
-            == property_id
-        ]
-
-        if matched_row.empty:
-            return {
-                "success": False,
-                "error": f"Original raw property not found for ID: {property_id}"
-            }
-
-        # ==========================================
-        # USE FULL ORIGINAL ROW
-        # SAME AS WORKING STREAMLIT PAGE
-        # ==========================================
-        # raw_payload = (
-        #     matched_row
-        #     .iloc[0]
-        #     .drop(labels=["PRICE"], errors="ignore")
-        #     .to_dict()
-        # )
-
-        # payload = sanitize_payload(raw_payload)
-
         raw_payload = property_row.to_dict()
 
         payload = sanitize_payload(raw_payload)
@@ -526,30 +444,25 @@ def predict_property_price(property_row):
         print(len(payload))
         print("========================\n")
 
-        # print("\n========== PAYLOAD SIZE ==========")
-        # print(len(payload))
-        # print("==================================\n")
-
-        # print("\n========== PAYLOAD ==========")
-        # print(payload)
-        # print("=============================\n")
-
-        #This code is used to send your property data (payload) from your Streamlit/LangGraph app -
-        #to the FastAPI prediction server so the ML model can predict the house price.
+        # ==========================================
+        # CALL FASTAPI PREDICTION SERVER
+        # ==========================================
         response = requests.post(
             PREDICT_API_URL,
             json=payload,
             timeout=60
         )
 
-        # print("STATUS:", response.status_code)
-        # print("RESPONSE:", response.text)
+        print("\n===== FASTAPI RESPONSE =====")
+        print("STATUS:", response.status_code)
+        print("BODY:", response.text)
+        print("============================\n")
 
         if response.status_code != 200:
-
             return {
                 "success": False,
-                "error": f"Prediction API failed ({response.status_code})"
+                "error": f"Prediction API failed ({response.status_code})",
+                "response": response.text
             }
 
         data = response.json()
@@ -558,8 +471,6 @@ def predict_property_price(property_row):
             "success": True,
             "prediction": data
         }
-    
-        
 
     except Exception as e:
 
@@ -567,14 +478,8 @@ def predict_property_price(property_row):
         traceback.print_exc()
         print("================================\n")
 
-        # Handle FastAPI server connection errors.
-        # Start server using:
-        # python -m uvicorn app:app --reload --port 8000
         error_msg = str(e)
 
-        # -----------------------------------------
-        # FASTAPI SERVER NOT RUNNING
-        # -----------------------------------------
         if (
             "127.0.0.1:8000" in error_msg
             or "Failed to establish a new connection" in error_msg
@@ -590,9 +495,6 @@ def predict_property_price(property_row):
                 )
             }
 
-        # -----------------------------------------
-        # UNKNOWN ERROR
-        # -----------------------------------------
         return {
             "success": False,
             "error": f"Prediction failed: {error_msg}"

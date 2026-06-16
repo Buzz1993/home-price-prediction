@@ -140,9 +140,6 @@
 
 FROM python:3.12-slim
 
-# ----------------------------------------------------------
-# System Dependencies
-# ----------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -151,43 +148,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Verify libgomp exists
-RUN ldconfig -p | grep libgomp || true
+RUN echo "===== VERIFY LIBGOMP ====="
+RUN find / -name "libgomp.so*" 2>/dev/null || true
+RUN ldconfig -p | grep gomp || true
 
-# ----------------------------------------------------------
-# Working Directory
-# ----------------------------------------------------------
 WORKDIR /app
 
-# ----------------------------------------------------------
-# Install Python Dependencies
-# ----------------------------------------------------------
 COPY requirements-dockers.txt .
 
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements-dockers.txt
 
-# ----------------------------------------------------------
-# Copy Project
-# ----------------------------------------------------------
 COPY . .
 
-# ----------------------------------------------------------
-# Python Path
-# ----------------------------------------------------------
 ENV PYTHONPATH=/app
 
-# ----------------------------------------------------------
-# Debug
-# ----------------------------------------------------------
 RUN ls -R /app/cache || true
 
-# ----------------------------------------------------------
-# Port
-# ----------------------------------------------------------
 EXPOSE 8000
 
-# ----------------------------------------------------------
-# Start App
-# ----------------------------------------------------------
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

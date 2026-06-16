@@ -541,20 +541,24 @@ def get_or_download_artifacts():
 # ==========================================
 def sanitize_payload(row_dict):
     clean = {}
+
     for k, v in row_dict.items():
-        if pd.isna(v):
-            continue
-        if isinstance(v, (float, np.floating)) and np.isinf(v):
-            continue
+
         if isinstance(v, (list, dict)):
+            continue
+
+        if isinstance(v, (float, np.floating)) and np.isinf(v):
             continue
 
         if isinstance(v, (np.integer, int)):
             clean[k] = int(v)
+
         elif isinstance(v, (np.floating, float)):
             clean[k] = float(v)
+
         else:
-            clean[k] = str(v)
+            clean[k] = v
+
     return clean
 
 
@@ -614,9 +618,34 @@ def predict_property_price(property_row):
 
         print("After TE Shape:", X.shape)
 
-        print("\n===== MODEL INPUT COLUMNS =====")
-        print(X.columns.tolist())
-        print("===============================")
+        # ---------------------------------
+        # MATCH TRAINING SCHEMA
+        # ---------------------------------
+
+        EXPECTED_COLUMNS = (
+            artifacts["preprocessor"]
+            .feature_names_in_
+            .tolist()
+        )
+
+        for col in EXPECTED_COLUMNS:
+
+            if col not in X.columns:
+                X[col] = np.nan
+
+        X = X[EXPECTED_COLUMNS]
+
+        print(
+            "Final Model Input Shape:",
+            X.shape
+        )
+
+        print(
+            "Expected Columns:",
+            len(EXPECTED_COLUMNS)
+        )
+
+        # ---------------------------------
 
         pred_log = artifacts["model_pipe"].predict(X)
 

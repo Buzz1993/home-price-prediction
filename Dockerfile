@@ -141,6 +141,13 @@
 FROM python:3.12-slim
 
 # ----------------------------------------------------------
+# PROVE THIS DOCKERFILE IS BEING USED
+# ----------------------------------------------------------
+RUN echo "########################################"
+RUN echo "CUSTOM DOCKERFILE IS RUNNING"
+RUN echo "########################################"
+
+# ----------------------------------------------------------
 # System Dependencies
 # ----------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -148,6 +155,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gcc \
     g++ \
+    build-essential \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -155,7 +163,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Verify libgomp exists
 # ----------------------------------------------------------
 RUN echo "===== VERIFY LIBGOMP ====="
+
 RUN find / -name "libgomp.so*" 2>/dev/null || true
+
 RUN ldconfig -p | grep gomp || true
 
 # ----------------------------------------------------------
@@ -164,7 +174,7 @@ RUN ldconfig -p | grep gomp || true
 WORKDIR /app
 
 # ----------------------------------------------------------
-# Install Python Dependencies
+# Install Dependencies
 # ----------------------------------------------------------
 COPY requirements-dockers.txt .
 
@@ -173,12 +183,12 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements-dockers.txt
 
 # ----------------------------------------------------------
-# Verify LightGBM can load
+# Verify LightGBM imports
 # ----------------------------------------------------------
 RUN python -c "import lightgbm; print('LIGHTGBM OK')"
 
 # ----------------------------------------------------------
-# Copy Entire Project
+# Copy Project
 # ----------------------------------------------------------
 COPY . .
 
@@ -188,9 +198,10 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # ----------------------------------------------------------
-# Debug Artifacts
+# Debug Artifact Folder
 # ----------------------------------------------------------
 RUN echo "===== CACHE CONTENTS ====="
+
 RUN ls -R /app/cache || true
 
 # ----------------------------------------------------------
@@ -199,6 +210,6 @@ RUN ls -R /app/cache || true
 EXPOSE 8000
 
 # ----------------------------------------------------------
-# Start Application
+# Start Server
 # ----------------------------------------------------------
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

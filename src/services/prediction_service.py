@@ -402,6 +402,14 @@ def get_or_download_artifacts():
     No downloads.
     """
 
+    try:
+        import lightgbm
+        print("✅ LIGHTGBM IMPORT SUCCESS")
+    except Exception as e:
+        print("❌ LIGHTGBM IMPORT FAILED")
+        print(repr(e))
+        raise
+
     global _CACHED_ARTIFACTS
 
     if _CACHED_ARTIFACTS is not None:

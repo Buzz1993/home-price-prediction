@@ -402,6 +402,10 @@ def get_or_download_artifacts():
     No downloads.
     """
 
+    print("\n====================================")
+    print("ENTERED get_or_download_artifacts")
+    print("====================================")
+
     try:
         import lightgbm
         print("✅ LIGHTGBM IMPORT SUCCESS")
@@ -413,12 +417,18 @@ def get_or_download_artifacts():
     global _CACHED_ARTIFACTS
 
     if _CACHED_ARTIFACTS is not None:
+        print("✅ Using cached artifacts")
         return _CACHED_ARTIFACTS
 
     local_paths = {
         name: ARTIFACTS_DIR / filename
         for name, filename in REQUIRED_ARTIFACTS.items()
     }
+
+    print("\n===== ARTIFACT PATHS =====")
+    for name, path in local_paths.items():
+        print(name, "->", path)
+    print("==========================")
 
     missing_artifacts = [
         str(path)
@@ -427,6 +437,9 @@ def get_or_download_artifacts():
     ]
 
     if missing_artifacts:
+        print("❌ Missing Artifacts:")
+        print(missing_artifacts)
+
         raise FileNotFoundError(
             f"Missing prediction artifacts:\n{missing_artifacts}"
         )
@@ -434,14 +447,39 @@ def get_or_download_artifacts():
     print("\n🧠 Loading prediction artifacts...")
     print(f"📂 Artifact Folder: {ARTIFACTS_DIR}")
 
+    try:
+        print("Loading cleaner...")
+        cleaner = joblib.load(local_paths["cleaner"])
+        print("✅ cleaner loaded")
+
+        print("Loading target encoder...")
+        te = joblib.load(local_paths["te"])
+        print("✅ target encoder loaded")
+
+        print("Loading preprocessor...")
+        preprocessor = joblib.load(local_paths["preprocessor"])
+        print("✅ preprocessor loaded")
+
+        print("Loading model...")
+        model = joblib.load(local_paths["model"])
+        print("✅ model loaded")
+
+    except Exception:
+        print("\n========== JOBLIB LOAD FAILURE ==========")
+        traceback.print_exc()
+        print("=========================================")
+        raise
+
     _CACHED_ARTIFACTS = {
-        name: joblib.load(path)
-        for name, path in local_paths.items()
+        "cleaner": cleaner,
+        "te": te,
+        "preprocessor": preprocessor,
+        "model": model
     }
 
     _CACHED_ARTIFACTS["model_pipe"] = Pipeline([
-        ("preprocessor", _CACHED_ARTIFACTS["preprocessor"]),
-        ("model", _CACHED_ARTIFACTS["model"])
+        ("preprocessor", preprocessor),
+        ("model", model)
     ])
 
     print("✅ Prediction artifacts loaded successfully")
@@ -495,20 +533,49 @@ def apply_te(df, artifacts):
 # DIRECT LOCAL PREDICTION SERVICE
 # ==========================================
 def predict_property_price(property_row):
+
+    print("\n====================================")
+    print("ENTERED predict_property_price")
+    print("====================================")
+
     try:
         print("\n🚀 DIRECT MODEL PREDICTION RUNNING")
-        
-        # Lazy initialization happens here at runtime
+
         artifacts = get_or_download_artifacts()
 
+        print("✅ Artifacts Ready")
+
         raw_payload = property_row.to_dict()
+
+        print("\n===== RAW PAYLOAD =====")
+        print(raw_payload)
+        print("=======================")
+
         payload = sanitize_payload(raw_payload)
 
+        print("\n===== SANITIZED PAYLOAD =====")
+        print(payload)
+        print("=============================")
+
         X = pd.DataFrame([payload])
+
+        print("DataFrame Shape:", X.shape)
+
         X = apply_te(X, artifacts)
 
+        print("After TE Shape:", X.shape)
+
+        print("\n===== MODEL INPUT COLUMNS =====")
+        print(X.columns.tolist())
+        print("===============================")
+
         pred_log = artifacts["model_pipe"].predict(X)
+
+        print("Prediction Log Value:", pred_log)
+
         predicted_price = float(np.expm1(pred_log)[0])
+
+        print("Predicted Price:", predicted_price)
 
         return {
             "success": True,
@@ -519,9 +586,11 @@ def predict_property_price(property_row):
         }
 
     except Exception as e:
+
         print("\n========== ERROR LOGGED ==========")
         traceback.print_exc()
         print("==================================\n")
+
         return {
             "success": False,
             "error": str(e)

@@ -408,28 +408,50 @@ def get_or_download_artifacts():
 
     try:
         import os
+        import ctypes
 
         print("\n===== LIGHTGBM DIAGNOSTICS =====")
 
+        torch_lib_path = (
+            "/usr/local/lib/python3.12/site-packages/torch/lib"
+        )
+
+        existing = os.environ.get(
+            "LD_LIBRARY_PATH",
+            ""
+        )
+
+        os.environ["LD_LIBRARY_PATH"] = (
+            f"{torch_lib_path}:{existing}"
+        )
+
         print(
             "LD_LIBRARY_PATH =",
-            os.environ.get("LD_LIBRARY_PATH")
+            os.environ["LD_LIBRARY_PATH"]
         )
 
-        print("\nSearching for libgomp...")
-        os.system(
-            "find / -name 'libgomp.so*' 2>/dev/null"
+        libgomp_path = (
+            "/usr/local/lib/python3.12/site-packages/torch/lib/libgomp.so.1"
         )
 
-        print("\nChecking linker cache...")
-        os.system(
-            "ldconfig -p | grep gomp || true"
-        )
+        if os.path.exists(libgomp_path):
+
+            print("✅ libgomp file found")
+
+            ctypes.CDLL(libgomp_path)
+
+            print("✅ LIBGOMP MANUALLY LOADED")
+
+        else:
+
+            print("❌ libgomp file NOT found")
 
         print("\nTrying LightGBM import...")
+
         import lightgbm
 
         print("✅ LIGHTGBM IMPORT SUCCESS")
+
         print("===== END DIAGNOSTICS =====\n")
 
     except Exception as e:

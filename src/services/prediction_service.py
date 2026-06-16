@@ -407,11 +407,38 @@ def get_or_download_artifacts():
     print("====================================")
 
     try:
+        import os
+
+        print("\n===== LIGHTGBM DIAGNOSTICS =====")
+
+        print(
+            "LD_LIBRARY_PATH =",
+            os.environ.get("LD_LIBRARY_PATH")
+        )
+
+        print("\nSearching for libgomp...")
+        os.system(
+            "find / -name 'libgomp.so*' 2>/dev/null"
+        )
+
+        print("\nChecking linker cache...")
+        os.system(
+            "ldconfig -p | grep gomp || true"
+        )
+
+        print("\nTrying LightGBM import...")
         import lightgbm
+
         print("✅ LIGHTGBM IMPORT SUCCESS")
+        print("===== END DIAGNOSTICS =====\n")
+
     except Exception as e:
+
         print("❌ LIGHTGBM IMPORT FAILED")
         print(repr(e))
+
+        print("===== END DIAGNOSTICS =====\n")
+
         raise
 
     global _CACHED_ARTIFACTS

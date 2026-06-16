@@ -143,13 +143,16 @@ FROM python:3.12-slim
 # ----------------------------------------------------------
 # System Dependencies
 # ----------------------------------------------------------
-# libgomp1 is REQUIRED by LightGBM
-# ----------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
+    gcc \
+    g++ \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Verify libgomp exists
+RUN ldconfig -p | grep libgomp || true
 
 # ----------------------------------------------------------
 # Working Directory
@@ -161,10 +164,11 @@ WORKDIR /app
 # ----------------------------------------------------------
 COPY requirements-dockers.txt .
 
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements-dockers.txt
 
 # ----------------------------------------------------------
-# Copy Entire Project
+# Copy Project
 # ----------------------------------------------------------
 COPY . .
 
@@ -174,7 +178,7 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # ----------------------------------------------------------
-# Debug (optional)
+# Debug
 # ----------------------------------------------------------
 RUN ls -R /app/cache || true
 
@@ -184,6 +188,6 @@ RUN ls -R /app/cache || true
 EXPOSE 8000
 
 # ----------------------------------------------------------
-# Start Application
+# Start App
 # ----------------------------------------------------------
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

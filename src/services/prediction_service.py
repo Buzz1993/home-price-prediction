@@ -635,6 +635,12 @@ def predict_property_price(property_row):
 
         X = X[EXPECTED_COLUMNS]
 
+        print("\n===== MODEL INPUT DTYPES =====")
+        print(X.dtypes)
+
+        print("\n===== MODEL INPUT SAMPLE =====")
+        print(X.head(1).T)
+
         print(
             "Final Model Input Shape:",
             X.shape
@@ -646,6 +652,18 @@ def predict_property_price(property_row):
         )
 
         # ---------------------------------
+
+        print("\n===== MODEL INPUT COLUMNS =====")
+        print(X.columns.tolist())
+
+        print("\n===== MODEL INPUT DTYPES =====")
+        print(X.dtypes)
+
+        print("\n===== MODEL INPUT SAMPLE =====")
+        print(X.head(1).T)
+        print("=============================")
+
+
 
         pred_log = artifacts["model_pipe"].predict(X)
 

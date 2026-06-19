@@ -64,7 +64,8 @@ def init_session_state():
     # Initialize all session variables
     # =============================
     """
-    This function is used in Streamlit to make sure all required variables exist inside st.session_state.
+    Initializes all required Streamlit session state variables
+    used by the application.
     """
     # THREAD SYSTEM
     if "threads" not in st.session_state:  #Creates a dictionary to store: different chat/search threads
@@ -144,15 +145,26 @@ def reset_filters(default_filters):
 # =============================
 def handle_search(df, X_processed, filters, intent, slider_weights, mode):
 
-    # =============================
-    # Run search + create/update thread
-    # =============================
     """
-    Executes search pipeline.
-    
-    RULE:
-    - If active thread is "New Chat" → reuse same thread
-    - Else → create new thread
+    Runs the property search and stores the recommendation results
+    in a chat thread.
+
+    Inputs:
+        df: Property dataset.
+        X_processed: Processed property features.
+        filters: Selected search filters.
+        intent: User preferences.
+        slider_weights: Ranking weights.
+        mode: Search mode (static/dynamic).
+
+    Returns:
+        None
+
+    Side Effects:
+        - Generates property recommendations.
+        - Creates or updates a chat thread.
+        - Stores search results in the thread.
+        - Refreshes the UI.
     """
 
     initial_state = {
@@ -193,6 +205,14 @@ def handle_search(df, X_processed, filters, intent, slider_weights, mode):
     #estimated_rent_min, estimated_rent_max (from search agent))
     #print("=============================")
     # print(st.session_state.threads) # get empty dictionary {} when we run the search(after clicking on search button) for the first time as no thread is created yet
+
+
+    # Static mode + only one matching property
+    st.session_state.single_property_warning = (
+        recs
+        and mode == "static"
+        and recs["similar"].empty
+    )
 
 
     print("==============111===============")

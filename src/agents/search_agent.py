@@ -12,12 +12,16 @@ from src.utils.rent_utils import calculate_rent
 import pandas as pd
 
 def add_rent_columns(df):
-        #add estimated_rent_min and estimated_rent_max columns to Similar Properties dataframe by applying calculate_rent function on each row
-        df[["estimated_rent_min", "estimated_rent_max"]] = df.apply(
-            lambda row: pd.Series(calculate_rent(row)),
-            axis=1
-        )
+    if df.empty:
         return df
+
+    #add estimated_rent_min and estimated_rent_max columns to Similar Properties dataframe by applying calculate_rent function on each row
+    df[["estimated_rent_min", "estimated_rent_max"]] = df.apply(
+        lambda row: pd.Series(calculate_rent(row)),
+        axis=1
+    )
+    return df
+
 
 def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
     """
@@ -36,7 +40,7 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
         return None
 
     # Ranking
-    recs["similar"] = apply_hybrid_ranking(recs["similar"], intent, slider_weights) #rank similar properties based on hybrid score (cosine similarity + weighted business score) and 
+    recs["similar"] = apply_hybrid_ranking(similar_df=recs["similar"], intent=intent, slider_weights=slider_weights) #rank similar properties based on hybrid score (cosine similarity + weighted business score) and 
                                                                                     #add column as "hybrid_score" to Similar Properties dataframe
 
     print("1"*50)

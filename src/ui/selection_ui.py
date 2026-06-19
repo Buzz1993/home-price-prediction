@@ -223,6 +223,7 @@ def handle_selection(df, selected_keys_state_key, editor_key):
     st.session_state[selected_keys_state_key] = current_selected
 
 
+
 # =============================
 # RENDER INPUT PROPERTIES
 # =============================
@@ -231,6 +232,7 @@ def render_input_properties(input_df, thread_id):
     Display input property table
     with property selection support.
     """
+
     st.subheader("🏠 Input Property")
 
     handle_selection(
@@ -238,6 +240,13 @@ def render_input_properties(input_df, thread_id):
         "input_selected_keys",
         f"input_editor_{thread_id}"
     )
+
+    # Show warning AFTER displaying the property
+    if st.session_state.get("single_property_warning", False):
+        st.warning(
+            "Only one property is available for the current selection in Static Mode. "
+            "Please try Dynamic Mode for more recommendations."
+        )
 
 
 # =============================
@@ -248,6 +257,9 @@ def render_similar_properties(sim_df, thread_id):
     Display similar properties table
     with property selection support.
     """
+    if sim_df is None or sim_df.empty:
+        return
+    
     st.subheader("✨ Similar Properties")
 
     handle_selection(

@@ -526,7 +526,22 @@ PROPERTY_DETAIL_WHITELIST = [
 # =====================================================================
 
 def search_properties(bhk: str = None, amenities: str = None, location: str = None, limit: int = 5) -> list[dict]:
-    """Query inventory through fast text tokens and exact matching structural masks."""
+    """
+    Searches the property inventory using structured filters extracted
+    from the Copilot query parser.
+
+    Applies BHK and location filtering on top of the search engine results
+    and returns matching properties for ranking and recommendation.
+
+    Args:
+        bhk (str, optional): BHK filter (e.g. "2bhk").
+        amenities (str, optional): Amenity filter.
+        location (str, optional): Location or city filter.
+        limit (int, optional): Maximum number of properties to return.
+
+    Returns:
+        list[dict]: Matching property records.
+    """
     extracted_criteria = {
         "bhk": f"{bhk.strip().lower().replace(' ', '')}" if bhk else None,
         "amenities": amenities,

@@ -12,7 +12,7 @@ import pandas as pd
 # like messages, recommendations, comparison results, and explanations.
 def create_thread(name="New Chat", data=None):
     """
-    Create and return a new thread structure.
+    Creates and returns a new chat thread with default values.
     """
     return {
         "messages": [],

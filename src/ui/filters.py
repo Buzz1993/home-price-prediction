@@ -10,11 +10,8 @@ import streamlit as st
 # DEFAULT FILTER CONFIG
 # =============================
 def get_default_filters():
-    # =============================
-    # Return default filter values
-    # =============================
     """
-    Provides default values for all filters.
+    Returns the default values for all property filters.
     """
     return {
         "city": "Any",
@@ -31,12 +28,9 @@ def get_default_filters():
 # INIT FILTER STATE
 # =============================
 def init_filter_state(default_filters):
-    # If filter does not exist in memory, create it with default value    
-    # =============================
-    # Initialize filter session state
-    # =============================
     """
-    Ensures all filters exist in session state.
+    Initializes filter values (usually "Any") in session state if they do not
+    already exist.
     """
     for k in default_filters:
         if k not in st.session_state:
@@ -50,11 +44,8 @@ def init_filter_state(default_filters):
 # RESET FILTERS
 # =============================
 def reset_filters(default_filters):
-    # =============================
-    # Reset filters to default values
-    # =============================
     """
-    Resets all filters and clears last changed flag.
+    Resets all filters back to their default values.
     """
     for k in default_filters:
         st.session_state[k] = default_filters[k]
@@ -66,11 +57,8 @@ def reset_filters(default_filters):
 # APPLY FILTER LOGIC
 # =============================
 def get_filtered_df(df, filters, exclude_col=None):
-    # =============================
-    # Apply filters to dataframe
-    # =============================
     """
-    Returns filtered dataframe based on current filters.
+    Filters the property data based on the selected filter values.
     """
 
     temp = df.copy()
@@ -82,7 +70,7 @@ def get_filtered_df(df, filters, exclude_col=None):
 
         if v != "Any":
 
-            if k in ["builder", "transportation_hubs_clean"]:
+            if k in ["builder", "transportation_hubs_clean"]: # For builder and transportation hub filters, partial matching is used so related values are also included.
                 temp = temp[temp[k].str.contains(str(v), case=False, na=False)]
             else:
                 temp = temp[temp[k] == v]
@@ -94,16 +82,13 @@ def get_filtered_df(df, filters, exclude_col=None):
 # GET DROPDOWN OPTIONS
 # =============================
 def get_options(df, col, filters):
-    # =============================
-    # Get valid dropdown options
-    # =============================
     """
-    Returns filtered dropdown options for a column.
+    Returns available dropdown options based on the current filters.
     """
 
     temp = get_filtered_df(df, filters, exclude_col=col)
 
-    return ["Any"] + sorted(temp[col].dropna().unique().tolist())
+    return ["Any"] + sorted(temp[col].dropna().unique().tolist()) # help to building a dropdown
 
 
 # =============================
@@ -112,9 +97,6 @@ def get_options(df, col, filters):
 def render_filter_ui(df, default_filters):
     # Renders the top filter/input layer of the UI with static/dynamic mode and dropdown filters for- 
     # city, location, bed, furnish, price range, transportation hubs, and builder selection.
-    # =============================
-    # Render filter selection UI
-    # =============================
     """
     Displays filter dropdowns and handles changes.
     Returns selected filters and mode.

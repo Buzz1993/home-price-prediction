@@ -16,6 +16,20 @@ from sklearn.metrics.pairwise import cosine_similarity
 # PIPELINE
 # -----------------------------
 def build_pipeline():
+    """
+    most important job of this pipeline is to convert property data
+    into a clean numeric format and normalize it
+
+    The pipeline:
+    - Fills missing values.
+    - Converts categorical columns into numeric format.
+    - Processes location and builder information.
+    - Prepares amenity scores.
+    - Normalizes all features so they can be compared fairly.
+
+    Returns:
+        Pipeline: A ready-to-use preprocessing pipeline.
+    """
 
     numeric_features = [
         'locality_rank','locality_rating',"environment_rating","commuting_rating",
@@ -71,7 +85,24 @@ def train(df):
 # -----------------------------
 def filter_data(df, filters):
     """
-    Returns only matching properties from the dataframe based on filters.
+    Filters the property dataset based on the user's selected
+    search criteria.
+
+    Only properties matching the selected filters are returned.
+    Supports exact matching for most fields and partial matching
+    for text fields such as location, builder, and transportation hubs.
+
+    Example:
+        Filters:
+            city = "Mumbai"
+            bed = "2 BHK"
+            builder = "Lodha"
+
+        Result:
+            Returns only properties matching these criteria.
+
+    Returns:
+        DataFrame: Filtered properties matching the selected filters.
     """
     
     temp = df.copy()

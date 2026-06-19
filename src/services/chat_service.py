@@ -1411,8 +1411,11 @@ def fetch_safe_historical_context(store_instance, user_id: str) -> dict:
 
 def persist_safe_historical_context(store_instance, user_id: str, payload: dict) -> bool:
     """
-    Dynamically maps execution payload write states into memory stores
-    regardless of variations in contract execution naming signatures.
+    Saves the user's search filters and preferences so they can
+    be reused in follow-up conversations.
+
+    Returns:
+        bool: True if saved successfully, otherwise False.
     """
     for method_name in ["save", "store", "persist", "set_context", "update_context"]:
         if hasattr(store_instance, method_name):
@@ -1442,8 +1445,8 @@ def is_followup_query(prompt_lower: str) -> bool:
 
 def generate_custom_recommendation_reason(row: pd.Series, preferences: dict) -> str:
     """
-    Analyzes user-specified soft preferences and matching property attributes to construct
-    highly detailed, natural explanations for recommendations programmatically in Python.
+    Creates a personalized explanation describing why a property
+    was recommended based on the user's preferences.
     """
     reasons = []
 
@@ -1496,17 +1499,27 @@ def generate_custom_recommendation_reason(row: pd.Series, preferences: dict) -> 
 
 def extract_intent_and_preferences(user_prompt: str, historical_filters: dict = None, historical_weights: dict = None) -> dict:
     """
-    Unified extraction layer. Attempts to resolve both hard filters (bhk, location, amenities)
-    and soft ranking preferences in a single high-efficiency LLM call. Falls back dynamically
-    to robust regex heuristics if the API layer fails.
+    Extracts property search filters and preferences from a user query.
+
+    The function first uses an LLM to identify:
+    - Filters: BHK, location, amenities
+    - Preferences: price, area, connectivity, location, amenities
+
+    If the LLM fails, it falls back to regex-based extraction.
+
+    Preferences are converted into numerical weights that can be used
+    by the property recommendation/ranking engine.
+
+    Follow-up queries can reuse previously detected filters and weights.
+
+    Args:
+        user_prompt (str): User's property search query.
+        historical_filters (dict, optional): Filters from previous queries.
+        historical_weights (dict, optional): Weights from previous queries.
 
     Returns:
-        dict: {
-            "filters": {"bhk": str/None, "location": str/None, "amenities": str/None},
-            "preferences": {"price_importance": str, "amenities_importance": str, ...},
-            "weights": dict (mapped weights),
-            "source": str ("llm_unified_parser" or "regex_fallback")
-        }
+        dict: Extracted filters, preferences, ranking weights,
+        and parsing source information.
     """
     prompt_lower = user_prompt.lower().strip()
     historical_filters = historical_filters or {}
@@ -1788,7 +1801,7 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
 # MAIN PIPELINE ENTRY POINT
 # =====================================================================
 
-def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current_ui_sliders: dict = None, user_changed_sliders: bool = False) -> dict:
+def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current_ui_sliders: dict = None) -> dict:
     """
     Main entry point executing structured search filters alongside ranking preferences.
     """
@@ -1909,7 +1922,6 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
                 intent_weights=synthesized_chat_weights, 
                 slider_weights=current_ui_sliders, 
                 alpha=0.65,
-                user_changed_sliders=user_changed_sliders
             )
 
             # Programmatically inject naturalized recommendation reasons

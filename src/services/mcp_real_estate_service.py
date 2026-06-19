@@ -548,8 +548,7 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
     df = apply_hybrid_ranking(
         similar_df=df,
         intent_weights={},
-        slider_weights=None,
-        user_changed_sliders=False
+        slider_weights=None
     )
 
     df[["estimated_rent_min", "estimated_rent_max"]] = df.apply(

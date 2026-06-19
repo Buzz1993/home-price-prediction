@@ -348,10 +348,69 @@ def normalize(series):
 
 
 
+# -----------------------------
+# INTENT WEIGHTS
+# -----------------------------
+def get_dynamic_weights(intent):
+    """
+    Generate recommendation weights
+    based on user preferences like:
+    luxury, low budget, spacious, etc.
+
+    Returns normalized weights.
+    """
+
+    weights = {
+        "price": 0.30,
+        "area": 0.20,
+        "amenities": 0.15,
+        "location": 0.15,
+        "connectivity": 0.10,
+        "distance": 0.10
+    }
+
+    if not intent:
+        return weights
+
+    preferences = intent.get("preferences", [])
+
+    if "low budget" in preferences: #if user has "low budget" preference then we increase the weight for price and decrease the weight for area because for low budget users price is more important than area
+        weights["price"] += 0.15
+        weights["area"] -= 0.05
+
+    if "luxury" in preferences:
+        weights["amenities"] += 0.15
+        weights["area"] += 0.10
+        weights["price"] -= 0.10
+
+    if "location" in preferences:
+        weights["location"] += 0.15
+        weights["distance"] += 0.10
+        weights["price"] -= 0.05
+
+    if "spacious" in preferences:
+        weights["area"] += 0.20
+        weights["price"] -= 0.05
+
+    if "investment" in preferences:
+        weights["price"] += 0.10
+        weights["location"] += 0.10
+
+    total = sum(weights.values())
+    for k in weights:
+        weights[k] /= total
+
+    return weights
+
+
+
 def sanitize_weights(weights, baseline_keys):
     """
-    validation layer.
-    Ensures expected keys exist and values are numeric.
+    Validate and normalize a weight dictionary.
+
+    - Ensures all expected keys exist.
+    - Converts values to float.
+    - Replaces missing or invalid values with 0.0.
     """
 
     if not isinstance(weights, dict):
@@ -362,7 +421,7 @@ def sanitize_weights(weights, baseline_keys):
     for k in baseline_keys:
         value = weights.get(k, 0.0)
 
-        try:
+        try:    
             cleaned[k] = float(value)
         except (TypeError, ValueError):
             cleaned[k] = 0.0
@@ -370,14 +429,17 @@ def sanitize_weights(weights, baseline_keys):
     return cleaned
 
 
-def combine_weights(intent_weights, slider_weights, profile_weights=None, user_changed_sliders=False):
+def combine_weights(intent_weights, slider_weights):
     """
-    Combine preferences from 3 sources:
+    Combine preferences from 2 sources:
     1. UI sliders (60%) -> what user manually selected
-    2. Chat intent (30%) -> what user asked in conversation
-    3. User profile (10%) -> past user preferences
+    2. Chat intent (40%) -> what user asked in conversation
+    The final weights are normalized to sum to 1.0.
     Normalize and merge all active sources into one final weight dictionary.
     If no preferences are available, use default system weights.
+
+    Returns:
+    dict: Final ranking weights.
     """
     fallback_baseline = {
         "price": 0.30, "area": 0.20, "amenities": 0.15,
@@ -386,12 +448,12 @@ def combine_weights(intent_weights, slider_weights, profile_weights=None, user_c
 
     sanitized_intent = sanitize_weights(intent_weights, fallback_baseline.keys())
     sanitized_slider = sanitize_weights(slider_weights, fallback_baseline.keys())
-    sanitized_profile = sanitize_weights(profile_weights, fallback_baseline.keys())
+    
 
     sources = []
     
-    # 1. UI Sliders: Only contribute if the user explicitly interacted with them
-    if user_changed_sliders and sum(sanitized_slider.values()) > 0:
+    # 1. UI Sliders: Contribute whenever slider weights are available
+    if sum(sanitized_slider.values()) > 0:
         ui_total = sum(sanitized_slider.values())
         ui_norm = {k: v / ui_total for k, v in sanitized_slider.items()}
         sources.append((ui_norm, 0.60)) # 0.60 means 60% weight for sliders in final weight combination
@@ -400,13 +462,8 @@ def combine_weights(intent_weights, slider_weights, profile_weights=None, user_c
     if sum(sanitized_intent.values()) > 0:
         chat_total = sum(sanitized_intent.values())
         chat_norm = {k: v / chat_total for k, v in sanitized_intent.items()}
-        sources.append((chat_norm, 0.30)) # 0.30 means 30% weight for chat intent in final weight combination
+        sources.append((chat_norm, 0.40)) # 0.40 means 40% weight for chat intent in final weight combination
         
-    # 3. User Profile: Only contribute if explicit historical preferences exist
-    if sum(sanitized_profile.values()) > 0:
-        prof_total = sum(sanitized_profile.values())
-        prof_norm = {k: v / prof_total for k, v in sanitized_profile.items()}
-        sources.append((prof_norm, 0.10)) # 0.10 means 10% weight for user profile in final weight combination
         
     # Fallback Mechanism: If no active layers matched, return calibrated uniform system defaults
     if not sources: # if sources = [] then return default {"price": 0.30, "area": 0.20, "amenities": 0.15,"location": 0.15, "connectivity": 0.10, "distance": 0.10}
@@ -473,15 +530,18 @@ def compute_weighted_score(df, weights):
     return temp
 
 
-def apply_hybrid_ranking(similar_df, intent_weights=None, slider_weights=None, alpha=0.65, user_changed_sliders=False):
+def apply_hybrid_ranking(similar_df, intent=None, intent_weights=None, slider_weights=None, alpha=0.65):
     """
     The Single Source of Truth Ranking Engine.
     Blends structural vector similarity with normalized business rule filters.
     """
+
+    if intent_weights is None: 
+        intent_weights = get_dynamic_weights(intent)
+
     resolved_weights = combine_weights(
         intent_weights=intent_weights, 
-        slider_weights=slider_weights, 
-        user_changed_sliders=user_changed_sliders
+        slider_weights=slider_weights
     )
     temp = compute_weighted_score(similar_df, resolved_weights)
 

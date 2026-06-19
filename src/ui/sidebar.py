@@ -8,11 +8,26 @@ from src.services.thread_manager import create_thread
 # USER INTENT + SLIDERS
 # =============================
 def get_user_intent_and_weights(): 
-    # =============================
-    # Capture user preferences + weights
-    # =============================
     """
-    Collects user intent and slider weights.
+    Collects user preferences from the sidebar and generates
+    normalized weights for property ranking.
+
+    Returns:
+        tuple: User intent and recommendation weights.
+
+    eg:
+    intent = {
+        "preferences": ["low budget", "location"]
+    }
+
+    weights = {
+        "price": 0.30,
+        "amenities": 0.10,
+        "location": 0.25,
+        "area": 0.10,
+        "connectivity": 0.15,
+        "distance": 0.10
+    }
     """
 
     st.sidebar.markdown("## 🎯 Preferences")
@@ -52,7 +67,8 @@ def render_thread_sidebar():
     # Render thread UI with pin sorting
     # =============================
     """
-    Handles thread creation, pinning, sorting, and actions.
+    Renders the thread sidebar and manages thread actions such as
+    creating, opening, renaming, pinning, and deleting chats.
     """
 
     # if "pinned_threads" not in st.session_state:

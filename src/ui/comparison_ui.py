@@ -48,8 +48,9 @@ def render_comparison(df, edited_selected):
     """
 
     # -----------------------------
-    # VALIDATION
+    # VALIDATION :Validate that properties exist in the comparison tray and that at least two properties are selected for comparison.
     # -----------------------------
+
     if edited_selected is None:
         st.warning("No properties selected.")
         return
@@ -73,7 +74,7 @@ def render_comparison(df, edited_selected):
 
         # 🔥 DO NOT recompute if already exists
         # At the first comparison run, thread["comparison_result"] is None from recommendations.py,
-        # so the below - "if" block condition becomes False and the "else" block runs always first to generate and save the comparison results.
+        # so the below - "if" block condition becomes False and the "else" block runs always first to generate and save the comparison results(table).
         if thread.get("comparison_result") is not None:
             raw_df = thread["comparison_raw"] #Selected Properties (Comparison Tray) dataframe (same as compare_df but without the "Compare" column and only the original columns of the properties)
             compare_df = thread["comparison_result"] #Comparison Result dataframe

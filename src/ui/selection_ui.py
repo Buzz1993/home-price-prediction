@@ -47,8 +47,7 @@ def add_to_selected(df_row):
 # =============================
 def clear_selected():
     """
-    Clear all selected properties from
-    global session state and active thread.
+    Reset all selected properties and comparison-related session state.
     """
 
     # clear selected dataframe
@@ -81,12 +80,7 @@ def render_selected_panel():
     # Display selected properties tray
     # =============================
     """
-    Render selected properties tray with:
-    - compare option
-    - delete option
-    - clear selection option
-
-    Returns edited selected dataframe.
+    Display selected properties in the comparison tray and manage user actions such as compare, delete, and clear.
     """
 
     st.subheader("📌 Selected Properties (Comparison Tray)")

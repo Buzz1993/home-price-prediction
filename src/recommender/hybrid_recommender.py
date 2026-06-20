@@ -502,6 +502,7 @@ def compute_weighted_score(df, weights):
     price, area, amenities, location, connectivity, and distance.
     Apply user preference weights to each feature.
     Combine all feature scores into one final weighted_score.
+    Adds: price_score, area_score, amenities_score, location_score, connectivity_score, distance_score, weighted_score, and why_recommended columns.
     Generate a short explanation for why the property was recommended.
     """
     temp = df.copy()

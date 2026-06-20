@@ -27,17 +27,37 @@
 
 #rent_utils.py
 
+import pandas as pd
+
 def calculate_rent(row):
     """
     Calculates estimated minimum and maximum rent for a property.
     """
     try:
-        rent_min = row.get("rent_min", 0)
-        rent_max = row.get("rent_max", 0)
+        #data validation and NaN handling before the rent calculation
+        rent_min = pd.to_numeric(
+            row.get("rent_min", 0),
+            errors="coerce"
+        )
 
-        area = row["area"]
+        rent_max = pd.to_numeric(
+            row.get("rent_max", 0),
+            errors="coerce"
+        )
 
-        if rent_min == 0 or rent_max == 0 or area == 0:
+        area = pd.to_numeric(
+            row.get("area", 0),
+            errors="coerce"
+        )
+
+        if (
+            pd.isna(rent_min)
+            or pd.isna(rent_max)
+            or pd.isna(area)
+            or rent_min <= 0
+            or rent_max <= 0
+            or area <= 0
+        ):
             return 0, 0
 
         estimated_rent_min = int(rent_min * area)

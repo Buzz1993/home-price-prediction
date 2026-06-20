@@ -77,28 +77,28 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
         recs["similar"] = recs["similar"].merge(analysis_df,on="id",how="left") # Merge analysis results into Similar Properties dataframe
 
     # -----------------------------
-    # NEGOTIATION AGENT (ADD HERE)
-    # -----------------------------
-    # Run negotiation agent on similar properties to get negotiation results with columns "id","negotiation_power",-
-    # "suggested_discount_percent","target_price","price_position","strategy","talking_points"
-    negotiation_df = run_negotiation_agent(recs["similar"])
-
-    if negotiation_df is not None and len(negotiation_df) > 0:
-        recs["similar"] = recs["similar"].merge(
-            negotiation_df,
-            on="id",
-            how="left"
-        )
-
-    # -----------------------------
     # RENTAL AGENT (NEW)
     # -----------------------------
-    # Run rental agent on similar properties to get rental results with columns "id", "rent_estimate", "rent_reasoning"
+    # Run rental agent on similar properties to get rental results with columns "id", "rent_estimate", "rent_reasoning" and also merge that col in similar properties dataframe
     rental_df = run_rental_agent(recs["similar"])
 
     if rental_df is not None and len(rental_df) > 0:
         recs["similar"] = recs["similar"].merge(
             rental_df,
+            on="id",
+            how="left"
+        )
+
+    # -----------------------------
+    # NEGOTIATION AGENT (ADD HERE)
+    # -----------------------------
+    # Run negotiation agent on similar properties to get negotiation results with columns "id","negotiation_power",-
+    # "suggested_discount_percent","target_price","price_position","strategy","talking_points" and also merge that col in similar properties dataframe
+    negotiation_df = run_negotiation_agent(recs["similar"])
+
+    if negotiation_df is not None and len(negotiation_df) > 0:
+        recs["similar"] = recs["similar"].merge(
+            negotiation_df,
             on="id",
             how="left"
         )

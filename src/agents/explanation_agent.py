@@ -147,17 +147,22 @@ def generate_comparison_explanation(raw_df, compare_df, llm_func):
 
             "price_position",
             "negotiation_power",
+            "negotiation_score",
 
             "risk_label",
 
             "growth_label",
             "growth_reason",
 
+            "dev_summary",
+
             "locality_rating",
 
             "monthly_rent_estimate",
             "rental_yield_percent",
-            "investment_rating"
+            "investment_rating",
+            "demand_level",
+            "rental_strategy"
         ]].to_dict(orient="records"),
 
         "scoring": compare_df.to_dict(orient="records"),
@@ -175,7 +180,7 @@ def generate_comparison_explanation(raw_df, compare_df, llm_func):
         - price value insight (analysis_msg, price_position)
         - negotiation strength (negotiation_power)
         - risk profile (risk_label)
-        - growth potential (growth_label, growth_reason)
+        - growth potential (growth_label, growth_reason, dev_summary)
         - locality quality (locality_rating)
         - rental performance (monthly rent, rental yield, investment rating)
     2. COMPARISON DATA including overall score, verdict, and comparison reasoning
@@ -196,6 +201,9 @@ def generate_comparison_explanation(raw_df, compare_df, llm_func):
     - Be practical and human-like
     - Use development_data if available for growth comparison
     - Prefer real-time developments over static growth_reason
+    - Use dev_summary whenever available
+    - Mention specific upcoming infrastructure projects if present
+    - Prefer dev_summary over generic growth_reason when both exist
     - MUST compare rental yield and income potential between properties
     - Mention which property gives better rental return
     - Use rental data as a key decision factor
@@ -206,8 +214,11 @@ def generate_comparison_explanation(raw_df, compare_df, llm_func):
     - IMPORTANT: All prices are in Indian Rupees (₹)
     - NEVER use dollars ($)
     - Format like: ₹2.35 Cr
-    - Consider negotiation strength and pricing position
+    - Consider negotiation strength, negotiation score and pricing position
+    - Use demand_level and rental_strategy when discussing rental attractiveness
     - Mention if a property looks overpriced or undervalued
+    - DO NOT choose winner solely based on overall_score
+    - Cross-check price value, risk, growth, rental yield and negotiation opportunity
 
     Output STRICTLY in this format:
 

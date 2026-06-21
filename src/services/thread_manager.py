@@ -16,6 +16,7 @@ def create_thread(name="New Chat", data=None):
     """
     return {
         "messages": [],
+        "memory": [],
         "data": data,
         "selected": pd.DataFrame(),
         "comparison_result": None,

@@ -433,11 +433,11 @@ def run_comparison_agent(df):
     # -----------------------------
     def verdict(row):
 
-        if row["overall_score"] >= 0.75:
-            return "🏆 Best Value"
-
         if row.get("risk_score", 0) >= 6:
             return "⚠️ Risky"
+
+        if row["overall_score"] >= 0.75:
+            return "🏆 Best Value"
 
         if row.get("analysis_flag") == "undervalued":
             return "💎 Undervalued"
@@ -500,6 +500,7 @@ def run_comparison_agent(df):
 
             "analysis_flag",
             "analysis_severity",
+            "analysis_msg",
 
             "locality_rating",
             "rental_yield_percent",

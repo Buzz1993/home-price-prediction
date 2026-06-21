@@ -80,9 +80,7 @@ def run_comparison(selected_df):
 # =============================
 def prepare_map_data(df, master_df):
     """
-    Ensure latitude & longitude exist.
-    If already present → use directly
-    Else → fallback to merge
+    Make sure every property has latitude and longitude before plotting it on the map.
     """
 
     # ✅ CASE 1: Already present (BEST CASE)

@@ -92,6 +92,13 @@
 # chat_ui.py (FINAL FIXED VERSION)
 # ===============================
 
+import pandas as pd
+
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
+pd.set_option("display.width", None)
+pd.set_option("display.max_colwidth", None)
+
 import streamlit as st
 
 from src.graph.workflow import chat_graph
@@ -102,7 +109,7 @@ from src.llm.deepseek_client import ask_deepseek_stream
 # =============================
 # MAIN CHAT UI
 # =============================
-def handle_chat(thread, recs, edited_selected=None):
+def handle_chat(thread, recs):
 
     # =============================
     # 🔥 SHOW CHAT HISTORY
@@ -129,8 +136,9 @@ def handle_chat(thread, recs, edited_selected=None):
         thread["messages"].append(("USER", user_msg)) # Save the new user message to thread["messages"] i.e in thread chat history
 
         # -------------------------
-        # RUN CHAT GRAPH
+        # RUN LANGGRAPH
         # -------------------------
+        #Send property data, comparison data, explanation data and memory to the graph.
         with st.chat_message("assistant"):
 
             initial_state = {
@@ -155,16 +163,34 @@ def handle_chat(thread, recs, edited_selected=None):
                 "response": ""
             }
 
+            # print("========================================")
+            # print("\nSELECTED COLUMNS:")
+            # print(thread.get("selected").columns.tolist())
+            # print(thread.get("selected").shape)
+
+            # print("\nCOMPARISON_RESULT COLUMNS:")
+            # print(thread.get("comparison_result").columns.tolist())
+            # print(thread.get("comparison_result").shape)
+
+            # print("\nCOMPARISON_RAW COLUMNS:")
+            # print(thread.get("comparison_raw").columns.tolist())
+            # print(thread.get("comparison_raw").shape)
+            # print("========================================")
+
+
             final_state = chat_graph.invoke(initial_state)
 
+            # Get the latest memory updated inside memory_node() and save it back into the thread.
             thread["memory"] = final_state.get(
                 "memory",
                 thread.get("memory", [])
             )
 
+            # GET AI RESPONSE
             full_response = final_state["response"]
-
+            
+            # DISPLAY RESPONSE
             st.markdown(full_response)
 
-        # SAVE RESPONSE
+        # SAVE CHAT HISTORY
         thread["messages"].append(("AI", full_response))

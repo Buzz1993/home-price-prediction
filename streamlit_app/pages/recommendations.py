@@ -478,7 +478,7 @@ def main():
                 )  
 
         # 💬 Chat ALWAYS after UI
-        handle_chat(thread, recs, edited_selected)
+        handle_chat(thread, recs)
 
 # =============================
 # RUN APP

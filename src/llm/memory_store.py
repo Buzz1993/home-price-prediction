@@ -29,6 +29,11 @@ class SQLiteMemoryStore:
         return [row[0] for row in cur.fetchall()]
 
     def add_memory(self, user_id, text):
+        """
+        Load existing memories
+        Prevent duplicate memories
+        Save new memory to SQLite
+        """
         existing = self.get_memories(user_id)
 
         if text.lower() in [e.lower() for e in existing]:

@@ -53,9 +53,11 @@ USER_ID = "default_user" # Static user ID - "default_user" used for this project
 
 def memory_node(state):
     """
-    Extracts user memory from chat messages,
-    stores it in SQLite memory storage,
-    and loads all saved memories and stores them in state["memory"]. 
+    # Get latest user message
+    # Extract memory from the message using DeepSeek
+    # Save new memory to SQLite
+    # Load all saved memories from SQLite
+    # Store them in state["memory"] 
     """
 
     print("\n" + "="*60)
@@ -65,7 +67,7 @@ def memory_node(state):
 
     print("✅ memory_node executed")
 
-    user_msg = state["user_message"] # Get the latest user message from state to extract memory from it. This is the same "user_message" that was set in the initial state 
+    user_msg = state["user_message"] # Get the latest user message from state, to extract memory from it. This is the same "user_message" that was set in the initial state 
                                      # when the chat graph started executing in chat_ui.py. As the graph executes, this "user_message" can be updated with new user queries, 
                                      # and memory_node will always extract memory from the latest query.
 

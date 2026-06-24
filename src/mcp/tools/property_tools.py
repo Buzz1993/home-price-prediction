@@ -683,13 +683,17 @@ def get_properties_by_ids(property_ids: list[str]) -> list[dict]:
 # 2. PROPERTY EVALUATION TOOLS
 # =====================================================================
 
-def compare_properties(property_ids: list[str]) -> dict:
+def compare_properties(property_ids: list[str]) -> dict: # Receives the selected property IDs from the tray.
     """
     Compare multiple properties using MCP analysis.
     Sort properties by overall_score.
     Return the highest-scoring property as the winner
     along with the complete ranking list.
     """
+    print("=" * 50)
+    print("Raw property_ids received:", property_ids)
+    print("=" * 50)
+
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if len(target_ids) < 2:
         return {"error": "Analytical stacking comparison metrics require at least 2 distinct property IDs."}

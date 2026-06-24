@@ -2226,6 +2226,10 @@ def extract_intent_and_preferences(user_prompt: str, historical_filters: dict = 
     historical_filters = historical_filters or {}
     historical_weights = historical_weights or {}
 
+    print("\n===== USER QUERY =====")
+    print("extract_intent_and_preferences", prompt_lower)
+    print("======================\n")
+
     # -----------------------------------------------------------------
     # LAYER 1: LLM SEMANTIC INTENT EXTRACTION
     # -----------------------------------------------------------------
@@ -2556,7 +2560,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
             }
         return None
 
-    if any(k in prompt_lower for k in ["compare", "ranking", "rank"]):
+    if any(k in prompt_lower for k in ["compare", "comparison", "ranking", "rank", "vs", "versus"]):
         error = require_tray(2)
         if error:
             return error
@@ -2568,19 +2572,19 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
             return error
         return {"type": "rental", "content": tools.get_rental_analysis(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["predict", "prediction", "predicted price", "estimated price"]):
+    if any(k in prompt_lower for k in ["predict", "prediction", "predicted price", "estimated price", "price estimate", "property value"]):
         error = require_tray()
         if error:
             return error
         return {"type": "prediction", "content": tools.get_price_prediction(session_state_tray)}
     
-    if any(k in prompt_lower for k in [ "negotiate", "discount", "deal", "target price"]):
+    if any(k in prompt_lower for k in [ "negotiate", "negotiation", "discount", "deal", "target price", "bargain", "best price"]):
         error = require_tray()
         if error:
             return error
         return {"type": "negotiation", "content": tools.get_negotiation_strategy(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["valuation", "fair value", "overpriced", "undervalued"]):
+    if any(k in prompt_lower for k in ["valuation", "fair value", "fair price", "overpriced", "undervalued", "market value", "worth buying"]):
         error = require_tray()
         if error:
             return error

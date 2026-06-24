@@ -904,6 +904,11 @@ def render_search_results_table(results_list, msg_idx):
     df_raw = build_search_dataframe(results_list) # Converts raw search data into a table and shows a TICK if the property is already in the tray, and NO TICK if it isn't
     df_display = df_raw[SEARCH_DISPLAY_COLUMNS] # Rearrange columns so the selection checkbox stays on the far left
 
+    print("============================")
+    print("df_raw :",df_raw)
+    print("df_raw :",df_display)
+    print("============================")
+
     st.write("🎯 **Search Results:** Check rows to stage them in your active evaluation tray:")
     
     # Creates an interactive table. Returns the updated dataframe after the user makes changes.
@@ -915,6 +920,9 @@ def render_search_results_table(results_list, msg_idx):
         column_config=SEARCH_COLUMN_CONFIG,
         use_container_width=True
     )
+    print("============================")
+    print("df_raw :",edited_df)
+    print("============================")
     handle_search_result_selection(edited_df) # Detect user changes inside the interactive table block and update the tray state accordingly
 
 
@@ -1034,6 +1042,10 @@ def render_extended_data_grids(message):
 
 def render_chat_history():
     """Loops through and renders standard history, updating internal component references safely."""
+    print("=" * 50)
+    print("render_chat_history() executed")
+    print("chat_history:", st.session_state.chat_history)
+    print("=" * 50)
     for msg_idx, message in enumerate(st.session_state.chat_history):
         with st.chat_message(message["role"]):
             # Render the header or conversational message body text first
@@ -1182,7 +1194,9 @@ def render_intent_chat_workspace():
         st.title("🧠 EstateMind Copilot")
         st.caption("Ask questions naturally: e.g., 'Want 2bhk property with cctv near goregaon railway station'")
         st.write("---")
-        
+
+        # render_chat_history() runs first, but on the initial page load there is no chat history to display,
+        # so nothing is rendered. so then this handle_new_chat_input() gets triggered.
         render_chat_history()
         handle_new_chat_input()
         

@@ -542,6 +542,7 @@ def search_properties(bhk: str = None, amenities: str = None, location: str = No
     Returns:
         list[dict]: Matching property records.
     """
+    print("☑️ search_properties executed")
     extracted_criteria = {
         "bhk": f"{bhk.strip().lower().replace(' ', '')}" if bhk else None,
         "amenities": amenities,
@@ -655,6 +656,7 @@ def search_properties(bhk: str = None, amenities: str = None, location: str = No
 
 def get_property_details(property_id: str) -> dict:
     """Perform a filtered drill-down isolation query matching a single asset ID."""
+    print("☑️ get_property_details executed")
     target_id = str(property_id).strip()
     match_frame = GLOBAL_MASTER_DF[GLOBAL_MASTER_DF["id"].astype(str).str.strip() == target_id]
     
@@ -667,6 +669,7 @@ def get_property_details(property_id: str) -> dict:
 
 def get_properties_by_ids(property_ids: list[str]) -> list[dict]:
     """Batch-loads and resolves multiple property detail records in a single round-trip call."""
+    print("☑️ get_properties_by_ids executed")
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if not target_ids:
         return []
@@ -690,6 +693,7 @@ def compare_properties(property_ids: list[str]) -> dict: # Receives the selected
     Return the highest-scoring property as the winner
     along with the complete ranking list.
     """
+    print("☑️ compare_properties executed")
     print("=" * 50)
     print("Raw property_ids received:", property_ids)
     print("=" * 50)
@@ -714,6 +718,7 @@ def compare_properties(property_ids: list[str]) -> dict: # Receives the selected
 
 def get_rental_analysis(property_ids: list[str]) -> list[dict]:
     """Extract micro-rental income generation metrics, estimates, and yields."""
+    print("☑️ get_rental_analysis executed")
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if not target_ids:
         return []
@@ -722,6 +727,7 @@ def get_rental_analysis(property_ids: list[str]) -> list[dict]:
 
 def get_price_prediction(property_ids: list[str]) -> list[dict]:
     """Involves prediction core server logic routines to trace estimated variance metrics."""
+    print("☑️ get_price_prediction executed")
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if not target_ids:
         return []
@@ -730,6 +736,7 @@ def get_price_prediction(property_ids: list[str]) -> list[dict]:
 
 def get_negotiation_strategy(property_ids: list[str]) -> list[dict]:
     """Generates localized leverage power scores, target caps, and verbal counter strategies."""
+    print("☑️ get_negotiation_strategy executed")
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if not target_ids:
         return []
@@ -738,6 +745,7 @@ def get_negotiation_strategy(property_ids: list[str]) -> list[dict]:
 
 def get_valuation_analysis(property_ids: list[str]) -> list[dict]:
     """Validates baseline distribution thresholds to identify fair market pricing parameters."""
+    print("☑️ get_valuation_analysis executed")
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if not target_ids:
         return []
@@ -746,6 +754,7 @@ def get_valuation_analysis(property_ids: list[str]) -> list[dict]:
 
 def get_investment_advice(property_ids: list[str]) -> list[dict]:
     """Runs structural profile matrices to chart risk metrics against investment horizons."""
+    print("☑️ get_investment_advice executed")
     target_ids = [str(pid).strip() for pid in property_ids if pid]
     if not target_ids:
         return []
@@ -754,6 +763,7 @@ def get_investment_advice(property_ids: list[str]) -> list[dict]:
 
 def clear_property_analysis_cache() -> dict:
     """Explicitly purges agent model enrichment caches while maintaining the immutable engine states intact."""
+    print("☑️ clear_property_analysis_cache executed")
     clear_enrichment_cache()
     return {"status": "success", "message": "Global downstream property agent enrichment caches successfully flushed."}
 
@@ -765,7 +775,7 @@ def send_property_report(phone_number: str, report: str) -> dict:
     """
     Sends property report to n8n workflow.
     """
-
+    print("☑️ send_property_report executed")
     webhook_url = "https://buzz123.app.n8n.cloud/webhook-test/98d3e0b7-9577-43ff-8f7a-a43956739ff9"
 
     response = requests.post(

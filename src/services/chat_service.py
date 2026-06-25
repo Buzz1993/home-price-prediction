@@ -2127,6 +2127,7 @@ def is_followup_query(prompt_lower: str) -> bool:
         bool: True if the query should reuse the previous
         search filters and pagination state.
     """
+    print("☑️ is_followup_query executed")
     matched = any(
         re.search(term, prompt_lower)
         for term in FOLLOWUP_TERMS
@@ -2149,6 +2150,7 @@ def generate_custom_recommendation_reason(row: pd.Series, preferences: dict) -> 
     Creates a personalized explanation describing why a property
     was recommended based on the user's preferences.
     """
+    print("☑️ generate_custom_recommendation_reason executed")
     reasons = []
 
     price_pref = preferences.get("price_importance", "none")
@@ -2222,6 +2224,7 @@ def extract_intent_and_preferences(user_prompt: str, historical_filters: dict = 
         dict: Extracted filters, preferences, ranking weights,
         and parsing source information.
     """
+    print("☑️ extract_intent_and_preferences executed")
     prompt_lower = user_prompt.lower().strip()
     historical_filters = historical_filters or {}
     historical_weights = historical_weights or {}
@@ -2510,6 +2513,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
     """
     Main entry point executing structured search filters alongside ranking preferences.
     """
+    print("☑️ parse_intent_and_execute executed")
     prompt_lower = user_prompt.lower().strip()
 
     print("\n===== USER QUERY =====")

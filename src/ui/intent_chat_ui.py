@@ -796,6 +796,7 @@ TRAY_COLUMN_CONFIG = {
 
 def init_session_states():
     """Initializes default lists in background session memory."""
+    print("☑️ init_session_states() executed")
     defaults = {
         "chat_history": [],
         "comparison_tray": [],
@@ -807,6 +808,7 @@ def init_session_states():
 
 def append_to_chat(role, text, payload_key=None, payload_data=None):
     """Stores user/assistant(LLM) messages and any associated dataframe in chat_history."""
+    print("☑️ append_to_chat(user) executed")
     msg = {"role": role, "text": text}
     if payload_key and payload_data is not None:
         msg[payload_key] = payload_data
@@ -815,7 +817,7 @@ def append_to_chat(role, text, payload_key=None, payload_data=None):
 
 def process_response(response):
     """Formats and saves the LLM response to the chat history."""
-    
+    print("☑️ process_response() executed")
     # 1. Grab the response type (like 'text' or 'search_results') and its core content data
     response_type = response["type"]
     content = response["content"]
@@ -838,6 +840,7 @@ def process_response(response):
 
 def build_tray_dataframe():
     """Creates a table showing the properties currently saved in the tray."""
+    print("☑️ build_tray_dataframe executed")
     return pd.DataFrame({
         "Compare": [
             pid in st.session_state.active_comparison_selection
@@ -849,7 +852,8 @@ def build_tray_dataframe():
 
 
 def build_search_dataframe(results_list):
-    """Creates a table for search results synced with active tray selections."""
+    """Creates a table for search results syncedwith active tray selections."""
+    print("☑️ build_search_dataframe executed")
     # Converts raw search data into a table
     df = pd.DataFrame(results_list) 
     
@@ -862,6 +866,7 @@ def build_search_dataframe(results_list):
 
 def render_dataframe(data):
     """Displays a standardized data table on the screen."""
+    print("☑️ render_dataframe executed")
     st.dataframe(
         pd.DataFrame(data),
         hide_index=True,
@@ -875,6 +880,7 @@ def render_dataframe(data):
 
 def handle_search_result_selection(edited_df):
     """Adds or removes properties from the tray based on user checkbox clicks."""
+    print("☑️ handle_search_result_selection executed")
     mutated = False
     # Loop through the table data received to see what the user clicked
     for _, row in edited_df.iterrows():
@@ -896,11 +902,13 @@ def handle_search_result_selection(edited_df):
 
     # If any selection changed, refresh the screen to update the layout
     if mutated:
+        print("🔄 RERUN: Search result selection changed")
         st.rerun()
 
 
 def render_search_results_table(results_list, msg_idx):
     """Displays search results in an interactive table with selection checkboxes."""
+    print("☑️ render_search_results_table executed")
     df_raw = build_search_dataframe(results_list) # Converts raw search data into a table and shows a TICK if the property is already in the tray, and NO TICK if it isn't
     df_display = df_raw[SEARCH_DISPLAY_COLUMNS] # Rearrange columns so the selection checkbox stays on the far left
 
@@ -928,6 +936,7 @@ def render_search_results_table(results_list, msg_idx):
 
 def render_comparison_result(comp_data):
     """Displays the analytical comparison results, winner info, and ranking tables."""
+    print("☑️ render_comparison_result executed")
     
     # 1. Show a green success box highlighting the winning property ID and its final score
     st.success(f"**Winner Selected:** Property {comp_data['winner']['id']} (Score: {comp_data['winner']['overall_score']})")
@@ -944,6 +953,7 @@ def render_comparison_result(comp_data):
 
 def render_extended_data_grids(message):
     """Display prediction, negotiation, valuation, and advisor results in Streamlit UI."""
+    print("☑️ render_extended_data_grids executed")
     if "prediction_data" in message:
         pred_df = pd.DataFrame(message["prediction_data"])
         st.dataframe(pred_df.style.format({"original_price": "₹{:.2f} Cr", "predicted_price": "₹{:.2f} Cr", "margin_diff": "₹{:.2f} Cr"}), hide_index=True, use_container_width=True)
@@ -1042,6 +1052,7 @@ def render_extended_data_grids(message):
 
 def render_chat_history():
     """Loops through and renders standard history, updating internal component references safely."""
+    print("☑️ render_chat_history executed")
     print("=" * 50)
     print("render_chat_history() executed")
     print("chat_history:", st.session_state.chat_history)
@@ -1076,6 +1087,7 @@ def render_chat_history():
 
 def handle_new_chat_input():
     """Handles the user's input, gets the LLM response, and updates the chat."""
+    print("☑️ handle_new_chat_input executed")
     
     # 1. Listen for when the user types something in the chat box and presses Enter
     if user_input := st.chat_input("Ask anything about properties..."):
@@ -1094,8 +1106,10 @@ def handle_new_chat_input():
         # 5. Process and display the assistant (LLM) response.
         with st.chat_message("assistant"):
             process_response(response)  # Formats data (shows text, search tables, or comparison grids)
+            print("🔄 RERUN: New chat response generated")
             st.rerun()                  # Refresh the screen to cleanly show the updated conversation
-
+            # rerun restarts the entire Streamlit script from the top. hence after this all function from 
+            # render_intent_chat_workspace() get run
 
 # ---------------------------------------------------------------------
 # 5. PERSISTENT EVALUATION SIDEBAR TRAYS
@@ -1103,17 +1117,22 @@ def handle_new_chat_input():
 
 def run_comparison():
     """Triggers the property comparison analysis and saves the results to chat."""
+    print("☑️ run_comparison executed")
+
     append_to_chat("user", "Compare selected properties from my active tray")
     
     with st.spinner("Processing node routing matrices..."):
         response = parse_intent_and_execute("compare properties", st.session_state.active_comparison_selection)
         
     process_response(response)
+    print("🔄 RERUN: Comparison completed")
     st.rerun()
 
 
 def handle_tray_mutations(edited_tray_df):
     """Processes deletions and updates selected properties in the comparison tray."""
+    print("☑️ handle_tray_mutations executed")
+
     updated_selection = []
     tray_mutated = False
     
@@ -1133,11 +1152,14 @@ def handle_tray_mutations(edited_tray_df):
 
     st.session_state.active_comparison_selection = updated_selection
     if tray_mutated:
+        print("🔄 RERUN: Tray updated")
         st.rerun()
 
 
 def render_tray_actions():
     """Renders the buttons to compare properties or clear the tray."""
+    print("☑️ render_tray_actions executed")
+
     disable_comparison = len(st.session_state.active_comparison_selection) < 2
     
     if st.button("🏆 Compare Properties", use_container_width=True, type="primary", disabled=disable_comparison):
@@ -1146,11 +1168,14 @@ def render_tray_actions():
     if st.button("🗑️ Clear Entire Tray", use_container_width=True):
         st.session_state.comparison_tray = []
         st.session_state.active_comparison_selection = []
+        print("🔄 RERUN: Tray cleared")
         st.rerun()
 
 
 def render_tray_column():
     """Displays and manages the property comparison sidebar."""
+    print("☑️ render_tray_column executed")
+
     st.subheader("📌 Active Comparison Tray")
     st.write("Properties staged for multi-node evaluation:")
 
@@ -1186,6 +1211,8 @@ def render_tray_column():
 
 def render_intent_chat_workspace():
     """Splits the screen into a main chat window and a property sidebar."""
+    print("☑️ render_intent_chat_workspace executed")
+
     init_session_states()
     
     main_chat_col, sidebar_tray_col = st.columns([3, 1])
@@ -1202,4 +1229,8 @@ def render_intent_chat_workspace():
         
     with sidebar_tray_col:
         render_tray_column()
+
+
+
+
 

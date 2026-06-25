@@ -342,6 +342,7 @@ import pandas as pd
 
 def normalize(series):
     """Normalize values between 0 and 1 for scale unification."""
+    #print("☑️ normalize executed")
     if series.max() == series.min():
         return pd.Series([0.0] * len(series), index=series.index)
     return (series - series.min()) / (series.max() - series.min())
@@ -359,6 +360,7 @@ def get_dynamic_weights(intent):
 
     Returns normalized weights.
     """
+    print("☑️ get_dynamic_weights executed")
 
     weights = {
         "price": 0.30,
@@ -412,7 +414,7 @@ def sanitize_weights(weights, baseline_keys):
     - Converts values to float.
     - Replaces missing or invalid values with 0.0.
     """
-
+    #print("☑️ sanitize_weights executed")
     if not isinstance(weights, dict):
         return {k: 0.0 for k in baseline_keys}
 
@@ -441,6 +443,8 @@ def combine_weights(intent_weights, slider_weights):
     Returns:
     dict: Final ranking weights.
     """
+
+    print("☑️ combine_weights executed")
     fallback_baseline = {
         "price": 0.30, "area": 0.20, "amenities": 0.15,
         "location": 0.15, "connectivity": 0.10, "distance": 0.10
@@ -488,6 +492,8 @@ def combine_weights(intent_weights, slider_weights):
 
 def explain(row):
     """Generate short analytical explanation snippet for property recommendations."""
+
+    #print("☑️ explain executed")
     reasons = []
     if row["price_score"] > 0.2: reasons.append("good price")
     if row["location_score"] > 0.2: reasons.append("great location")
@@ -505,6 +511,7 @@ def compute_weighted_score(df, weights):
     Adds: price_score, area_score, amenities_score, location_score, connectivity_score, distance_score, weighted_score, and why_recommended columns.
     Generate a short explanation for why the property was recommended.
     """
+    print("☑️ compute_weighted_score executed")
     temp = df.copy()
 
     price_norm = normalize(temp["price"])
@@ -536,7 +543,7 @@ def apply_hybrid_ranking(similar_df, intent=None, intent_weights=None, slider_we
     The Single Source of Truth Ranking Engine.
     Blends structural vector similarity with normalized business rule filters.
     """
-
+    print("☑️ apply_hybrid_ranking executed")
     if intent_weights is None: 
         intent_weights = get_dynamic_weights(intent)
 

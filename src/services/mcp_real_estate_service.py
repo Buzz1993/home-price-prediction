@@ -874,6 +874,7 @@ def clear_enrichment_cache():
     Manually invalidates the runtime memory storage layer cleanly across threads.
     Essential for hot-reloading changes to agent files during active development.
     """
+    print("☑️ clear_enrichment_cache executed")
     global ENRICHMENT_CACHE
     with CACHE_LOCK:
         ENRICHMENT_CACHE.clear()
@@ -885,6 +886,7 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
     Returns a single dataframe containing both the original property data
     and all agent-generated insights.
     """
+    print("☑️ enrich_properties executed")
     if selected_df.empty:
         return selected_df
 
@@ -960,7 +962,7 @@ def get_cached_enrichment(property_ids: list[str]) -> pd.DataFrame:
     calculate it once, store it in cache, and reuse it later.
     also this get_cached_enrichment function returns all properties requested by the chatbot 
     """
-
+    print("☑️ get_cached_enrichment executed")
     global ENRICHMENT_CACHE
     
     # Standardize incoming elements cleanly
@@ -1027,6 +1029,7 @@ def run_mcp_comparison(property_ids: list[str]):
     Retrieves enriched property data(Original property data + all calculated insights added by our agents.) and runs the comparison model
     to generate rankings and investment scores.
     """
+    print("☑️ run_mcp_comparison executed")
     enriched_df = get_cached_enrichment(property_ids)
 
     # Comparison requires at least 2 properties.
@@ -1046,6 +1049,7 @@ def run_mcp_rental(property_ids: list[str]) -> pd.DataFrame:
     rental-related columns without re-running
     the rental agent.
     """
+    print("☑️ run_mcp_rental executed")
     enriched_df = get_cached_enrichment(property_ids)
     if enriched_df.empty:
         return pd.DataFrame()
@@ -1072,6 +1076,7 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
     Slices targets using optimized cache tracking and dispatches data 
     directly to inference prediction models safely.
     """
+    print("☑️ run_mcp_prediction executed")
     enriched_df = get_cached_enrichment(property_ids)
     results = []
     
@@ -1085,7 +1090,7 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
         input_row = row.copy()
         input_row["id"] = str(p_id).strip()
         
-        # Eliminate data leakage points prior to inference
+        # Remove the actual property price before sending the property data to the prediction model,to avoid data leakage
         for price_key in ["PRICE", "price"]:
             if price_key in input_row.index:
                 input_row = input_row.drop(price_key)
@@ -1102,9 +1107,7 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
         # print(prediction_result)
         # print("=======================================\n")
         
-        # If prediction fails, mark as "Prediction Failed".
-        # If prediction value is missing, mark as "Prediction Missing".
-        # Otherwise use the predicted price for further calculations.
+        # If the prediction request fails, record the failure and continue with the next property.
         if not prediction_result or not prediction_result.get("success"):
             results.append({
                 "id": p_id,
@@ -1115,10 +1118,12 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
                 "status": "Prediction Failed"
             })
             continue
-
+        
+        # Extract the predicted price returned by the prediction model.
         pred_data = prediction_result["prediction"]
         predicted_price = pred_data.get("predicted_price")
 
+        # The prediction process succeeded, but the predicted price is missing, so record prediction and continue with the next property.
         if predicted_price is None:
             results.append({
                 "id": p_id,
@@ -1129,7 +1134,8 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
                 "status": "Prediction Missing"
             })
             continue
-            
+        
+        # Save the successful prediction along with the price difference.
         results.append({
             "id": p_id,
             "location": row.get("location", "Unknown"),
@@ -1137,7 +1143,8 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
             "predicted_price": round(float(predicted_price), 2),
             "margin_diff": round(float(predicted_price) - float(original_price), 2)
         })
-        
+    
+    # Return prediction results for all requested properties as a DataFrame.
     return pd.DataFrame(results)
 
 
@@ -1146,6 +1153,7 @@ def run_mcp_prediction(property_ids: list[str]) -> pd.DataFrame:
 # =====================================================================
 def run_mcp_negotiation(property_ids: list[str]) -> pd.DataFrame:
     """Bypasses rule agent computation passes by returning compiled metric keys directly."""
+    print("☑️ run_mcp_negotiation executed")
     enriched_df = get_cached_enrichment(property_ids)
     if enriched_df.empty:
         return pd.DataFrame()
@@ -1169,6 +1177,7 @@ def run_mcp_negotiation(property_ids: list[str]) -> pd.DataFrame:
 # =====================================================================
 def run_mcp_valuation(property_ids: list[str]) -> pd.DataFrame:
     """Bypasses re-analysis by pulling benchmark variance indicators from cache."""
+    print("☑️ run_mcp_valuation executed")
     enriched_df = get_cached_enrichment(property_ids)
     if enriched_df.empty:
         return pd.DataFrame()
@@ -1192,8 +1201,10 @@ def run_mcp_valuation(property_ids: list[str]) -> pd.DataFrame:
 # =====================================================================
 def run_mcp_advisor(property_ids: list[str]) -> pd.DataFrame:
     """Uses cached tables to render direct decision portfolio summaries."""
+    print("☑️ run_mcp_advisor executed")
     enriched_df = get_cached_enrichment(property_ids)
     
+    # If only one property is selected, create a default comparison result since comparison requires at least two properties.
     if len(property_ids) < 2:
         compare_df = pd.DataFrame([{
             "id": pid, "overall_score": 0.50, "verdict": "👍 Balanced", "comparison_reason": "Context incomplete"
@@ -1201,11 +1212,12 @@ def run_mcp_advisor(property_ids: list[str]) -> pd.DataFrame:
     else:
         _, compare_df = run_mcp_comparison(property_ids)
         
-    advisor_df = run_advisor_agent(enriched_df)
+    advisor_df = run_advisor_agent(enriched_df) # Extract advisor-specific columns from the enriched property data.
     
-    # Drop colliding metadata elements if present prior to joining fields
+    # Remove duplicate columns before merging the comparison results.
     dup_cols = [c for c in compare_df.columns if c in advisor_df.columns and c != "id"]
     if dup_cols:
-        compare_df = compare_df.drop(columns=dup_cols)
-        
+        compare_df = compare_df.drop(columns=dup_cols) 
+
+    # Merge advisor insights with the comparison score and verdict.        
     return advisor_df.merge(compare_df[["id", "overall_score", "verdict"]], on="id", how="left")

@@ -550,7 +550,7 @@
 
 #     sections = []
 
-#     # =====================================
+#     # ====================================
 #     # INPUT PROPERTY
 #     # =====================================
 #     # Extract selected columns and their values from recs["input"] and add them to the sections list for LLM context generation.

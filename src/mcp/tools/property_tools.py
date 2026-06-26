@@ -499,8 +499,12 @@ Enforces whitelists across search results and batch detail projections to mainta
 """
 import pandas as pd
 import requests
-from src.core.search_registry import SEARCH_STATE, GLOBAL_MASTER_DF, CACHED_SEARCH_METADATA
-from src.utils.search_engine import query
+from src.core.search_registry import (
+    SEARCH_STATE,
+    GLOBAL_MASTER_DF,
+    CACHED_SEARCH_METADATA,
+    query,
+)
 from src.services.mcp_real_estate_service import (
     run_mcp_comparison,
     run_mcp_rental,

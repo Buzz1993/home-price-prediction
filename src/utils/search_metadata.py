@@ -1,6 +1,30 @@
 #==============================
 #search_metadata.py
 #==============================
+# search_metadata.py reads the dataset, extracts unique searchable values
+# from only the columns listed in KEEP_COLUMNS, cleans them, removes duplicates,
+# and saves them into search_metadata.json.
+#
+# Note: This metadata is created once for the entire dataset, not separately for each row.
+'''
+{
+  "city": [
+    "mumbai",
+    "thane"
+  ],
+  "location": [
+    "andheri",
+    "goregaon"
+  ],
+  "amenities_mcp": [
+    "cctv camera",
+    "gymnasium",
+    "swimming pool"
+  ]
+}
+'''
+
+
 
 import ast
 import json

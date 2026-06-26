@@ -2264,7 +2264,8 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
 """
 
     llm_payload_prompt = f"{system_parsing_instruction}\n\nUSER REQUEST: {user_prompt}\nJSON OUTPUT:"
-
+    
+    #send the prompt to the LLM, clean its response, convert it to a Python dictionary, and extract the filters.
     try:
         llm_raw_response = ask_deepseek(
             llm_payload_prompt
@@ -2311,6 +2312,7 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
         # ==================================================
         # LOCATION FALLBACK USING METADATA
         # ==================================================
+        #If the LLM fails to identify the location from the user's query, it searches the user's query itself for any known location names and fills in the location automatically.
         if not filters.get("location"):
 
             known_locations = CACHED_SEARCH_METADATA.get("location", [])
@@ -2332,6 +2334,7 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
         # ==================================================
         # CITY FALLBACK
         # ==================================================
+        #If the LLM couldn't find a location, this code checks whether the user mentioned one of the known cities (Mumbai, Thane, Navi Mumbai, Palghar) and uses it as the location.
         if not filters.get("location"):
 
             known_cities = ["mumbai", "thane", "navi mumbai", "palghar"]
@@ -2356,21 +2359,12 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
         # ==================================================
 
         # Generic amenities intent
-        if any(
-            word in prompt_lower
-            for word in [
-                "amenities",
-                "facility",
-                "facilities"
-            ]
-        ):
+        if any(word in prompt_lower for word in ["amenities", "facility", "facilities"]): # Backup: Detects that amenities are important from general words like 
+                                                                                          # "amenities", "facility", or "facilities" if the LLM misses it.
             preferences["amenities_importance"] = "high"
 
-        # Specific amenity names from metadata
-        known_amenities = CACHED_SEARCH_METADATA.get(
-            "amenities_mcp",
-            []
-        )
+        # If the user mentions a specific amenity, mark amenities as important.
+        known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp",[])
 
         for amenity in known_amenities:
 

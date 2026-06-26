@@ -838,8 +838,8 @@ def process_response(response):
     print("==============================")
 
     # 3. If it has a payload_key, it means this reply contains a data table or structured result
-    # Payload keys are the dictionary key names used to store different types of structured response data (e.g., data, comparison_data, rental_data, etc.) inside a chat message.
-    if payload_key: #payload key are shown in RESPONSE_CONFIG 
+    # payload key are shown in RESPONSE_CONFIG  :Payload keys are the dictionary key names used to store different types of structured response data (e.g., data, comparison_data, rental_data, etc.) inside a chat message.
+    if payload_key: 
         # Save it to chat history with its specific title header and data payload
         append_to_chat("assistant", title, payload_key, content)
     else:

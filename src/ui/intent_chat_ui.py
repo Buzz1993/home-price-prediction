@@ -819,13 +819,26 @@ def process_response(response):
     """Formats and saves the LLM response to the chat history."""
     print("☑️ process_response() executed")
     # 1. Grab the response type (like 'text' or 'search_results') and its core content data
+    # receive this type and content from parse_intent_and_execute function in chat_service.py at # STEP 2: ROUTE AGENT METRIC ACTIONS
     response_type = response["type"]
     content = response["content"]
+
+    print("==============================")
+    print("response_type: \n", response_type) #eg o/p : text, comparison, rental, prediction, negotiation, valuation, advisor, search_results
+    print("content: \n", content) # dataframe which going to show in o/p for that query
+    print("==============================")
 
     # 2. Look up the response type in our configuration dictionary to get its title and key name
     title, payload_key = RESPONSE_CONFIG[response_type]
 
+    print("==============================")
+    print("title: \n", title) # titles eg:  🎯 Here are the highest ranking properties matching your intent parameters: taken from RESPONSE_CONFIG
+    print("payload_key: \n", payload_key) # this are the payload keys : data, comparison_data, rental_data, prediction_data, negotiation_data, valuation_data, advisor_data
+                                          # taken from RESPONSE_CONFIG
+    print("==============================")
+
     # 3. If it has a payload_key, it means this reply contains a data table or structured result
+    # Payload keys are the dictionary key names used to store different types of structured response data (e.g., data, comparison_data, rental_data, etc.) inside a chat message.
     if payload_key: #payload key are shown in RESPONSE_CONFIG 
         # Save it to chat history with its specific title header and data payload
         append_to_chat("assistant", title, payload_key, content)

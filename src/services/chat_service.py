@@ -2751,6 +2751,14 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
     Provide structured clear insights utilizing Indian Rupee (₹) denominations.
     """
     return {"type": "text", "content": ask_deepseek(chat_prompt)}
+    # so it return something like 
+    # response = {
+    #     "type": "search_results",
+    #     "content": [
+    #         {"id": "P101", "price": 2.1},
+    #         {"id": "P102", "price": 2.4}
+    #     ]
+    # }
 
 
 

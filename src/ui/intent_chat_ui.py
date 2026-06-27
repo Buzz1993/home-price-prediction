@@ -760,7 +760,7 @@ from src.services.chat_service import parse_intent_and_execute
 # ---------------------------------------------------------------------
 # UI CONFIGURATION & DISPLAY CONSTANTS
 # ---------------------------------------------------------------------
-SEARCH_DISPLAY_COLUMNS = ["Select", "id", "price", "bhk_type", "location", "search_score"]
+SEARCH_DISPLAY_COLUMNS = ["Select", "id", "price", "bhk_type", "location", "amenities_mcp", "why_recommended", "search_score"]
 
 RESPONSE_CONFIG = {
     "text": (None, None),
@@ -780,6 +780,7 @@ SEARCH_COLUMN_CONFIG = {
     "bhk_type": st.column_config.TextColumn("BHK"),
     "location": st.column_config.TextColumn("Locality"),
     "amenities_mcp": st.column_config.TextColumn("Amenities / Features"),
+    "why_recommended": st.column_config.TextColumn("Why Recommended"),
     "search_score": st.column_config.NumberColumn("BM25 Score", format="%.4f")
 }
 

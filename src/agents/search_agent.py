@@ -39,6 +39,7 @@ def run_search_pipeline(df, X_processed, filters, intent, slider_weights, mode):
 
     if not recs:
         return None
+    
 
     # Ranking
     recs["similar"] = apply_hybrid_ranking(similar_df=recs["similar"], intent=intent, slider_weights=slider_weights) #rank similar properties based on hybrid score (cosine similarity + weighted business score) and 

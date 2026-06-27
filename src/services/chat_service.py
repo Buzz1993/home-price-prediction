@@ -2020,6 +2020,7 @@ from src.llm.deepseek_client import ask_deepseek
 from src.recommender.hybrid_recommender import apply_hybrid_ranking
 
 
+#what this functions are return than mention at the end 
 
 # =====================================================================
 # CONFIGURATION MATRICES
@@ -2265,7 +2266,31 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
 
     llm_payload_prompt = f"{system_parsing_instruction}\n\nUSER REQUEST: {user_prompt}\nJSON OUTPUT:"
     
-    #send the prompt to the LLM, clean its response, convert it to a Python dictionary, and extract the filters.
+    #send the user query to the LLM, clean its response, convert it to a Python dictionary, and extract the filters.
+    # Example final output:
+    # {
+    #     "filters": {
+    #         "bhk": "3bhk",
+    #         "location": "Thane",
+    #         "amenities": "gym, swimming pool"
+    #     },
+    #     "preferences": {
+    #         "price_importance": "high",
+    #         "amenities_importance": "high",
+    #         "location_importance": "none",
+    #         "connectivity_importance": "none",
+    #         "area_importance": "none"
+    #     },
+    #     "weights": {
+    #         "price": 1.0,
+    #         "amenities": 1.0,
+    #         "location": 0.0,
+    #         "connectivity": 0.0,
+    #         "area": 0.0,
+    #         "distance": 0.0
+    #     },
+    #     "source": "llm_unified_parser"
+    # }
     try:
         llm_raw_response = ask_deepseek(
             llm_payload_prompt
@@ -2312,7 +2337,12 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
         # ==================================================
         # LOCATION FALLBACK USING METADATA
         # ==================================================
-        #If the LLM fails to identify the location from the user's query, it searches the user's query itself for any known location names and fills in the location automatically.
+        # If the LLM misses the location, find it using known locations from search_metadata.json.
+        
+        # Note:
+        # CACHED_SEARCH_METADATA is used only to recover the missing
+        # location. The LLM has already extracted the other filters
+        # and preferences successfully.
         if not filters.get("location"):
 
             known_locations = CACHED_SEARCH_METADATA.get("location", [])
@@ -2357,27 +2387,34 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
         # ==================================================
         # AMENITIES PREFERENCE FALLBACK
         # ==================================================
+        # If the LLM misses the amenities preference, use
+        # CACHED_SEARCH_METADATA to check whether the user
+        # mentioned any known amenity in the query.
 
         # Generic amenities intent
-        if any(word in prompt_lower for word in ["amenities", "facility", "facilities"]): # Backup: Detects that amenities are important from general words like 
-                                                                                          # "amenities", "facility", or "facilities" if the LLM misses it.
+        if any(word in prompt_lower for word in ["amenities", "facility", "facilities"]): # Backup: Detects that amenities are important if the user uses general words like 
+                                                                                          # "amenities", "facility", or "facilities"  even if the LLM fails to identify this intent.
             preferences["amenities_importance"] = "high"
 
-        # If the user mentions a specific amenity, mark amenities as important.
+        #from the dictionary o/p get from the search_metadata.py from that fetch this amenities_mcp
         known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp",[])
 
         for amenity in known_amenities:
-
-            if pd.isna(amenity):
+            if pd.isna(amenity): #Skip missing (NaN) values.
                 continue
 
             amenity_text = str(amenity).lower().strip()
 
             if amenity_text and amenity_text in prompt_lower:
-                preferences["amenities_importance"] = "high"
+                preferences["amenities_importance"] = "high"  # If the user mentions a specific amenity, mark amenities as a high-priority preference.
+                                                              # so here we get as example: - preferences = {"amenities_importance": "high"}
                 break
-
+        
+        # ==================================================
+        # PREFERENCE WEIGHT GENERATION
+        # ==================================================
         # Map preference importances directly into numerical weights
+        # get this numerical weights for that particular user query
         synthesized_weights = {
             "price":        IMPORTANCE_TO_WEIGHT.get(preferences.get("price_importance"), 0.0),
             "amenities":    IMPORTANCE_TO_WEIGHT.get(preferences.get("amenities_importance"), 0.0),
@@ -2392,39 +2429,68 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
         print("Amenities Weight:", synthesized_weights["amenities"])
         print("==============================\n")
         
-        # Handle followup logic integration
+        # ==================================================
+        # FOLLOW-UP QUERY HANDLING
+        # ==================================================
+        # If the current query is a follow-up, reuse the
+        # previous filters and weights whenever needed.
         if is_followup_query(prompt_lower):
             for k, v in historical_filters.items():
                 if not filters.get(k):
                     filters[k] = v
             if sum(synthesized_weights.values()) == 0:
                 synthesized_weights = historical_weights
-                
+
+        # ==================================================
+        # RETURN PARSED INTENT
+        # ==================================================
+        # Return the extracted filters, preferences,
+        # numerical weights, and parsing source.                
         return {
             "filters": filters,
             "preferences": preferences,
             "weights": synthesized_weights,
             "source": "llm_unified_parser"
         }
-        
+    
+    # ==================================================
+    # LLM FAILURE → SWITCH TO REGEX FALLBACK
+    # ==================================================
+    # If the LLM returns invalid JSON or throws an error,
+    # continue with the regex-based fallback parser.
     except Exception as e:
         print(f"⚠️ Layer 1 LLM Unified Parsing Exception: {str(e)}. Defaulting to Layer 2 Regex Heuristics.")
+
+
+    # This entire block is Layer 2 (Fallback Parser). It only runs if the LLM fails (throws an exception or returns invalid JSON). 
+    # Instead of using AI, it relies on regex patterns, keyword lists, and metadata to extract filters and estimate user preferences.
 
     # -----------------------------------------------------------------
     # LAYER 2: DETERMINISTIC REGEX HEURISTIC FALLBACK
     # -----------------------------------------------------------------
-    extracted_filters = {"bhk": None, "amenities": None, "location": None}
+    extracted_filters = {"bhk": None, "amenities": None, "location": None} # Store extracted filters
 
-    # Extract BHK constraints
+    # -----------------------------
+    # Extract BHK (e.g., 2BHK, 3BHK)
+    # -----------------------------
     bhk_match = re.search(FILTER_INTENTS["bhk_pattern"], prompt_lower)
     if bhk_match:
         extracted_filters["bhk"] = f"{bhk_match.group(1)}bhk"
     else:
-        extracted_filters["bhk"] = historical_filters.get("bhk")
+        extracted_filters["bhk"] = historical_filters.get("bhk") # Use previous BHK if none found
 
-    # Extract Location constraints using master taxonomy metadata
+    # -----------------------------
+    # Extract Location
+    # -----------------------------
+    # Note:
+    # CACHED_SEARCH_METADATA is used again here, but this block runs
+    # only when the LLM completely fails. In this case, the regex
+    # fallback extracts all filters (BHK, location, amenities) from
+    # the user query instead of relying on the LLM.
     matched_locations = []
     known_locations = CACHED_SEARCH_METADATA.get("location", [])
+
+    # Check whether any known location appears in the user query
     for loc in known_locations:
         if re.search(r"\b" + re.escape(str(loc).lower()) + r"\b", prompt_lower):
             matched_locations.append(loc)
@@ -2433,41 +2499,55 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
     else:
         extracted_filters["location"] = historical_filters.get("location")
 
-    # Extract Amenity constraints using master taxonomy metadata
+    # -----------------------------
+    # Extract Amenities
+    # -----------------------------
     matched_amenities = []
     known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
+
+    # Check whether any known amenity appears in the user query
     for amenity in known_amenities:
         if re.search(r"\b" + re.escape(str(amenity).lower()) + r"\b", prompt_lower):
             matched_amenities.append(amenity)
     if matched_amenities:
         extracted_filters["amenities"] = " ".join(matched_amenities)
     else:
-        extracted_filters["amenities"] = historical_filters.get("amenities")
+        extracted_filters["amenities"] = historical_filters.get("amenities") # Use previous amenities if none found
 
-    # Synthesize preferences via Regex mappings
+    # -----------------------------
+    # Build preference weights
+    # -----------------------------
     base_weights = DEFAULT_BLANK_WEIGHTS.copy()
     intent_quality_logs = {}
-    
+
+    # Look for ranking-related keywords
     for intent_name, keywords in RANKING_WORD_LISTS.items():
         for keyword in keywords:
+
+            # Search keyword in the user query
             pattern = r"\b" + re.escape(keyword) + r"\b"
             match = re.search(pattern, prompt_lower)
             
             if match:
+                # Get words before the matched keyword
                 start_idx = match.start()
                 preceding_chunk = prompt_lower[max(0, start_idx - 30):start_idx].strip()
                 
+                # Ignore if keyword is negated
                 if any(re.search(neg, preceding_chunk) for neg in NEGATIONS):
                     continue 
                 
-                strength_score = 1.0
+                strength_score = 1.0 # Default keyword strength
+                # Increase strength if modifiers like "very", "extremely" exist
                 for modifier, multiplier in INTENSITY_MODIFIERS.items():
                     occurrences = len(re.findall(r"\b" + re.escape(modifier) + r"\b", preceding_chunk))
                     if occurrences > 0:
                         strength_score += (multiplier - 1.0) * occurrences
                 
+                # Assign confidence score
                 quality_metric = 0.95 if keyword in ["low budget", "luxury", "spacious", "metro"] else 0.85
                 
+                # Save detected intent details
                 intent_quality_logs[intent_name] = {
                     "intent": intent_name,
                     "strength": round(strength_score, 2),
@@ -2475,14 +2555,20 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
                     "source": "regex_keyword_fallback"
                 }
                 break 
+    
 
+    # Convert detected intents into feature weights
     for intent_name, metrics in intent_quality_logs.items():
         target_map = RANKING_TARGET_MAPS.get(intent_name, {})
         for feature, feature_weight in target_map.items():
             if feature in base_weights:
                 base_weights[feature] += (metrics["strength"] * feature_weight)
 
-    # Reconstruct preferences format to mimic LLM layer structure
+    
+    # -----------------------------
+    # Convert numeric weights into
+    # High / None preference labels
+    # -----------------------------
     synthesized_preferences = {
         "price_importance":        "high" if base_weights["price"] >= 1.0 else "none",
         "amenities_importance":    "high" if base_weights["amenities"] >= 1.0 else "none",
@@ -2491,6 +2577,7 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
         "area_importance":         "high" if base_weights["area"] >= 1.0 else "none"
     }
 
+    # Return extracted filters, preferences, and weights
     return {
         "filters": extracted_filters,
         "preferences": synthesized_preferences,
@@ -2658,6 +2745,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
             print(f"SLIDER WEIGHTS RAW  : {current_ui_sliders}")
             print("="*50 + "\n")
 
+
             # Execute unified ranker using calculated weights
             ranked_df = apply_hybrid_ranking(
                 similar_df=matched_full_df, 
@@ -2756,3 +2844,660 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
 
 
 
+
+
+
+
+# What does extract_intent_and_preferences() do?
+#
+# This function understands the user's property search query and converts it
+# into structured information that the recommendation engine can use.
+#
+# It extracts:
+# 1. Hard Filters      -> Used to eliminate non-matching properties.
+# 2. Soft Preferences  -> Used to understand what the user prioritizes.
+# 3. Ranking Weights   -> Numerical weights used for property scoring.
+#
+#
+# Example User Query:
+#
+# "Show me affordable 3 BHK flats in Thane with gym and swimming pool."
+#
+#
+# -------------------------------------------------------------------------
+# Step 1:
+# The user's query is sent to the LLM for semantic understanding.
+# -------------------------------------------------------------------------
+#
+# User Query:
+#
+# "Show me affordable 3 BHK flats in Thane with gym and swimming pool."
+# Code responsible:
+# ask_deepseek(llm_payload_prompt)
+#
+# The LLM extracts:
+#
+# {
+#     "filters": {
+#         "bhk": "3bhk",
+#         "location": "Thane",
+#         "amenities": "gym, swimming pool"
+#     },
+#
+#     "preferences": {
+#         "price_importance": "high",
+#         "amenities_importance": "high",
+#         "location_importance": "none",
+#         "connectivity_importance": "none",
+#         "area_importance": "none"
+#     }
+# }
+#
+# -------------------------------------------------------------------------
+# Step 2:
+# Convert the LLM JSON response into a Python dictionary.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+# parsed_data = json.loads(llm_raw_response)
+#
+#
+# -------------------------------------------------------------------------
+# Step 3:
+# Extract the hard filters returned by the LLM.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+# filters = parsed_data.get("filters", ...)
+#
+#
+# Example:
+#
+# {
+#     "bhk": "3bhk",
+#     "location": "Thane",
+#     "amenities": "gym, swimming pool"
+# }
+#
+#
+# -------------------------------------------------------------------------
+# Step 4:
+# Extract the user preference importance levels.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+# preferences = parsed_data.get("preferences", {})
+#
+#
+# Example:
+#
+# {
+#     "price_importance":"high",
+#     "amenities_importance":"high",
+#     "location_importance":"none",
+#     ...
+# }
+# -------------------------------------------------------------------------
+# Step 5:
+# Apply backup logic if the LLM misses information.
+# --------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# bhk_match = re.search(...)
+#
+# filters["location"] = loc
+#
+# preferences["amenities_importance"] = "high"
+#
+#
+# Example:
+#
+# User:
+# "Need a flat with gym."
+#
+# Even if the LLM misses "gym",
+# the metadata lookup detects it and sets:
+#
+# preferences["amenities_importance"] = "high"
+#
+#
+# -------------------------------------------------------------------------
+# Step 6:
+# Convert textual preference levels into numerical weights.
+# -------------------------------------------------------------------------
+# Code responsible:
+#
+# synthesized_weights = {
+#     ...
+# }
+#
+# Text Preferences:
+#
+# {
+#     "price_importance": "high",
+#     "amenities_importance": "high",
+#     "location_importance": "none",
+#     "connectivity_importance": "none",
+#     "area_importance": "none"
+# }
+#
+#
+# become
+#
+# {
+#     "price": 0.75,
+#     "amenities": 0.75,
+#     "location": 0.0,
+#     "connectivity": 0.0,
+#     "area": 0.0,
+#     "distance": 0.0
+# }
+#
+# These numerical weights are later used by the recommendation engine
+# while ranking properties.
+#
+#
+# -------------------------------------------------------------------------
+# Step 7:
+# Handle follow-up conversations by reusing previous filters and weights.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# if is_followup_query(prompt_lower):
+#     ...
+#
+#
+# Example:
+#
+# Previous query:
+# "Show me 2 BHK in Thane."
+#
+# Follow-up:
+# "Only under 90 lakhs."
+#
+# The previous location and BHK are automatically reused.
+#
+#
+# -------------------------------------------------------------------------
+# Step 8:
+# Return the final structured output.
+# ---------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# return {
+#     "filters": filters,
+#     "preferences": preferences,
+#     "weights": synthesized_weights,
+#     "source": "llm_unified_parser"
+# }
+#
+#
+# {
+#     "filters": {
+#         "bhk": "3bhk",
+#         "location": "Thane",
+#         "amenities": "gym, swimming pool"
+#     },
+#
+#     "preferences": {
+#         "price_importance": "high",
+#         "amenities_importance": "high",
+#         "location_importance": "none",
+#         "connectivity_importance": "none",
+#         "area_importance": "none"
+#     },
+#
+#     "weights": {
+#         "price": 0.75,
+#         "amenities": 0.75,
+#         "location": 0.0,
+#         "connectivity": 0.0,
+#         "area": 0.0,
+#         "distance": 0.0
+#     },
+#
+#     "source": "llm_unified_parser"
+# }
+#
+#
+# -------------------------------------------------------------------------
+# How each returned value is used
+# -------------------------------------------------------------------------
+#
+# filters
+# --------
+# Hard constraints used to filter the property dataset.
+#
+# Example:
+#
+# Keep only:
+# ✓ 3 BHK
+# ✓ Located in Thane
+# ✓ Having Gym and Swimming Pool
+#
+#
+# preferences
+# -----------
+# Human-readable importance levels detected from the user's query.
+#
+# Example:
+#
+# Price      -> High priority
+# Amenities  -> High priority
+# Location   -> Normal (not specially prioritized)
+#
+#
+# weights
+# -------
+# Numerical version of the preferences.
+#
+# These weights are passed to the property scoring engine so that
+# properties matching important user preferences receive higher scores.
+#
+#
+# source
+# ------
+# Indicates which parser produced the result.
+#
+# Example:
+#
+# "llm_unified_parser"
+#
+# This is useful for debugging or knowing whether the LLM or a fallback
+# parser generated the extracted information.
+#
+#
+# Finally, this structured output is passed to the property search and
+# recommendation engine, where:
+#
+# 1. Filters remove irrelevant properties.
+# 2. Weights rank the remaining properties according to the user's priorities.
+# 3. The highest-scoring properties are returned to the user.
+
+
+# -------------------------------------------------------------------------
+# LAYER 2 : DETERMINISTIC REGEX HEURISTIC FALLBACK
+# -------------------------------------------------------------------------
+#
+# This layer is executed only when the LLM parsing fails
+# (for example, invalid JSON, timeout, or any exception).
+#
+# Instead of using the LLM, this layer uses:
+#
+# 1. Regular Expressions (Regex)
+# 2. Search Metadata (locations & amenities)
+# 3. Keyword Dictionaries
+#
+# to produce exactly the same output format as the LLM.
+#
+#
+# Example User Query:
+#
+# "Show me an affordable 3 BHK in Thane with gym near metro."
+#
+#
+# -------------------------------------------------------------------------
+# Step 1:
+# Create an empty filter dictionary.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# extracted_filters = {
+#     "bhk": None,
+#     "amenities": None,
+#     "location": None
+# }
+#
+#
+# -------------------------------------------------------------------------
+# Step 2:
+# Extract the BHK using a regular expression.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# bhk_match = re.search(FILTER_INTENTS["bhk_pattern"], prompt_lower)
+#
+#
+# Example:
+#
+# User Query:
+#
+# "Need affordable 3 BHK in Thane"
+#
+#
+# Result:
+#
+# {
+#     "bhk":"3bhk"
+# }
+#
+# If no BHK is found,
+# reuse the BHK from the previous conversation.
+#
+#
+# -------------------------------------------------------------------------
+# Step 3:
+# Extract the location using the metadata dictionary.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# known_locations = CACHED_SEARCH_METADATA.get("location", [])
+#
+# for loc in known_locations:
+#     ...
+#
+#
+# Example Metadata:
+#
+# [
+#     "thane",
+#     "andheri",
+#     "powai",
+#     "goregaon"
+# ]
+#
+#
+# User Query:
+#
+# "Need a flat in Thane"
+#
+#
+# Result:
+#
+# {
+#     "location":"Thane"
+# }
+#
+#
+# If no location is found,
+# reuse the previous location.
+#
+#
+# -------------------------------------------------------------------------
+# Step 4:
+# Extract amenities using the metadata dictionary.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# known_amenities = CACHED_SEARCH_METADATA.get("amenities_mcp", [])
+#
+# for amenity in known_amenities:
+#     ...
+#
+#
+# Example Metadata:
+#
+# [
+#     "gym",
+#     "swimming pool",
+#     "club house"
+# ]
+#
+#
+# User Query:
+#
+# "Need gym and swimming pool"
+#
+#
+# Result:
+#
+# {
+#     "amenities":"gym swimming pool"
+# }
+#
+#
+# -------------------------------------------------------------------------
+# Step 5:
+# Initialize the default ranking weights.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# base_weights = DEFAULT_BLANK_WEIGHTS.copy()
+#
+#
+# Example:
+#
+# {
+#     "price":0,
+#     "location":0,
+#     "amenities":0,
+#     "connectivity":0,
+#     "area":0,
+#     "distance":0
+# }
+#
+#
+# -------------------------------------------------------------------------
+# Step 6:
+# Detect ranking-related keywords from the user's query.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# for intent_name, keywords in RANKING_WORD_LISTS.items():
+#
+#
+# Example User Query:
+#
+# "Affordable flat near metro"
+#
+#
+# Keywords Found:
+#
+# affordable
+# metro
+#
+#
+# -------------------------------------------------------------------------
+# Step 7:
+# Ignore keywords that are negated.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# if any(re.search(neg, preceding_chunk) for neg in NEGATIONS):
+#     continue
+#
+#
+# Example:
+#
+# User Query:
+#
+# "Not near metro"
+#
+#
+# Since "not" appears before "metro",
+# the connectivity intent is ignored.
+#
+#
+# -------------------------------------------------------------------------
+# Step 8:
+# Increase the strength of important keywords.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# for modifier, multiplier in INTENSITY_MODIFIERS.items():
+#
+#
+# Example:
+#
+# User Query:
+#
+# "Very affordable"
+#
+#
+# Instead of:
+#
+# price strength = 1.0
+#
+#
+# it becomes:
+#
+# price strength = 1.5
+#
+#
+# -------------------------------------------------------------------------
+# Step 9:
+# Store every detected ranking intent.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# intent_quality_logs[intent_name] = {
+#     ...
+# }
+#
+#
+# Example:
+#
+# {
+#     "cheap":{
+#         "strength":1.5,
+#         "match_quality":0.95
+#     }
+# }
+#
+#
+# -------------------------------------------------------------------------
+# Step 10:
+# Convert detected intents into numerical feature weights.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# target_map = RANKING_TARGET_MAPS.get(intent_name,{})
+#
+# base_weights[feature] += ...
+#
+#
+# Example:
+#
+# cheap
+#     ↓
+# price += 1.0
+#
+#
+# metro
+#     ↓
+# connectivity += 1.0
+# distance += 0.8
+#
+#
+# Final Weights:
+#
+# {
+#     "price":1.0,
+#     "connectivity":1.0,
+#     "distance":0.8
+# }
+#
+#
+# -------------------------------------------------------------------------
+# Step 11:
+# Reconstruct the preferences dictionary so it matches the LLM format.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# synthesized_preferences = {
+#     ...
+# }
+#
+#
+# Example:
+#
+# {
+#     "price_importance":"high",
+#     "connectivity_importance":"high",
+#     "amenities_importance":"none"
+# }
+#
+#
+# -------------------------------------------------------------------------
+# Step 12:
+# Return the final output.
+# -------------------------------------------------------------------------
+#
+# Code responsible:
+#
+# return {
+#     "filters": extracted_filters,
+#     "preferences": synthesized_preferences,
+#     "weights": base_weights,
+#     "source": "regex_fallback"
+# }
+#
+#
+# Final Output:
+#
+# {
+#     "filters":{
+#         "bhk":"3bhk",
+#         "location":"Thane",
+#         "amenities":"gym"
+#     },
+#
+#     "preferences":{
+#         "price_importance":"high",
+#         "connectivity_importance":"high",
+#         "amenities_importance":"none",
+#         "location_importance":"none",
+#         "area_importance":"none"
+#     },
+#
+#     "weights":{
+#         "price":1.0,
+#         "connectivity":1.0,
+#         "distance":0.8,
+#         "location":0.0,
+#         "amenities":0.0,
+#         "area":0.0
+#     },
+#
+#     "source":"regex_fallback"
+# }
+#
+#
+# -------------------------------------------------------------------------
+# How each returned value is used
+# -------------------------------------------------------------------------
+#
+# filters
+# --------
+# Used to filter the property dataset.
+#
+# Example:
+#
+# ✓ 3 BHK
+# ✓ Thane
+# ✓ Gym
+#
+#
+# preferences
+# -----------
+# Human-readable importance levels generated using regex rules.
+#
+#
+# weights
+# -------
+# Numerical weights used by the recommendation engine to rank properties.
+#
+#
+# source
+# ------
+# Indicates that the output was generated by the regex fallback layer
+# instead of the LLM.
+#
+#
+# Finally, this output has exactly the same structure as the LLM output.
+# Therefore, the recommendation engine can use it without knowing whether
+# the data came from the LLM parser or the regex fallback parser.

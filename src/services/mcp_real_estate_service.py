@@ -904,6 +904,8 @@ def enrich_properties(selected_df: pd.DataFrame) -> pd.DataFrame:
     # fields (price_score, area_score, weighted_score, hybrid_score, etc.)
     # which are later consumed by the analysis, risk, rental, and negotiation agents.
     df["cosine_similarity"] = 1.0
+
+
     df = apply_hybrid_ranking(
         similar_df=df,
         intent_weights={},

@@ -531,32 +531,65 @@ PROPERTY_DETAIL_WHITELIST = [
 
 def search_properties(bhk: str = None, amenities: str = None, location: str = None, limit: int = 5) -> list[dict]:
     """
-    Searches the property inventory using structured filters extracted
-    from the Copilot query parser.
-
-    Applies BHK and location filtering on top of the search engine results
-    and returns matching properties for ranking and recommendation.
-
-    Args:
-        bhk (str, optional): BHK filter (e.g. "2bhk").
-        amenities (str, optional): Amenity filter.
-        location (str, optional): Location or city filter.
-        limit (int, optional): Maximum number of properties to return.
-
+    This function searches the property dataset using the filters
+    extracted from the user's query (BHK, amenities, and location).
+    
+    It:
+    1. Builds the search criteria from the extracted filters.
+    2. Calls the BM25 search engine (query()) to retrieve the
+       best matching properties.
+    3. Applies exact BHK filtering so only the requested BHK
+       properties remain.
+    4. Applies exact location or city filtering to remove
+       unrelated properties.
+    5. Keeps only the required columns for the UI.
+    6. Converts the DataFrame into a list of dictionaries.
+    
     Returns:
-        list[dict]: Matching property records.
+    [
+        {
+            "id": 101,
+            "price": 9500000,
+            "bhk_type": "2bhk",
+            "location": "Thane",
+            "city": "Thane",
+            "search_score": 0.91
+        },
+        {
+            "id": 205,
+            "price": 8700000,
+            "bhk_type": "2bhk",
+            "location": "Thane",
+            "city": "Thane",
+            "search_score": 0.89
+        },
+        ...
+    ].
     """
     print("☑️ search_properties executed")
+    
+    # ==================================================
+    # BUILD SEARCH CRITERIA
+    # ==================================================
     extracted_criteria = {
         "bhk": f"{bhk.strip().lower().replace(' ', '')}" if bhk else None,
         "amenities": amenities,
         "location": location
     }
+
+    # ==================================================
+    # VALIDATE SEARCH INPUT
+    # ==================================================
+    # Return an empty list if no search filters are provided.
     
     active_criteria = {k: v for k, v in extracted_criteria.items() if v}
     if not active_criteria:
         return []
         
+    # ==================================================
+    # EXECUTE BM25 SEARCH
+    # ==================================================
+    # Search the property dataset using the extracted criteria.    
     determined_min_matches = 1 if (not amenities or not location) else 2
     results_df = query(SEARCH_STATE, extracted_criteria, min_matches=determined_min_matches)
 
@@ -571,13 +604,19 @@ def search_properties(bhk: str = None, amenities: str = None, location: str = No
 
     print("========================\n")
     
+
+    # ==================================================
+    # EMPTY RESULT CHECK
+    # ==================================================
+    # Stop if no matching properties are found.
     if results_df.empty:
         return []
 
         
-    # ---------------------------------
+    # ==================================================
     # BHK FILTER
-    # ---------------------------------
+    # ==================================================
+    # Keep only properties matching the requested BHK.
     if extracted_criteria["bhk"] and "bhk_type" in results_df.columns:
 
         target_bhk = extracted_criteria["bhk"]
@@ -605,9 +644,10 @@ def search_properties(bhk: str = None, amenities: str = None, location: str = No
         print("============================\n")
 
 
-    # ---------------------------------
+    # ==================================================
     # LOCATION FILTER
-    # ---------------------------------
+    # ==================================================
+    # Filter by city or locality depending on the user's input.
     if extracted_criteria["location"]:
 
         target_location = (
@@ -654,6 +694,12 @@ def search_properties(bhk: str = None, amenities: str = None, location: str = No
 
         print("=================================\n")
 
+
+    # ==================================================
+    # RETURN SEARCH RESULTS
+    # ==================================================
+    # Keep only the required columns and return the
+    # matching properties as a list of dictionaries.
     out_cols = [c for c in SEARCH_RESULTS_WHITELIST if c in results_df.columns]
     return results_df[out_cols].head(limit).to_dict(orient="records")
 

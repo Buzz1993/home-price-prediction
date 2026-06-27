@@ -1,12 +1,14 @@
 #==============================
 #search_metadata.py
 #==============================
+# if LLM fails to find the city, location, amenities from user i/p this search_metadata.py help to find that using regex
 # search_metadata.py reads the dataset, extracts unique searchable values
 # from only the columns listed in KEEP_COLUMNS, cleans them, removes duplicates,
 # and saves them into search_metadata.json.
 #
 # Note: This metadata is created once for the entire dataset, not separately for each row.
-'''
+#o/p from this file is search_metadata.json file
+"""
 {
   "city": [
     "mumbai",
@@ -22,7 +24,7 @@
     "swimming pool"
   ]
 }
-'''
+"""
 
 
 

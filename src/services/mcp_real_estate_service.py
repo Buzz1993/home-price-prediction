@@ -1198,7 +1198,7 @@ def run_mcp_valuation(property_ids: list[str]) -> pd.DataFrame:
     return enriched_df[valid_cols]
 
 
-# =====================================================================
+# ====================================================================
 # 7. PORTFOLIO ADVISORY & SUITABILITY STACKING SERVICE
 # =====================================================================
 def run_mcp_advisor(property_ids: list[str]) -> pd.DataFrame:

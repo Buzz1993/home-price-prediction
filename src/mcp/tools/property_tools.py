@@ -826,7 +826,7 @@ def send_property_report(phone_number: str, report: str) -> dict:
     Sends property report to n8n workflow.
     """
     print("☑️ send_property_report executed")
-    webhook_url = "https://buzz123.app.n8n.cloud/webhook-test/98d3e0b7-9577-43ff-8f7a-a43956739ff9"
+    webhook_url = "https://bush123.app.n8n.cloud/webhook-test/98d3e0b7-9577-43ff-8f7a-a43956739ff9"
 
     response = requests.post(
         webhook_url,

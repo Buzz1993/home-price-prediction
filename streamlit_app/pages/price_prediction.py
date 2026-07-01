@@ -1,10 +1,17 @@
 #price_prediction.py
+import sys
+
+# Configure UTF-8 output for Windows (prevents UnicodeEncodeError on emoji prints)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 import json
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import requests
-import sys
 import streamlit as st
 from pathlib import Path
 

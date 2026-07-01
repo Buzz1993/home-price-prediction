@@ -1,7 +1,14 @@
 #analytics.py
+import sys
+
+# Configure UTF-8 output for Windows (prevents UnicodeEncodeError on emoji prints)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 import streamlit as st
 import pandas as pd
-import sys
 from pathlib import Path
 
 # -------------------------------------------------

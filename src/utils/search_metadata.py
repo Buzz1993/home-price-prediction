@@ -1,6 +1,7 @@
 #==============================
-#search_metadata.py
+# search_metadata.py
 #==============================
+
 # if LLM fails to find the city, location, amenities from user i/p this search_metadata.py help to find that using regex
 # search_metadata.py reads the dataset, extracts unique searchable values
 # from only the columns listed in KEEP_COLUMNS, cleans them, removes duplicates,

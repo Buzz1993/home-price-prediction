@@ -1,5 +1,5 @@
 # ===============================
-# memory_store.py - SQLITE MEMORY STORE (NO SERVER NEEDED)
+# memory_store.py - SQLITE MEMORY STORE
 # ===============================
 import sqlite3
 import uuid

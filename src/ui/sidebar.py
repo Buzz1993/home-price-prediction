@@ -1,4 +1,7 @@
-#src/ui/sidebar.py
+# ===============================
+# sidebar.py
+# ===============================
+
 import streamlit as st
 import uuid
 import pandas as pd

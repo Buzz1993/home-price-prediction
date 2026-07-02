@@ -1,5 +1,5 @@
 # ===============================
-# recommendations.py (REFACTORED)
+# recommendations.py
 # ===============================
 
 from concurrent.futures import thread

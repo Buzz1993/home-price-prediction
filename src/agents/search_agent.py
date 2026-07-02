@@ -1,4 +1,6 @@
-#search_agent.py
+# ===============================
+# search_agent.py
+# ===============================
 
 from src.data.content_based_filtering import recommend_with_constraints
 from src.recommender.hybrid_recommender import apply_hybrid_ranking

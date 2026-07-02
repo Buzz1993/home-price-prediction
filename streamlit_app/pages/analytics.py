@@ -1,4 +1,7 @@
-#analytics.py
+# ===============================
+# analytics.py
+# ===============================
+
 import sys
 
 # Configure UTF-8 output for Windows (prevents UnicodeEncodeError on emoji prints)

@@ -1,4 +1,3 @@
-#src/services/comparison_service.py
 # ===============================
 # comparison_service.py
 # ===============================

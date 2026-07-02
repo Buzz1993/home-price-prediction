@@ -1,4 +1,7 @@
-#price_prediction.py
+# ===============================
+# price_prediction.py
+# ===============================
+
 import sys
 
 # Configure UTF-8 output for Windows (prevents UnicodeEncodeError on emoji prints)

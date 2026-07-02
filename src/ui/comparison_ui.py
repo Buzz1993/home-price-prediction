@@ -1,5 +1,5 @@
 # ===============================
-# comparison_ui.py (FINAL FIXED)
+# comparison_ui.py 
 # ===============================
 
 from networkx import display

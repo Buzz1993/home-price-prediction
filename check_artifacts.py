@@ -1,20 +1,6 @@
-#check_artifacts.py
-# import mlflow
-# import dagshub
-# from mlflow import MlflowClient
-
-# dagshub.init(repo_owner="bowlekarbhushan88", repo_name="home-price-prediction", mlflow=True)
-# mlflow.set_tracking_uri("https://dagshub.com/bowlekarbhushan88/home-price-prediction.mlflow")
-
-# run_id = "a63bf4d777d5443f98e941a3d0358495"
-
-# client = MlflowClient()
-# files = client.list_artifacts(run_id)
-
-# print("Artifacts in run:", run_id)
-# for f in files:
-#     print("-", f.path)
-
+# ===============================
+# check_artifacts.py
+# ===============================
 
 import mlflow, dagshub, os
 from pathlib import Path

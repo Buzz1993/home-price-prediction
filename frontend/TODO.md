@@ -17,9 +17,14 @@
 - [x] Responsive Navigation
 
 ## Phase 3 — Authentication
-- [ ] Landing Page
-- [ ] Login
-- [ ] Signup
+
+> Authentication UI is complete.
+> Backend authentication endpoints (/login, /signup, /profile) are planned but not yet implemented.
+> Frontend integration will be completed once those endpoints are available.
+
+- [x] Landing Page
+- [x] Login
+- [x] Signup
 
 ## Phase 4 — Dashboard
 - [ ] Dashboard Page

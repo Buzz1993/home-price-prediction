@@ -1,14 +1,14 @@
 # EstateMind Frontend TODO
 
 ## Phase 1 — Project Setup
-- [ ] Initialize Next.js
-- [ ] Configure TypeScript
-- [ ] Configure Tailwind CSS
-- [ ] Install shadcn/ui
-- [ ] Configure TanStack Query
-- [ ] Configure ESLint
-- [ ] Create folder structure
-- [ ] Configure environment variables
+- [x] Initialize Next.js
+- [x] Configure TypeScript
+- [x] Configure Tailwind CSS
+- [x] Install shadcn/ui
+- [x] Configure TanStack Query
+- [x] Configure ESLint
+- [x] Create folder structure
+- [x] Configure environment variables
 
 ## Phase 2 — Layout
 - [ ] Navbar

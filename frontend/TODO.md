@@ -39,9 +39,16 @@
 - [x] Evaluation Tray
 
 ## Phase 5 — AI Chat
-- [ ] AI Chat
-- [ ] Search Results
-- [ ] Property Cards
+
+> Dedicated /chat route reuses the Phase 4 Copilot workspace (chat + evaluation
+> tray) via the shared CopilotWorkspace component — no chat logic duplicated.
+> Search results now render as reusable PropertyCards instead of a raw table.
+> Live data flows once the documented POST /chat endpoint is exposed by the
+> backend (app.py currently exposes only /predict) — same pattern as Phase 4.
+
+- [x] AI Chat
+- [x] Search Results
+- [x] Property Cards
 
 ## Phase 6 — Property Details
 - [ ] Property Details

@@ -14,6 +14,24 @@ export type SearchResult = {
   why_recommended: string;
 };
 
+// Full property record returned by GET /property/{id}. Mirrors the backend
+// PROPERTY_DETAIL_WHITELIST (src/mcp/tools/property_tools.py -> get_property_details).
+export type PropertyDetail = {
+  id: string;
+  project_name: string;
+  builder: string;
+  location: string;
+  price: number;
+  area: number | string;
+  bhk_type: string;
+  amenities_mcp: string;
+  features_mcp: string;
+  analysis_msg: string;
+};
+
+// The backend returns this shape (HTTP 200) when no property matches the id.
+export type NotFoundResponse = { error: string };
+
 // One row of a comparison ranking / the winning property.
 export type ComparisonRow = {
   id: string;

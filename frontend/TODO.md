@@ -51,7 +51,16 @@
 - [x] Property Cards
 
 ## Phase 6 — Property Details
-- [ ] Property Details
+
+> Property Details page (/property/[id]) reuses the shared UI primitives and the
+> format/splitList helpers to render the full property record — gallery
+> placeholder, information, amenities, features, location and price. Property
+> cards now link to it. It consumes the documented GET /property/{id} endpoint,
+> which is not yet exposed by the backend (app.py currently exposes only
+> /predict) — live data flows once it is available, same pattern as prior
+> phases. AI analysis sections (price/risk/rental/valuation) belong to Phase 8.
+
+- [x] Property Details
 
 ## Phase 7 — Property Comparison
 - [ ] Comparison

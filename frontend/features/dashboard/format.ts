@@ -15,6 +15,16 @@ export function humanizeKey(key: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Split a backend comma-separated string (amenities / features) into a trimmed,
+// non-empty list for rendering as badges.
+export function splitList(value: string | null | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 // Render an arbitrary cell value coming from an open backend record.
 export function formatCell(value: string | number | null): string {
   if (value === null || value === undefined || value === "") return "—";

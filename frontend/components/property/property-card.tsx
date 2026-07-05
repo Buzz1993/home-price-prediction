@@ -5,13 +5,14 @@
 // props, so it can be reused by the chat search results, property search and
 // saved properties pages. No business logic lives here.
 
-import { BedDouble, MapPin, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, BedDouble, MapPin, Sparkles } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { formatCr } from "@/features/dashboard/format";
+import { formatCr, splitList } from "@/features/dashboard/format";
 import type { SearchResult } from "@/types/dashboard";
 
 type PropertyCardProps = {
@@ -22,20 +23,12 @@ type PropertyCardProps = {
   onToggleStage?: (id: string) => void;
 };
 
-// Split the backend's comma-separated amenities string into a short badge list.
-function amenityList(amenities: string): string[] {
-  return amenities
-    .split(",")
-    .map((a) => a.trim())
-    .filter(Boolean);
-}
-
 export function PropertyCard({
   property,
   staged = false,
   onToggleStage,
 }: PropertyCardProps) {
-  const amenities = amenityList(property.amenities_mcp);
+  const amenities = splitList(property.amenities_mcp);
 
   return (
     <Card
@@ -50,9 +43,13 @@ export function PropertyCard({
             <p className="text-lg font-semibold leading-none">
               {formatCr(property.price)}
             </p>
-            <p className="truncate font-mono text-xs text-muted-foreground">
+            <Link
+              href={`/property/${property.id}`}
+              className="flex items-center gap-0.5 truncate font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
               {property.id}
-            </p>
+              <ArrowUpRight className="size-3 shrink-0" />
+            </Link>
           </div>
           <Badge variant="secondary" className="shrink-0">
             <BedDouble /> {property.bhk_type}

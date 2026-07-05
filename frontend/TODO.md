@@ -11,10 +11,10 @@
 - [x] Configure environment variables
 
 ## Phase 2 — Layout
-- [ ] Navbar
-- [ ] Sidebar
-- [ ] Dashboard Layout
-- [ ] Responsive Navigation
+- [x] Navbar
+- [x] Sidebar
+- [x] Dashboard Layout
+- [x] Responsive Navigation
 
 ## Phase 3 — Authentication
 - [ ] Landing Page

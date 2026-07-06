@@ -66,6 +66,23 @@ export type AdvisorRow = {
   risks: string;
 };
 
+// Result returned by POST /report. The backend composes an AI property report
+// (text / markdown) for the given properties; the frontend only previews,
+// downloads and shares it. `report` is the text the backend also feeds to its
+// n8n share tool (send_property_report). Kept lenient because the backend does
+// not yet expose /report — see project_docs/03_API.md.
+export type ReportResult = {
+  report: string;
+  property_ids?: string[];
+};
+
+// Delivery status returned by POST /report/share. Mirrors the backend
+// send_property_report return shape ({ status, status_code }).
+export type ShareResult = {
+  status: string;
+  status_code?: number;
+};
+
 // Discriminated union of every response the /chat endpoint can return. The
 // `type` field matches RESPONSE_CONFIG keys in the Streamlit reference.
 export type ChatResponse =

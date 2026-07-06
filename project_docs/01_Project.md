@@ -12,7 +12,7 @@ Users can search, compare, and analyze residential properties using Artificial I
 
 The Python backend is already implemented and considered the source of truth for this project.
 
-The frontend must integrate with the existing backend instead of recreating backend logic.
+The frontend must integrate with the EstateMind Copilot API instead of recreating backend logic.
 
 This project focuses on building a modern Next.js web application around the existing backend.
 
@@ -54,7 +54,20 @@ These modules are already implemented and should be reused.
 
 Do not recreate or redesign them.
 
-The frontend should only consume the existing backend APIs.
+The frontend communicates with the EstateMind Copilot FastAPI API.
+
+The EstateMind API is a thin layer that exposes the existing backend services without duplicating business logic.
+
+All AI, Machine Learning, search, recommendation, and analysis logic remains in the existing Python backend.
+
+The EstateMind backend exposes REST APIs through:
+
+- src/api/main.py
+- src/api/copilot_api.py
+
+These APIs are thin wrappers around the existing backend services.
+
+They do not contain business logic.
 
 ---
 
@@ -76,7 +89,9 @@ Do not redesign workflows or business logic unless required.
 
 This project focuses only on building the Next.js frontend.
 
-The existing Python backend, ML models, AI agents, search engine, recommendation engine, and report generation pipeline must not be modified.
+The existing backend business logic, ML models, AI agents, search engine, recommendation engine, and report generation pipeline must not be modified.
+
+The EstateMind API layer may be extended to expose existing backend functionality through REST endpoints.
 
 ---
 
@@ -182,9 +197,11 @@ Build a modern web application that allows users to:
 
 ## Backend
 
-Existing Python Backend
+EstateMind Copilot API
 
 * FastAPI
+* Thin API Layer (src/api)
+* Existing Python Backend
 * Machine Learning Models
 * AI Services
 * Recommendation Engine

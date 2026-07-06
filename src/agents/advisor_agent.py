@@ -24,7 +24,7 @@ def run_advisor_agent(df: pd.DataFrame) -> pd.DataFrame:
             # growth
             "growth_label",
             "growth_reason",
-            "dev_summary",
+
 
             # rental
             "investment_rating",

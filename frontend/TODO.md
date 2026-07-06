@@ -82,16 +82,13 @@
 > the existing reusable renderers (AnalysisTable / AdvisorCards /
 > NegotiationCards) — no analysis logic is duplicated in the frontend.
 >
-> Backend status (verified via the running FastAPI at http://localhost:8000):
-> app.py exposes only /, /health and /predict. The documented per-property
-> analysis endpoints (/rental, /valuation, /advisor, /negotiation) return 404,
-> and /predict currently expects a full raw property record (the Data model),
-> not a Property ID. The analysis logic itself already exists as backend MCP
-> tools (get_price_prediction, get_rental_analysis, get_valuation_analysis,
-> get_negotiation_strategy, get_investment_advice) but is only reachable through
-> the Streamlit /chat routing. So — same pattern as Phases 4–7 — each analysis is
-> wired to its documented POST endpoint and live data flows once the backend
-> exposes it. No backend was modified and no endpoint was invented.
+> Backend status: The EstateMind Copilot API (`src/api`) now exposes the
+> `/analysis/*` endpoints as thin FastAPI wrappers around the existing backend
+> services. All analysis logic continues to live in the existing backend
+> (`property_tools.py`, `mcp_real_estate_service.py`, analysis agents, and ML
+> services). The ML Prediction API (`app.py`) continues to run on port **8000**
+> and is used internally by the EstateMind Copilot API when required. No
+> business logic was duplicated or moved to the frontend.
 
 - [x] Price Prediction — POST /analysis/predict
 - [x] Rental Analysis — POST /analysis/rental
@@ -102,8 +99,24 @@
 - [x] Negotiation Strategy — POST /analysis/negotiation
 
 ## Phase 9 — Reports
-- [ ] Report Generation
-- [ ] Report Sharing
+
+> Dedicated Reports page (/reports) reuses the shared evaluation tray to pick the
+> staged properties a report covers, then generates an AI report (POST /report),
+> previews it, downloads it as Markdown (client-side Blob), and shares it to a
+> phone number (POST /report/share) — reproducing the Streamlit report workflow
+> (select → generate → preview → share). Tray + UI primitives are reused; no
+> report logic is duplicated in the frontend (the backend composes the report and
+> delivers it via the MCP tool send_property_report + n8n).
+>
+> Backend status: the EstateMind Copilot API (src/api) currently exposes only the
+> /analysis/* endpoints — neither /report nor /report/share is wired yet (the
+> report-share logic already exists as the MCP tool send_property_report in
+> src/mcp/tools/property_tools.py but is not exposed). Same pattern as Phases 4–8:
+> each action is wired to its documented POST endpoint and live data flows once
+> the backend exposes it. No backend was modified and no endpoint was invented.
+
+- [x] Report Generation — POST /report
+- [x] Report Sharing — POST /report/share
 
 ## Phase 10 — Saved Properties
 - [ ] Saved Properties

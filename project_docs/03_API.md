@@ -6,9 +6,11 @@ Version: 1.0
 
 # Overview
 
-The frontend communicates with the existing Python backend through REST APIs.
+The frontend communicates with the EstateMind Copilot FastAPI API.
 
-The existing Python backend is the source of truth.
+The EstateMind API is a thin layer that exposes the existing Python backend as REST endpoints.
+
+The existing Python backend remains the source of truth for all business logic.
 
 It already provides:
 
@@ -25,6 +27,13 @@ It already provides:
 Reuse the existing backend whenever possible.
 
 Do not rewrite backend business logic.
+
+The EstateMind API layer is implemented in:
+
+- src/api/main.py
+- src/api/copilot_api.py
+
+These files expose the existing backend services without duplicating business logic.
 
 If an API is unavailable, ask for clarification instead of creating a new implementation.
 
@@ -157,16 +166,35 @@ Retrieve complete property details.
 
 ---
 
+# Analysis Request
+
+All analysis endpoints accept the following request body:
+
+```json
+{
+  "property_ids": [
+    "cardid69427147"
+  ]
+}
+```
+
+**Note**
+
+- Most analysis endpoints accept one property ID.
+- `POST /analysis/comparison` requires at least two property IDs.
+
+---
+
 # Comparison API
 
-## POST /compare
+## POST /analysis/comparison
 
 **Purpose:**
 Compare selected properties.
 
 **Input:**
 
-- Property IDs
+- property_ids (minimum two property IDs)
 
 **Output:**
 
@@ -176,14 +204,14 @@ Compare selected properties.
 
 # Price Prediction API
 
-## POST /predict
+## POST /analysis/predict
 
 **Purpose:**
 Predict property price.
 
 **Input:**
 
-- Property ID
+- property_ids (list containing one property ID)
 
 **Output:**
 
@@ -193,14 +221,14 @@ Predict property price.
 
 # Rental Analysis API
 
-## POST /rental
+## POST /analysis/rental
 
 **Purpose:**
 Analyze rental potential.
 
 **Input:**
 
-- Property ID
+- property_ids (list containing one property ID)
 
 **Output:**
 
@@ -210,14 +238,14 @@ Analyze rental potential.
 
 # Valuation API
 
-## POST /valuation
+## POST /analysis/valuation
 
 **Purpose:**
 Analyze property valuation.
 
 **Input:**
 
-- Property ID
+- property_ids (list containing one property ID)
 
 **Output:**
 
@@ -227,14 +255,14 @@ Analyze property valuation.
 
 # Investment Advisor API
 
-## POST /advisor
+## POST /analysis/advisor
 
 **Purpose:**
 Generate investment advice.
 
 **Input:**
 
-- Property ID
+- property_ids (list containing one property ID)
 
 **Output:**
 
@@ -244,14 +272,14 @@ Generate investment advice.
 
 # Negotiation API
 
-## POST /negotiation
+## POST /analysis/negotiation
 
 **Purpose:**
 Generate negotiation strategy.
 
 **Input:**
 
-- Property ID
+- property_ids (list containing one property ID)
 
 **Output:**
 
@@ -268,7 +296,7 @@ Generate an AI property report.
 
 **Input:**
 
-- Property IDs
+- property_ids (list of property IDs)
 
 **Output:**
 
@@ -291,6 +319,19 @@ Send a generated report to a phone number.
 **Output:**
 
 - Delivery Status
+
+---
+
+## POST /analysis/cache/clear
+
+**Purpose:**
+Clear the backend enrichment cache.
+
+**Input:**
+None
+
+**Output:**
+Success Status
 
 ---
 

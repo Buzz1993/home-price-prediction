@@ -10,7 +10,11 @@ EstateMind provides AI-powered tools to help users search, analyze, compare, and
 
 The existing Python backend already implements all feature logic.
 
-The frontend should consume the existing APIs and display the results.
+All AI analysis features are exposed through the EstateMind Copilot REST API.
+
+The frontend consumes these APIs and displays the returned results.
+
+The frontend never implements business logic or AI analysis.
 
 Each feature includes:
 
@@ -115,6 +119,7 @@ Property Search
 Select Property
       ↓
 Evaluation Tray
+```
 
 ---
 

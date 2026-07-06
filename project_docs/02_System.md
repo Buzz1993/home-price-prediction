@@ -6,33 +6,51 @@ Version: 1.0
 
 # 1. Overall Architecture
 
-EstateMind uses a layered architecture where the Next.js frontend communicates with the existing Python backend.
+EstateMind uses a layered architecture where the Next.js frontend communicates with the EstateMind Copilot FastAPI API.
 
-The backend already contains all AI, Machine Learning, search, recommendation, and analysis logic.
+The EstateMind API is a thin layer that exposes the existing backend services without duplicating business logic.
+
+The backend contains all AI, Machine Learning, search, recommendation, and analysis logic.
 
 The frontend is responsible only for the user interface and consuming backend APIs.
 
 ```text
-┌──────────────────────────┐
-│        Frontend          │
-│    Next.js + React       │
-└─────────────┬────────────┘
-              │
-          REST APIs
-              │
-┌─────────────▼────────────┐
-│ Existing Python Backend  │
-│        FastAPI           │
-└─────────────┬────────────┘
-              │
- ┌────────────┼────────────────────────────────────────────────────────────┐
- │            │             │              │             │                 │
- ▼            ▼             ▼              ▼             ▼                 ▼
-Intent     Search     Recommendation   Analysis      ML Models     Reports &
-Engine     Engine        Engine          Agents                     MCP Tools
-              │
-              ▼
-      Property Dataset
+┌──────────────────────────────┐
+│     Next.js Frontend         │
+│    React + TypeScript        │
+└───────────────┬──────────────┘
+                │
+           REST APIs
+                │
+┌───────────────▼──────────────┐
+│   EstateMind Copilot API     │
+│      src/api/main.py         │
+└───────────────┬──────────────┘
+                │
+┌───────────────▼──────────────┐
+│   API Router                 │
+│ src/api/copilot_api.py       │
+└───────────────┬──────────────┘
+                │
+┌───────────────▼──────────────┐
+│      property_tools.py       │
+└───────────────┬──────────────┘
+                │
+┌───────────────▼──────────────┐
+│ mcp_real_estate_service.py   │
+└───────────────┬──────────────┘
+                │
+ ┌──────────────┼──────────────────────────────────────────────────────────────┐
+ │              │              │              │             │                  │
+ ▼              ▼              ▼              ▼             ▼                  ▼
+Search      Recommendation  Analysis     Prediction    Reports &          MCP Tools
+Engine         Engine         Agents       Service       Sharing
+                                   │
+                                   ▼
+                          Machine Learning Models
+                                   │
+                                   ▼
+                           Property Dataset
 ```
 
 ---
@@ -93,11 +111,46 @@ These modules are already implemented.
 
 Do not recreate or redesign them.
 
-The frontend should only consume the existing backend APIs.
+The frontend communicates with the EstateMind Copilot API.
+
+The EstateMind API exposes the existing backend functionality through thin FastAPI endpoints.
+
+Business logic remains in the existing backend services.
 
 ---
 
-# 4. Current Application
+# 4. EstateMind API Layer
+
+The frontend communicates with the EstateMind Copilot API.
+
+Location:
+
+- src/api/main.py
+- src/api/copilot_api.py
+
+The API layer is intentionally thin.
+
+Responsibilities:
+
+- Validate requests
+- Route requests
+- Call existing backend services
+- Return responses
+
+The API layer must not contain business logic.
+
+Business logic remains in:
+
+- property_tools.py
+- mcp_real_estate_service.py
+- Search Engine
+- Recommendation Engine
+- Analysis Agents
+- Prediction Service
+
+---
+
+# 5. Current Application
 
 The existing Streamlit application is the reference implementation.
 
@@ -109,7 +162,7 @@ Do not redesign workflows unless required.
 
 ---
 
-# 5. Authentication Flow
+# 6. Authentication Flow
 
 ```text
 User
@@ -140,7 +193,7 @@ Each authenticated user has:
 
 ---
 
-# 6. AI Chat Pipeline
+# 7. AI Chat Pipeline
 
 ```text
 User Query
@@ -173,7 +226,7 @@ The frontend only renders the conversation.
 
 ---
 
-# 7. Property Search Pipeline
+# 8. Property Search Pipeline
 
 The search pipeline already exists in the backend.
 
@@ -207,7 +260,7 @@ Search logic should never be implemented in the frontend.
 
 ---
 
-# 8. Hybrid Recommendation Pipeline
+# 9. Hybrid Recommendation Pipeline
 
 The recommendation engine combines multiple ranking strategies.
 
@@ -231,7 +284,7 @@ Recommendation logic remains in the backend.
 
 ---
 
-# 9. ML Prediction Pipeline
+# 10. ML Prediction Pipeline
 
 ```text
 Property
@@ -253,7 +306,7 @@ The frontend only displays prediction results.
 
 ---
 
-# 10. Analysis Agents
+# 11. Analysis Agents
 
 The backend already contains specialized analysis agents for:
 
@@ -270,7 +323,7 @@ The frontend should display these results and never implement the analysis itsel
 
 ---
 
-# 11. Report Generation Pipeline
+# 12. Report Generation Pipeline
 
 ```text
 Selected Properties
@@ -292,7 +345,7 @@ Report generation is handled by the backend.
 
 ---
 
-# 12. Report Sharing Pipeline
+# 13. Report Sharing Pipeline
 
 ```text
 Compare Properties
@@ -332,65 +385,89 @@ The frontend only collects the phone number and displays the delivery status.
 
 ---
 
-# 13. Data Flow
+# 14. Data Flow
 
 ```text
 User
-
-↓
-
+      │
+      ▼
 Next.js Frontend
-
-↓
-
-REST APIs
-
-↓
-
+      │
+      ▼
+EstateMind Copilot API
+(src/api/main.py)
+      │
+      ▼
+property_tools.py
+      │
+      ▼
+mcp_real_estate_service.py
+      │
+      ▼
 Backend Services
-
-↓
-
+(Search, Recommendation,
+Analysis, Prediction,
+Reports)
+      │
+      ▼
 Response
-
-↓
-
+      │
+      ▼
 Frontend
 ```
 
 ---
 
-# 14. Project Structure
+# 15. Project Structure
 
 ```text
-frontend/
+EstateMind/
 │
-├── app/
-├── components/
-├── features/
-├── hooks/
-├── lib/
-├── services/
-├── types/
-└── utils/
-
-backend/
+├── src/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   └── copilot_api.py
+│   │
+│   ├── agents/
+│   ├── core/
+│   ├── data/
+│   ├── graph/
+│   ├── llm/
+│   ├── mcp/
+│   ├── models/
+│   ├── recommender/
+│   ├── services/
+│   ├── streamlit_app/
+│   ├── ui/
+│   ├── utils/
+│   └── visualization/
 │
-└── Existing Python Backend
-
-docs/
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── features/
+│   ├── hooks/
+│   ├── lib/
+│   ├── services/
+│   ├── types/
+│   └── utils/
 │
-├── 01_Project.md
-├── 02_System.md
-├── 03_API.md
-├── 04_UI.md
-├── 05_Features.md
-└── CLAUDE.md
+├── project_docs/
+│   ├── 01_Project.md
+│   ├── 02_System.md
+│   ├── 03_API.md
+│   ├── 04_UI.md
+│   ├── 05_Features.md
+│
+├── app.py                  # ML Prediction API
+├── CLAUDE.md
+└── README.md
 ```
 
 ---
 
-# 15. Frontend Modules
+# 16. Frontend Modules
 
 * Authentication
 * Dashboard

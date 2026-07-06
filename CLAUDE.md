@@ -44,8 +44,6 @@ Examples:
 .venv2\Scripts\python.exe -m pip install -r requirements.txt
 
 .venv2\Scripts\python.exe -m streamlit run streamlit_app/main.py
-
-.venv2\Scripts\python.exe -m uvicorn app:app --reload --port 8000
 ```
 
 ---
@@ -103,10 +101,39 @@ For every new feature:
 
 The Python backend is already implemented.
 
-Before implementing or testing any frontend feature that communicates with the backend, ensure the FastAPI server is running:
+Before implementing or testing frontend features, start the required backend services.
+
+### Machine Learning Prediction API
 
 ```text
 .venv2\Scripts\python.exe -m uvicorn app:app --reload --port 8000
+```
+
+### EstateMind Copilot API
+
+Start the EstateMind Copilot API:
+
+```text
+.venv2\Scripts\python.exe -m uvicorn src.api.main:app --reload --port 8001
+```
+
+Configure the frontend (`frontend/.env.local`):
+
+```text
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
+```
+
+The Next.js frontend communicates with the EstateMind Copilot API on port **8001**.
+
+The EstateMind Copilot API is a thin orchestration layer.
+
+It exposes the existing backend functionality as REST APIs.
+
+When required, it delegates price prediction to the Machine Learning Prediction API (port **8000**).
+
+Do not implement business logic in the EstateMind Copilot API.
+
+Only expose existing backend functionality through thin FastAPI endpoints.
 
 ---
 
@@ -164,7 +191,8 @@ Follow the order defined in frontend/TODO.md.
 # Development Rules
 
 - Build one page at a time.
-- Do not modify the backend.
+- Do not modify existing backend business logic.
+- The EstateMind API layer (src/api) may be extended only to expose existing backend functionality. Do not implement new business logic in this layer.
 - Consume backend APIs only.
 - Keep components reusable.
 - Keep code simple and readable.
@@ -184,19 +212,23 @@ Frontend is independent.
 Next.js
       │
       ▼
-FastAPI APIs
+EstateMind Copilot API
+(src/api/main.py)
       │
       ▼
-Existing Python Backend Platform
+property_tools.py
       │
       ▼
-Intent Extraction
-Hybrid Search
-Recommendation Engine
-Analysis Agents
-ML Models
-MCP Tools
-n8n
+mcp_real_estate_service.py
+      │
+      ▼
+Existing Backend Services
+      │
+      ▼
+Prediction API (app.py)
+      │
+      ▼
+Machine Learning Models
 ```
 
 Never move business logic to the frontend.
@@ -287,7 +319,7 @@ Do not:
 
 Do not create:
 
-- New backend APIs
+- New backend business logic
 - New database schemas
 - Admin panels
 - Notification systems
@@ -296,7 +328,7 @@ Do not create:
 - CI/CD pipelines
 - Microservices
 
-Only build the requested frontend page or feature using the existing backend.
+Existing backend services may be exposed through thin FastAPI endpoints when required.
 
 ---
 
@@ -335,7 +367,21 @@ For every task:
 1. Read `CLAUDE.md`.
 2. Read only the required documentation.
 3. Review the matching Streamlit implementation.
-4. If backend integration is required, ensure the FastAPI server is running.
+4. If the task requires backend integration:
+
+   Ensure the following services are running:
+
+   - ML Prediction API (port 8000)
+   - EstateMind Copilot API (port 8001)
+
+   Ensure the frontend is configured to use:
+
+   ```text
+   frontend/.env.local
+
+   NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
+   ```
+
 5. Reuse the existing backend APIs.
 6. Build only the requested task.
 7. Do not modify unrelated files.

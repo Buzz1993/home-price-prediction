@@ -103,11 +103,10 @@ For every new feature:
 
 The Python backend is already implemented.
 
-Reuse the existing backend APIs.
+Before implementing or testing any frontend feature that communicates with the backend, ensure the FastAPI server is running:
 
-Do not recreate business logic.
-
-If an API is missing, ask for clarification instead of creating a new implementation.
+```text
+.venv2\Scripts\python.exe -m uvicorn app:app --reload --port 8000
 
 ---
 
@@ -336,10 +335,11 @@ For every task:
 1. Read `CLAUDE.md`.
 2. Read only the required documentation.
 3. Review the matching Streamlit implementation.
-4. Reuse the existing backend APIs.
-5. Build only the requested task.
-6. Do not modify unrelated files.
-7. Stop after completing the requested task.
+4. If backend integration is required, ensure the FastAPI server is running.
+5. Reuse the existing backend APIs.
+6. Build only the requested task.
+7. Do not modify unrelated files.
+8. Stop after completing the requested task.
 
 ---
 

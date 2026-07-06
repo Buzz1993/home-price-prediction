@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
@@ -104,9 +105,12 @@ function AnalysisResultView({
 }) {
   if (Array.isArray(data) && data.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        The backend returned no analysis rows for the selected properties.
-      </p>
+      <EmptyState
+        icon={Sparkles}
+        title="No analysis to show"
+        description="The backend returned no analysis rows for the selected properties."
+        className="py-8"
+      />
     );
   }
 
@@ -247,12 +251,12 @@ export function AnalysisWorkspace() {
             )}
 
           {!active && canRun && (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-              <Sparkles className="size-8 text-muted-foreground" />
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Choose an analysis above to evaluate your staged properties.
-              </p>
-            </div>
+            <EmptyState
+              icon={Sparkles}
+              title="Pick an analysis"
+              description="Choose an analysis above to evaluate your staged properties."
+              className="h-full"
+            />
           )}
         </div>
       </section>

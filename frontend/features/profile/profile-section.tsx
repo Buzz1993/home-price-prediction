@@ -6,6 +6,7 @@
 import type { LucideIcon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -64,7 +65,7 @@ export function ProfileSection({
         )}
 
         {!isLoading && !isError && isEmpty && (
-          <p className="py-1 text-sm text-muted-foreground">{emptyMessage}</p>
+          <EmptyState icon={Icon} description={emptyMessage} className="py-6" />
         )}
 
         {!isLoading && !isError && !isEmpty && children}

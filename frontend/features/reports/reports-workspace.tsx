@@ -11,6 +11,7 @@
 import { FileText, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
@@ -87,14 +88,16 @@ export function ReportsWorkspace() {
           )}
 
           {!report && !generate.isPending && !generate.isError && (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-              <Sparkles className="size-8 text-muted-foreground" />
-              <p className="max-w-sm text-sm text-muted-foreground">
-                {tray.length === 0
+            <EmptyState
+              icon={Sparkles}
+              title="No report yet"
+              description={
+                tray.length === 0
                   ? "Your tray is empty. Stage properties from AI Chat search results, then generate a report here."
-                  : "Press Generate Report to build an AI report for your staged properties."}
-              </p>
-            </div>
+                  : "Press Generate Report to build an AI report for your staged properties."
+              }
+              className="h-full"
+            />
           )}
         </div>
       </section>

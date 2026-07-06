@@ -9,6 +9,7 @@
 
 import { Scale } from "lucide-react";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
@@ -79,14 +80,16 @@ export function ComparisonWorkspace() {
           )}
 
           {!result && !comparison.isPending && !comparison.isError && (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-              <Scale className="size-8 text-muted-foreground" />
-              <p className="max-w-sm text-sm text-muted-foreground">
-                {tray.length === 0
+            <EmptyState
+              icon={Scale}
+              title="Nothing to compare yet"
+              description={
+                tray.length === 0
                   ? "Your tray is empty. Stage properties from AI Chat search results, then select them here to compare."
-                  : "Tick at least two staged properties, then press Compare Properties."}
-              </p>
-            </div>
+                  : "Tick at least two staged properties, then press Compare Properties."
+              }
+              className="h-full"
+            />
           )}
         </div>
       </section>

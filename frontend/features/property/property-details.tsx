@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Building2,
   BedDouble,
+  FileSearch,
   Image as ImageIcon,
   MapPin,
   Ruler,
@@ -20,6 +21,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,12 +79,12 @@ export function PropertyDetails({ id }: { id: string }) {
       <div className="space-y-4">
         <BackLink />
         <Card>
-          <CardContent className="p-6 text-center">
-            <p className="font-medium">Property not found.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              No property matches id{" "}
-              <span className="font-mono">{id}</span>.
-            </p>
+          <CardContent className="p-6">
+            <EmptyState
+              icon={FileSearch}
+              title="Property not found"
+              description={`No property matches id ${id}.`}
+            />
           </CardContent>
         </Card>
       </div>

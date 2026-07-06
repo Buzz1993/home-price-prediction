@@ -6,10 +6,11 @@
 // needs at least 2 selected properties). Further tray actions (price
 // prediction, rental, valuation, …) arrive in later phases.
 
-import { Trash2, Scale } from "lucide-react";
+import { Trash2, Scale, PackageOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { useWorkspace } from "./workspace-provider";
 
@@ -49,10 +50,11 @@ export function EvaluationTray({ onCompare, isComparing }: EvaluationTrayProps =
 
       {tray.length === 0 ? (
         <div className="flex flex-1 items-center justify-center p-4">
-          <p className="text-center text-sm text-muted-foreground">
-            Your tray is empty. Stage properties from search results to compare
-            and analyze them.
-          </p>
+          <EmptyState
+            icon={PackageOpen}
+            title="Your tray is empty"
+            description="Stage properties from search results to compare and analyze them."
+          />
         </div>
       ) : (
         <>

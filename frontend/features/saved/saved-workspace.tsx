@@ -11,6 +11,7 @@
 import { Bookmark } from "lucide-react";
 
 import { PropertyCard } from "@/components/property/property-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
@@ -52,13 +53,12 @@ export function SavedWorkspace() {
       )}
 
       {!isLoading && !isError && saved.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-16 text-center">
-          <Bookmark className="size-8 text-muted-foreground" />
-          <p className="max-w-sm text-sm text-muted-foreground">
-            You have no saved properties yet. Save properties from the AI Chat
-            search results, then find them here.
-          </p>
-        </div>
+        <EmptyState
+          icon={Bookmark}
+          title="No saved properties yet"
+          description="Save properties from the AI Chat search results, then find them here."
+          className="rounded-xl border border-dashed py-16"
+        />
       )}
 
       {!isLoading && !isError && saved.length > 0 && (

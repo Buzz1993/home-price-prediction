@@ -7,7 +7,10 @@
 // (Phase 10) so a property can be added to / removed from the saved list; the
 // backend owns persistence via the documented saved-properties endpoints.
 
+import { SearchX } from "lucide-react";
+
 import { PropertyCard } from "@/components/property/property-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   useRemoveSavedProperty,
   useSaveProperty,
@@ -32,10 +35,12 @@ export function SearchResultsPanel({ results }: { results: SearchResult[] }) {
 
   if (results.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No properties matched your search. Try adjusting the location, BHK or
-        amenities.
-      </p>
+      <EmptyState
+        icon={SearchX}
+        title="No matching properties"
+        description="No properties matched your search. Try adjusting the location, BHK or amenities."
+        className="py-8"
+      />
     );
   }
 

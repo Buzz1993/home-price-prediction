@@ -169,8 +169,18 @@
 > Duplicated inline error banners were replaced with the shared component; the
 > auth forms keep their existing form-level FormError (retry = resubmit the form).
 
+> Empty States (12.4): every API-driven section now renders "nothing to show yet"
+> through the shared reusable EmptyState component (components/ui/empty-state.tsx)
+> — a friendly message, an appropriate icon and an optional CTA. Applied to AI
+> Chat search results, the Evaluation Tray, Property Comparison, AI Analysis
+> (placeholder + no-rows result), Reports, Saved Properties, the Profile sections
+> (reports + chat history via ProfileSection) and the Property Details not-found
+> state. Ad-hoc inline centered/dashed empty blocks were replaced with the shared
+> component. Loading and error states were left unchanged; the chat composer keeps
+> its richer SuggestedPrompts empty state (interactive prompt CTAs).
+
 - [x] Responsive Design
 - [x] Loading States
 - [x] Error States
-- [ ] Empty States
+- [x] Empty States
 - [ ] UI Polish

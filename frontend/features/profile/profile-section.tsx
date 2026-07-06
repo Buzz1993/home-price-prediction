@@ -4,21 +4,22 @@
 // handles all four states without duplicating the markup.
 
 import type { LucideIcon } from "lucide-react";
-import { TriangleAlert } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type ProfileSectionProps = {
   title: string;
   icon: LucideIcon;
-  // The endpoint powering this section, shown in the error hint.
-  endpoint: string;
   isLoading: boolean;
   isError: boolean;
-  error?: unknown;
   isEmpty: boolean;
   emptyMessage: string;
+  // Retry the section's query (TanStack Query refetch); a spinner shows while
+  // the retry is in flight.
+  onRetry?: () => void;
+  retrying?: boolean;
   // Optional header-right slot (e.g. the logout button on the account section).
   action?: React.ReactNode;
   children: React.ReactNode;
@@ -27,12 +28,12 @@ type ProfileSectionProps = {
 export function ProfileSection({
   title,
   icon: Icon,
-  endpoint,
   isLoading,
   isError,
-  error,
   isEmpty,
   emptyMessage,
+  onRetry,
+  retrying,
   action,
   children,
 }: ProfileSectionProps) {
@@ -54,15 +55,12 @@ export function ProfileSection({
         )}
 
         {isError && (
-          <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-            <span>
-              Could not load {title.toLowerCase()}.{" "}
-              {error instanceof Error ? error.message : "Please try again."} Make
-              sure the EstateMind Copilot API (src/api/main.py) is running and the{" "}
-              {endpoint} endpoint is reachable at the configured base URL.
-            </span>
-          </div>
+          <ErrorState
+            title={`Could not load ${title.toLowerCase()}`}
+            description="Something went wrong while loading this section. Please try again."
+            onRetry={onRetry}
+            retrying={retrying}
+          />
         )}
 
         {!isLoading && !isError && isEmpty && (

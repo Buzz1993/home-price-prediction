@@ -37,10 +37,10 @@ export function ProfileWorkspace() {
       <ProfileSection
         title="Account"
         icon={UserRound}
-        endpoint="/profile"
         isLoading={profile.isLoading}
         isError={profile.isError}
-        error={profile.error}
+        onRetry={() => profile.refetch()}
+        retrying={profile.isFetching}
         isEmpty={!profile.data}
         emptyMessage="No profile information available."
         action={
@@ -55,10 +55,10 @@ export function ProfileWorkspace() {
       <ProfileSection
         title="Generated Reports"
         icon={FileText}
-        endpoint="/reports"
         isLoading={reports.isLoading}
         isError={reports.isError}
-        error={reports.error}
+        onRetry={() => reports.refetch()}
+        retrying={reports.isFetching}
         isEmpty={reportList.length === 0}
         emptyMessage="You haven't generated any reports yet. Create one from the Reports page."
       >
@@ -68,10 +68,10 @@ export function ProfileWorkspace() {
       <ProfileSection
         title="AI Chat History"
         icon={MessageSquare}
-        endpoint="/chat-history"
         isLoading={history.isLoading}
         isError={history.isError}
-        error={history.error}
+        onRetry={() => history.refetch()}
+        retrying={history.isFetching}
         isEmpty={chats.length === 0}
         emptyMessage="No AI conversations yet. Start chatting from the AI Chat page."
       >

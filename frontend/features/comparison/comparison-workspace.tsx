@@ -7,8 +7,9 @@
 // logic lives here — the backend scores and ranks; the tray logic and the
 // ComparisonResult renderer are reused from Phases 4–6.
 
-import { Scale, TriangleAlert } from "lucide-react";
+import { Scale } from "lucide-react";
 
+import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { ComparisonResult } from "@/features/dashboard/comparison-result";
@@ -20,6 +21,12 @@ export function ComparisonWorkspace() {
   const { tray } = useWorkspace();
   const comparison = useComparison();
   const result = comparison.data;
+
+  // Retry re-runs the last comparison request with the same property ids.
+  const lastIds = comparison.variables;
+  const retryComparison = lastIds
+    ? () => comparison.mutate(lastIds)
+    : undefined;
 
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -42,13 +49,12 @@ export function ComparisonWorkspace() {
           )}
 
           {comparison.isError && (
-            <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              <TriangleAlert className="size-4 shrink-0" />
-              <span>
-                Comparison failed. Please make sure the backend is running and
-                try again.
-              </span>
-            </div>
+            <ErrorState
+              title="Comparison failed"
+              description="Something went wrong while comparing your properties. Please try again."
+              onRetry={retryComparison}
+              retrying={comparison.isPending}
+            />
           )}
 
           {result && !comparison.isPending && (

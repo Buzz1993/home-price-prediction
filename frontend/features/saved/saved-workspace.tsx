@@ -8,16 +8,18 @@
 // saved list; this only reads it and toggles membership by id, mirroring the
 // documented workflow (Property → Save → Saved List).
 
-import { Bookmark, TriangleAlert } from "lucide-react";
+import { Bookmark } from "lucide-react";
 
 import { PropertyCard } from "@/components/property/property-card";
+import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
 import { useRemoveSavedProperty, useSavedProperties } from "./use-saved";
 
 export function SavedWorkspace() {
   const { tray, toggleTray } = useWorkspace();
-  const { data, isLoading, isError, error } = useSavedProperties();
+  const { data, isLoading, isError, isFetching, refetch } =
+    useSavedProperties();
   const remove = useRemoveSavedProperty();
 
   const saved = data ?? [];
@@ -41,15 +43,12 @@ export function SavedWorkspace() {
       )}
 
       {isError && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-          <span>
-            Could not load your saved properties.{" "}
-            {error instanceof Error ? error.message : "Please try again."} Make
-            sure the EstateMind Copilot API (src/api/main.py) is running and the
-            /saved-properties endpoint is reachable at the configured base URL.
-          </span>
-        </div>
+        <ErrorState
+          title="Could not load your saved properties"
+          description="Something went wrong while loading your saved list. Please try again."
+          onRetry={() => refetch()}
+          retrying={isFetching}
+        />
       )}
 
       {!isLoading && !isError && saved.length === 0 && (

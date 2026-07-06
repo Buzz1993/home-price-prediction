@@ -7,9 +7,10 @@
 // step of the report workflow (enter phone → send → delivery status).
 
 import { useState } from "react";
-import { CheckCircle2, Send, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -70,14 +71,12 @@ export function ShareReportForm({ report }: { report: string }) {
       )}
 
       {share.isError && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-          <span>
-            Delivery failed. Make sure the EstateMind Copilot API
-            (src/api/main.py) is running and the /report/share endpoint is
-            reachable, then try again.
-          </span>
-        </div>
+        <ErrorState
+          title="Delivery failed"
+          description="Something went wrong while sending the report. Please check the number and try again."
+          onRetry={canShare ? handleShare : undefined}
+          retrying={share.isPending}
+        />
       )}
     </div>
   );

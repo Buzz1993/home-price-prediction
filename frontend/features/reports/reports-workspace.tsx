@@ -8,9 +8,10 @@
 // the responses, mirroring the Streamlit report workflow
 // (select → generate → preview → share).
 
-import { FileText, Sparkles, TriangleAlert } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
@@ -70,14 +71,12 @@ export function ReportsWorkspace() {
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {generate.isError && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-              <span>
-                Report generation failed. Make sure the EstateMind Copilot API
-                (src/api/main.py) is running and the /report endpoint is reachable
-                at the configured base URL, then try again.
-              </span>
-            </div>
+            <ErrorState
+              title="Report generation failed"
+              description="Something went wrong while generating your report. Please try again."
+              onRetry={() => generate.mutate(targetIds)}
+              retrying={generate.isPending}
+            />
           )}
 
           {report && !generate.isPending && (

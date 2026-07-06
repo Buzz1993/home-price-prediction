@@ -20,6 +20,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCr, splitList } from "@/features/dashboard/format";
@@ -44,7 +45,8 @@ function BackLink() {
 }
 
 export function PropertyDetails({ id }: { id: string }) {
-  const { data, isLoading, isError, error } = usePropertyDetails(id);
+  const { data, isLoading, isError, isFetching, refetch } =
+    usePropertyDetails(id);
 
   if (isLoading) {
     return (
@@ -60,14 +62,12 @@ export function PropertyDetails({ id }: { id: string }) {
     return (
       <div className="space-y-4">
         <BackLink />
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="font-medium">Could not load this property.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : "Please try again."}
-            </p>
-          </CardContent>
-        </Card>
+        <ErrorState
+          title="Could not load this property"
+          description="Something went wrong while loading the property details. Please try again."
+          onRetry={() => refetch()}
+          retrying={isFetching}
+        />
       </div>
     );
   }

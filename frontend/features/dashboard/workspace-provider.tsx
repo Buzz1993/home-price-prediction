@@ -54,6 +54,10 @@ type WorkspaceContextValue = {
   // Send a user message. `trayOverride` lets the tray's Compare action send the
   // active selection instead of the whole tray.
   sendMessage: (text: string, trayOverride?: string[]) => void;
+  // Re-run the last chat request after a failure. The user message stays in the
+  // history, so no duplicate bubble is added. Undefined when there is nothing to
+  // retry.
+  retryLastMessage?: () => void;
   // Toggle a search result in/out of the tray.
   toggleTray: (id: string) => void;
   // Toggle whether a staged property is selected for comparison.
@@ -87,6 +91,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     },
     [mutate, tray]
   );
+
+  // Re-send the exact request that failed (same message + tray) using the
+  // mutation's last variables — available only after a send has been attempted.
+  const lastVariables = mutation.variables;
+  const retryLastMessage = useCallback(() => {
+    if (lastVariables) mutate(lastVariables);
+  }, [mutate, lastVariables]);
 
   const toggleTray = useCallback((id: string) => {
     setTray((prev) =>
@@ -123,6 +134,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       isSending: mutation.isPending,
       error: mutation.error,
       sendMessage,
+      retryLastMessage: mutation.isError ? retryLastMessage : undefined,
       toggleTray,
       toggleSelected,
       removeFromTray,
@@ -134,7 +146,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       selected,
       mutation.isPending,
       mutation.error,
+      mutation.isError,
       sendMessage,
+      retryLastMessage,
       toggleTray,
       toggleSelected,
       removeFromTray,

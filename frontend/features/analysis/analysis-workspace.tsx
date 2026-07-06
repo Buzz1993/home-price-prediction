@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { AnalysisTable } from "@/features/dashboard/analysis-table";
@@ -134,6 +135,10 @@ export function AnalysisWorkspace() {
 
   const activeMeta = ANALYSES.find((a) => a.key === active);
 
+  // Retry re-runs the last analysis request with the same key and property ids.
+  const lastRun = mutation.variables;
+  const retryAnalysis = lastRun ? () => mutation.mutate(lastRun) : undefined;
+
   const handlePick = (meta: AnalysisMeta) => {
     setActive(meta.key);
     if (meta.blocked || !canRun) return;
@@ -220,14 +225,12 @@ export function AnalysisWorkspace() {
           )}
 
           {!activeMeta?.blocked && mutation.isError && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-              <span>
-                {activeMeta?.label ?? "Analysis"} failed. Make sure the
-                EstateMind Copilot API (src/api/main.py) is running and reachable
-                at the configured base URL, then try again.
-              </span>
-            </div>
+            <ErrorState
+              title={`${activeMeta?.label ?? "Analysis"} failed`}
+              description="Something went wrong while running this analysis. Please try again."
+              onRetry={retryAnalysis}
+              retrying={mutation.isPending}
+            />
           )}
 
           {!activeMeta?.blocked &&

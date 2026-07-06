@@ -6,15 +6,16 @@
 // bottom. Reproduces the Streamlit chat-first workflow.
 
 import { useEffect, useRef } from "react";
-import { Bot, TriangleAlert } from "lucide-react";
+import { Bot } from "lucide-react";
 
+import { ErrorState } from "@/components/ui/error-state";
 import { ChatMessage } from "./chat-message";
 import { ChatInput } from "./chat-input";
 import { SuggestedPrompts } from "./suggested-prompts";
 import { useWorkspace } from "./workspace-provider";
 
 export function ChatWorkspace() {
-  const { messages, isSending, error } = useWorkspace();
+  const { messages, isSending, error, retryLastMessage } = useWorkspace();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Keep the latest message in view as the conversation grows.
@@ -43,13 +44,12 @@ export function ChatWorkspace() {
         )}
 
         {error && (
-          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-            <TriangleAlert className="size-4 shrink-0" />
-            <span>
-              Something went wrong. Please make sure the backend is running and
-              try again.
-            </span>
-          </div>
+          <ErrorState
+            title="Something went wrong"
+            description="We couldn't process your last message. Please try again."
+            onRetry={retryLastMessage}
+            retrying={isSending}
+          />
         )}
 
         <div ref={bottomRef} />

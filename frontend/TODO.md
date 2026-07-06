@@ -159,8 +159,18 @@
 - [x] User Profile — GET /profile, GET /chat-history, GET /reports
 
 ## Phase 12 — Final Polish
+
+> Error States (12.3): every API-consuming page now surfaces failures through the
+> shared reusable ErrorState component (components/ui/error-state.tsx) — a clean,
+> non-technical message plus a Retry button wired to the existing TanStack Query
+> refetch (queries) or a re-run of the last request (mutations). Applied to AI
+> Chat, Property Details, Property Comparison, AI Analysis, Reports (generate +
+> share) and Saved Properties, and to the Profile sections via ProfileSection.
+> Duplicated inline error banners were replaced with the shared component; the
+> auth forms keep their existing form-level FormError (retry = resubmit the form).
+
 - [x] Responsive Design
 - [x] Loading States
-- [ ] Error States
+- [x] Error States
 - [ ] Empty States
 - [ ] UI Polish

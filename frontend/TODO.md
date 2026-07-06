@@ -140,7 +140,23 @@
 - [x] Saved Properties — GET /saved-properties, POST /save-property, DELETE /save-property
 
 ## Phase 11 — Profile
-- [ ] User Profile
+
+> Dedicated Profile page (/profile) shows the user's account, generated reports and
+> AI chat history, plus a logout action (UI doc §15). Each section reads its own
+> documented endpoint (GET /profile, GET /reports, GET /chat-history) and handles
+> loading, empty and error states through the reusable ProfileSection wrapper. The
+> chat history reuses the shared ChatMessage bubble; the account section reuses the
+> auth session for logout (clears the client-side session via auth-provider, drops
+> cached queries, and redirects to /login) — no authentication or business logic is
+> implemented in the frontend.
+>
+> Backend status: the EstateMind Copilot API (src/api) currently exposes only the
+> /analysis/* endpoints — none of the profile endpoints are wired yet (there is also
+> no Streamlit reference for this feature). Same pattern as Phases 4–10: each query
+> targets its documented contract (project_docs/03_API.md) and live data flows once
+> the backend exposes it. No backend was modified and no endpoint was invented.
+
+- [x] User Profile — GET /profile, GET /chat-history, GET /reports
 
 ## Phase 12 — Final Polish
 - [ ] Responsive Design

@@ -159,7 +159,7 @@
 - [x] User Profile — GET /profile, GET /chat-history, GET /reports
 
 ## Phase 12 — Final Polish
-- [ ] Responsive Design
+- [x] Responsive Design
 - [ ] Loading States
 - [ ] Error States
 - [ ] Empty States

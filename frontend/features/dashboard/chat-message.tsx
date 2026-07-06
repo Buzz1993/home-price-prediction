@@ -54,7 +54,7 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
         {message.text && (
           <div
             className={cn(
-              "inline-block rounded-lg px-3 py-2 text-sm",
+              "inline-block max-w-full whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm",
               isUser
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-foreground"

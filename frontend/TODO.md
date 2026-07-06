@@ -76,13 +76,33 @@
 - [x] Comparison
 
 ## Phase 8 — AI Analysis
-- [ ] Price Prediction
-- [ ] Rental Analysis
-- [ ] Property Valuation
-- [ ] Risk Analysis
-- [ ] Future Growth
-- [ ] Investment Advisor
-- [ ] Negotiation Strategy
+
+> Dedicated AI Analysis page (/analysis) reuses the shared evaluation tray to
+> pick staged properties, then runs each analysis and renders the result with
+> the existing reusable renderers (AnalysisTable / AdvisorCards /
+> NegotiationCards) — no analysis logic is duplicated in the frontend.
+>
+> Backend status (verified via the running FastAPI at http://localhost:8000):
+> app.py exposes only /, /health and /predict. The documented per-property
+> analysis endpoints (/rental, /valuation, /advisor, /negotiation) return 404,
+> and /predict currently expects a full raw property record (the Data model),
+> not a Property ID. The analysis logic itself already exists as backend MCP
+> tools (get_price_prediction, get_rental_analysis, get_valuation_analysis,
+> get_negotiation_strategy, get_investment_advice) but is only reachable through
+> the Streamlit /chat routing. So — same pattern as Phases 4–7 — each analysis is
+> wired to its documented POST endpoint and live data flows once the backend
+> exposes it. No backend was modified and no endpoint was invented.
+
+- [x] Price Prediction — POST /predict (documented id-based contract)
+- [x] Rental Analysis — POST /rental
+- [x] Property Valuation — POST /valuation
+- [x] Risk Analysis — surfaced from POST /advisor (the backend embeds risk
+      metrics inside the investment advice; there is no dedicated risk endpoint)
+- [ ] Future Growth — BLOCKED: no backend endpoint or tool exists and it is not
+      in the source-of-truth chat routing, so it is not invented. The page shows
+      a clearly-labeled "not available yet" state.
+- [x] Investment Advisor — POST /advisor
+- [x] Negotiation Strategy — POST /negotiation
 
 ## Phase 9 — Reports
 - [ ] Report Generation

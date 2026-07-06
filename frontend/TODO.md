@@ -70,10 +70,10 @@
 > Compare runs the documented POST /compare endpoint and renders Property Score
 > Cards + AI Recommendation + Comparison Table (UI doc §9). The comparison
 > rendering (ComparisonResult) and tray logic are reused from Phases 4–6 — no
-> comparison logic is duplicated. Live data flows once /compare is exposed by the
+> comparison logic is duplicated. Live data flows once /analysis/comparison is exposed by the
 > backend (app.py currently exposes only /predict) — same pattern as prior phases.
 
-- [x] Comparison
+- [x] Property Comparison — POST /analysis/comparison
 
 ## Phase 8 — AI Analysis
 
@@ -93,16 +93,13 @@
 > wired to its documented POST endpoint and live data flows once the backend
 > exposes it. No backend was modified and no endpoint was invented.
 
-- [x] Price Prediction — POST /predict (documented id-based contract)
-- [x] Rental Analysis — POST /rental
-- [x] Property Valuation — POST /valuation
-- [x] Risk Analysis — surfaced from POST /advisor (the backend embeds risk
-      metrics inside the investment advice; there is no dedicated risk endpoint)
-- [ ] Future Growth — BLOCKED: no backend endpoint or tool exists and it is not
-      in the source-of-truth chat routing, so it is not invented. The page shows
-      a clearly-labeled "not available yet" state.
-- [x] Investment Advisor — POST /advisor
-- [x] Negotiation Strategy — POST /negotiation
+- [x] Price Prediction — POST /analysis/predict
+- [x] Rental Analysis — POST /analysis/rental
+- [x] Property Valuation — POST /analysis/valuation
+- [x] Risk Analysis — surfaced from POST /analysis/advisor
+- [ ] Future Growth — BLOCKED: no backend endpoint or MCP tool is currently available.
+- [x] Investment Advisor — POST /analysis/advisor
+- [x] Negotiation Strategy — POST /analysis/negotiation
 
 ## Phase 9 — Reports
 - [ ] Report Generation

@@ -223,9 +223,9 @@ export function AnalysisWorkspace() {
             <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
               <TriangleAlert className="mt-0.5 size-4 shrink-0" />
               <span>
-                {activeMeta?.label ?? "Analysis"} failed. This endpoint is not yet
-                exposed by the backend (app.py currently exposes only /predict).
-                Live data flows once it is available.
+                {activeMeta?.label ?? "Analysis"} failed. Make sure the
+                EstateMind Copilot API (src/api/main.py) is running and reachable
+                at the configured base URL, then try again.
               </span>
             </div>
           )}

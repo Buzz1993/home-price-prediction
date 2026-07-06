@@ -27,7 +27,7 @@ export function UserInfoCard({ user }: { user: User }) {
       <div className="min-w-0 space-y-0.5">
         <p className="truncate font-medium">{user.name}</p>
         <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
-          <Mail className="size-3.5 shrink-0" />
+          <Mail className="size-4 shrink-0" />
           {user.email}
         </p>
         {user.id && (

@@ -31,7 +31,7 @@ export function ComparisonWorkspace() {
 
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
+      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
         <div className="border-b p-4">
           <h1 className="font-heading text-lg font-semibold">
             Property Comparison
@@ -94,7 +94,7 @@ export function ComparisonWorkspace() {
         </div>
       </section>
 
-      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card">
+      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-sm">
         <EvaluationTray
           onCompare={(ids) => comparison.mutate(ids)}
           isComparing={comparison.isPending}

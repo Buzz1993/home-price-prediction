@@ -10,10 +10,10 @@ import { EvaluationTray } from "./evaluation-tray";
 export function CopilotWorkspace() {
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="flex h-[70dvh] min-h-0 flex-col overflow-hidden rounded-xl border bg-card lg:h-auto">
+      <section className="flex h-[70dvh] min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm lg:h-auto">
         <ChatWorkspace />
       </section>
-      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card">
+      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-sm">
         <EvaluationTray />
       </aside>
     </div>

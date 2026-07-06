@@ -67,13 +67,22 @@
 > Dedicated Property Comparison page (/compare) reuses the shared evaluation tray
 > — WorkspaceProvider is lifted to the (dashboard) layout so a tray staged in AI
 > Chat persists onto this page. Selecting ≥2 staged properties and pressing
-> Compare runs the documented POST /compare endpoint and renders Property Score
-> Cards + AI Recommendation + Comparison Table (UI doc §9). The comparison
-> rendering (ComparisonResult) and tray logic are reused from Phases 4–6 — no
-> comparison logic is duplicated. Live data flows once /analysis/comparison is exposed by the
-> backend (app.py currently exposes only /predict) — same pattern as prior phases.
+> Compare runs the documented POST /analysis/comparison endpoint and renders
+> Property Score Cards + AI Recommendation + Comparison Table (UI doc §9). The
+> comparison rendering (ComparisonResult) and tray logic are reused from Phases
+> 4–6 — no comparison logic is duplicated in the frontend.
+>
+> Backend status: the EstateMind Copilot API (`src/api`) now exposes the
+> `/analysis/comparison` endpoint as a thin FastAPI wrapper around the existing
+> backend comparison service. All comparison logic continues to live in the
+> existing backend (`property_tools.py`, `mcp_real_estate_service.py`,
+> comparison agents, and ML services). The ML Prediction API (`app.py`)
+> continues to run on port **8000** and is used internally by the EstateMind
+> Copilot API when required. No business logic was duplicated or moved to the
+> frontend.
 
 - [x] Property Comparison — POST /analysis/comparison
+
 
 ## Phase 8 — AI Analysis
 
@@ -183,4 +192,4 @@
 - [x] Loading States
 - [x] Error States
 - [x] Empty States
-- [ ] UI Polish
+- [x] UI Polish

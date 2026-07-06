@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function Hero() {
   return (
-    <section className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-20 text-center lg:py-28">
+    <section className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-20 text-center lg:px-6 lg:py-28">
       <span className="inline-flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
         <Sparkles className="size-3.5" />
         AI-powered real estate copilot

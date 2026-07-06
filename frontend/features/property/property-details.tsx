@@ -52,7 +52,7 @@ export function PropertyDetails({ id }: { id: string }) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-4xl space-y-4">
         <BackLink />
         <Skeleton className="h-56 rounded-xl" />
         <Skeleton className="h-40 rounded-xl" />
@@ -62,7 +62,7 @@ export function PropertyDetails({ id }: { id: string }) {
 
   if (isError) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-4xl space-y-4">
         <BackLink />
         <ErrorState
           title="Could not load this property"
@@ -76,7 +76,7 @@ export function PropertyDetails({ id }: { id: string }) {
 
   if (!data || isNotFound(data)) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-4xl space-y-4">
         <BackLink />
         <Card>
           <CardContent className="p-6">
@@ -105,7 +105,7 @@ function PropertyDetailsContent({ property }: { property: PropertyDetail }) {
       {/* Image gallery — the backend dataset carries no images yet, so we show a
           consistent placeholder panel. */}
       <div className="flex h-56 items-center justify-center rounded-xl border bg-muted/40 text-muted-foreground">
-        <ImageIcon className="size-10" />
+        <ImageIcon className="size-8" />
       </div>
 
       {/* Header: name, location, price and BHK. */}

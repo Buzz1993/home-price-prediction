@@ -31,7 +31,7 @@ export function ShareReportForm({ report }: { report: string }) {
   return (
     <div className="space-y-3 rounded-lg border p-4">
       <div className="space-y-1">
-        <h2 className="text-sm font-semibold">Share Report</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground">Share Report</h2>
         <p className="text-xs text-muted-foreground">
           Send this report to a phone number via the EstateMind delivery workflow.
         </p>

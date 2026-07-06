@@ -6,10 +6,11 @@
 // saved properties pages. No business logic lives here.
 
 import Link from "next/link";
-import { ArrowUpRight, BedDouble, MapPin, Sparkles } from "lucide-react";
+import { ArrowUpRight, BedDouble, Bookmark, MapPin, Sparkles } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { formatCr, splitList } from "@/features/dashboard/format";
@@ -21,12 +22,21 @@ type PropertyCardProps = {
   staged?: boolean;
   // Called with the property id when the user toggles staging.
   onToggleStage?: (id: string) => void;
+  // Whether the property is in the user's saved list.
+  saved?: boolean;
+  // Called with the property id when the user toggles the saved state.
+  onToggleSave?: (id: string) => void;
+  // Disables the save toggle while a save/remove request is in flight.
+  savePending?: boolean;
 };
 
 export function PropertyCard({
   property,
   staged = false,
   onToggleStage,
+  saved = false,
+  onToggleSave,
+  savePending = false,
 }: PropertyCardProps) {
   const amenities = splitList(property.amenities_mcp);
 
@@ -51,9 +61,24 @@ export function PropertyCard({
               <ArrowUpRight className="size-3 shrink-0" />
             </Link>
           </div>
-          <Badge variant="secondary" className="shrink-0">
-            <BedDouble /> {property.bhk_type}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-1">
+            {onToggleSave && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-pressed={saved}
+                aria-label={saved ? `Remove ${property.id} from saved` : `Save ${property.id}`}
+                title={saved ? "Remove from saved" : "Save property"}
+                disabled={savePending}
+                onClick={() => onToggleSave(property.id)}
+              >
+                <Bookmark className={cn(saved && "fill-primary text-primary")} />
+              </Button>
+            )}
+            <Badge variant="secondary">
+              <BedDouble /> {property.bhk_type}
+            </Badge>
+          </div>
         </div>
 
         <p className="flex items-center gap-1 text-sm text-muted-foreground">

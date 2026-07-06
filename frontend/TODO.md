@@ -119,7 +119,25 @@
 - [x] Report Sharing — POST /report/share
 
 ## Phase 10 — Saved Properties
-- [ ] Saved Properties
+
+> Dedicated Saved Properties page (/saved) lists the user's saved properties via
+> GET /saved-properties and renders each as a reusable PropertyCard. The card now
+> carries an optional bookmark toggle: saving from AI Chat search results
+> (POST /save-property) and removing from the saved page (DELETE /save-property).
+> Saved state is shared through TanStack Query — mutations invalidate the
+> saved-properties query so search results and the saved list stay in sync.
+> Staging is reused from the shared evaluation tray, so a saved property can flow
+> into comparison, analysis or a report. No persistence logic is duplicated in the
+> frontend — the backend owns the saved list.
+>
+> Backend status: the EstateMind Copilot API (src/api) currently exposes only the
+> /analysis/* endpoints — none of the saved-properties endpoints are wired yet
+> (there is also no Streamlit reference for this feature). Same pattern as Phases
+> 4–9: each action targets its documented contract (project_docs/03_API.md) and
+> live data flows once the backend exposes it. No backend was modified and no
+> endpoint was invented.
+
+- [x] Saved Properties — GET /saved-properties, POST /save-property, DELETE /save-property
 
 ## Phase 11 — Profile
 - [ ] User Profile

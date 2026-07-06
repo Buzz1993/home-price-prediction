@@ -29,6 +29,12 @@ export type PropertyDetail = {
   analysis_msg: string;
 };
 
+// A saved (favourited) property returned by GET /saved-properties. Modeled on
+// SearchResult so the reusable PropertyCard renders it directly. Kept as an
+// alias because the backend does not yet expose the saved-properties endpoints
+// (see project_docs/03_API.md) — the display shape mirrors search results.
+export type SavedProperty = SearchResult;
+
 // The backend returns this shape (HTTP 200) when no property matches the id.
 export type NotFoundResponse = { error: string };
 

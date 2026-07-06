@@ -11,6 +11,7 @@
 import { Bookmark, TriangleAlert } from "lucide-react";
 
 import { PropertyCard } from "@/components/property/property-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
 import { useRemoveSavedProperty, useSavedProperties } from "./use-saved";
 
@@ -34,7 +35,7 @@ export function SavedWorkspace() {
       {isLoading && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl bg-muted" />
+            <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
         </div>
       )}

@@ -8,9 +8,10 @@
 // the responses, mirroring the Streamlit report workflow
 // (select → generate → preview → share).
 
-import { FileText, Loader2, Sparkles, TriangleAlert } from "lucide-react";
+import { FileText, Sparkles, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
 import { ReportPreview } from "./report-preview";
@@ -57,7 +58,7 @@ export function ReportsWorkspace() {
           >
             {generate.isPending ? (
               <>
-                <Loader2 className="animate-spin" /> Generating…
+                <Spinner /> Generating…
               </>
             ) : (
               <>

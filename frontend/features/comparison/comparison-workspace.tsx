@@ -7,8 +7,9 @@
 // logic lives here — the backend scores and ranks; the tray logic and the
 // ComparisonResult renderer are reused from Phases 4–6.
 
-import { Loader2, Scale, TriangleAlert } from "lucide-react";
+import { Scale, TriangleAlert } from "lucide-react";
 
+import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { ComparisonResult } from "@/features/dashboard/comparison-result";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
@@ -35,7 +36,7 @@ export function ComparisonWorkspace() {
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {comparison.isPending && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
+              <Spinner className="size-4" />
               <span>Comparing selected properties…</span>
             </div>
           )}

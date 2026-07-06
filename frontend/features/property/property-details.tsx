@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCr, splitList } from "@/features/dashboard/format";
 import type { NotFoundResponse, PropertyDetail } from "@/types/dashboard";
 import { usePropertyDetails } from "./use-property-details";
@@ -49,8 +50,8 @@ export function PropertyDetails({ id }: { id: string }) {
     return (
       <div className="space-y-4">
         <BackLink />
-        <div className="h-56 animate-pulse rounded-xl bg-muted" />
-        <div className="h-40 animate-pulse rounded-xl bg-muted" />
+        <Skeleton className="h-56 rounded-xl" />
+        <Skeleton className="h-40 rounded-xl" />
       </div>
     );
   }

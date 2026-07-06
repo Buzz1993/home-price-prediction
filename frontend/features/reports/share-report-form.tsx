@@ -7,11 +7,12 @@
 // step of the report workflow (enter phone → send → delivery status).
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, Send, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Send, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { useShareReport } from "./use-report";
 
 export function ShareReportForm({ report }: { report: string }) {
@@ -50,7 +51,7 @@ export function ShareReportForm({ report }: { report: string }) {
           <Button onClick={handleShare} disabled={!canShare}>
             {share.isPending ? (
               <>
-                <Loader2 className="animate-spin" /> Sending…
+                <Spinner /> Sending…
               </>
             ) : (
               <>

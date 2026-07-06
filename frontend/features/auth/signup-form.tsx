@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -127,7 +127,7 @@ export function SignupForm() {
             className="mt-1 w-full"
             disabled={signupMutation.isPending}
           >
-            {signupMutation.isPending && <Loader2 className="animate-spin" />}
+            {signupMutation.isPending && <Spinner />}
             Create account
           </Button>
         </form>

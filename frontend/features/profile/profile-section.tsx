@@ -7,6 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import { TriangleAlert } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ProfileSectionProps = {
   title: string;
@@ -47,8 +48,8 @@ export function ProfileSection({
       <CardContent>
         {isLoading && (
           <div className="space-y-2">
-            <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
           </div>
         )}
 

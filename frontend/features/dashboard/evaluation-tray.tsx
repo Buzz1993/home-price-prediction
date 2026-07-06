@@ -10,6 +10,7 @@ import { Trash2, Scale } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
 import { useWorkspace } from "./workspace-provider";
 
 type EvaluationTrayProps = {
@@ -92,7 +93,8 @@ export function EvaluationTray({ onCompare, isComparing }: EvaluationTrayProps =
               disabled={!canCompare}
               onClick={runComparison}
             >
-              <Scale /> Compare Properties
+              {isComparing ? <Spinner /> : <Scale />}
+              {isComparing ? "Comparing…" : "Compare Properties"}
             </Button>
             <Button
               variant="outline"

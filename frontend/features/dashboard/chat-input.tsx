@@ -7,6 +7,7 @@ import { useState } from "react";
 import { SendHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useWorkspace } from "./workspace-provider";
 
@@ -41,7 +42,7 @@ export function ChatInput() {
         disabled={!value.trim() || isSending}
         onClick={submit}
       >
-        <SendHorizontal />
+        {isSending ? <Spinner /> : <SendHorizontal />}
       </Button>
     </div>
   );

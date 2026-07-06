@@ -14,7 +14,6 @@ import {
   Handshake,
   KeyRound,
   LineChart,
-  Loader2,
   ShieldAlert,
   Sparkles,
   TrendingUp,
@@ -23,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { AnalysisTable } from "@/features/dashboard/analysis-table";
 import { AdvisorCards, NegotiationCards } from "@/features/dashboard/analysis-cards";
@@ -214,7 +214,7 @@ export function AnalysisWorkspace() {
 
           {!activeMeta?.blocked && mutation.isPending && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
+              <Spinner className="size-4" />
               <span>Running {activeMeta?.label ?? "analysis"}…</span>
             </div>
           )}

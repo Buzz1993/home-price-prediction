@@ -12,13 +12,26 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useWorkspace } from "./workspace-provider";
 
-export function EvaluationTray() {
+type EvaluationTrayProps = {
+  // Optional override for the Compare action. When provided (Property
+  // Comparison page), the selection runs through POST /compare instead of the
+  // chat pipeline. Defaults to the Phase 4–6 chat behavior when omitted.
+  onCompare?: (ids: string[]) => void;
+  isComparing?: boolean;
+};
+
+export function EvaluationTray({ onCompare, isComparing }: EvaluationTrayProps = {}) {
   const { tray, selected, toggleSelected, removeFromTray, clearTray, sendMessage, isSending } =
     useWorkspace();
 
-  const canCompare = selected.length >= 2 && !isSending;
+  const busy = isSending || isComparing === true;
+  const canCompare = selected.length >= 2 && !busy;
 
   const runComparison = () => {
+    if (onCompare) {
+      onCompare(selected);
+      return;
+    }
     sendMessage("Compare selected properties from my tray", selected);
   };
 
@@ -85,7 +98,7 @@ export function EvaluationTray() {
               variant="outline"
               className="w-full"
               onClick={clearTray}
-              disabled={isSending}
+              disabled={busy}
             >
               <Trash2 /> Clear Tray
             </Button>

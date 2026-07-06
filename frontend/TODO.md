@@ -63,7 +63,17 @@
 - [x] Property Details
 
 ## Phase 7 — Property Comparison
-- [ ] Comparison
+
+> Dedicated Property Comparison page (/compare) reuses the shared evaluation tray
+> — WorkspaceProvider is lifted to the (dashboard) layout so a tray staged in AI
+> Chat persists onto this page. Selecting ≥2 staged properties and pressing
+> Compare runs the documented POST /compare endpoint and renders Property Score
+> Cards + AI Recommendation + Comparison Table (UI doc §9). The comparison
+> rendering (ComparisonResult) and tray logic are reused from Phases 4–6 — no
+> comparison logic is duplicated. Live data flows once /compare is exposed by the
+> backend (app.py currently exposes only /predict) — same pattern as prior phases.
+
+- [x] Comparison
 
 ## Phase 8 — AI Analysis
 - [ ] Price Prediction

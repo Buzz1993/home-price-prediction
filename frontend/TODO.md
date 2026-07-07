@@ -194,3 +194,105 @@
 - [x] Error States
 - [x] Empty States
 - [x] UI Polish
+
+
+# Phase 13 — Backend Integration
+
+> Expose the existing EstateMind backend through FastAPI so the Next.js
+> frontend communicates with the backend instead of the Streamlit UI.
+> Reuse the existing services, MCP tools, agents, and ML models.
+> No business logic should be duplicated or moved from the backend.
+
+---
+
+## Phase 13.1 — Chat API
+
+> Expose the existing chat workflow by wrapping
+> `parse_intent_and_execute()` inside a FastAPI endpoint.
+>
+> Refactor the chat service to remove direct Streamlit dependencies while
+> remaining compatible with both the Streamlit UI and the FastAPI backend.
+
+- [ ] POST /chat 
+- [ ] Refactor `parse_intent_and_execute()` for Streamlit/FastAPI compatibility 
+
+---
+
+## Phase 13.2 — Property Details API
+
+> Expose the existing property details service used by the Streamlit app.
+> Reuse the existing `get_property_details()` backend function.
+
+- [ ] GET /property/{id} 
+
+---
+
+## Phase 13.3 — Report APIs
+
+> Expose the existing report generation and report sharing workflow.
+> Reuse the existing MCP tool (`send_property_report`) without changing
+> the backend logic.
+>
+> Reports are generated as Markdown, previewed in the frontend,
+> downloadable as Markdown, and can be shared through the existing
+> n8n/WhatsApp workflow.
+
+- [ ] POST /report 
+- [ ] POST /report/share 
+- [ ] Create `create_property_report()` backend wrapper 
+
+---
+
+## Phase 13.4 — Authentication APIs
+
+> Create authentication endpoints for the frontend.
+> These are new APIs because the Streamlit application does not implement
+> authentication.
+
+- [ ] POST /signup 
+- [ ] POST /login 
+- [ ] GET /profile 
+- [ ] POST /logout 
+
+---
+
+## Phase 13.5 — Saved Properties APIs
+
+> Create endpoints for saving and retrieving bookmarked properties.
+
+- [x] GET /saved-properties
+- [x] POST /save-property
+- [x] DELETE /save-property
+
+---
+
+## Phase 13.6 — Profile APIs
+
+> Create endpoints for the user profile page.
+
+- [ ] GET /chat-history
+- [ ] GET /reports
+
+---
+
+## Phase 13.7 — FastAPI Integration
+
+> Register all API routers in the FastAPI application and verify that
+> every frontend endpoint is reachable through the backend.
+
+- [ ] Register all routers in `main.py`
+- [ ] Verify FastAPI application startup
+- [ ] Verify endpoint contracts with the frontend
+
+---
+
+## Future Enhancements
+
+> These are not required for backend integration and can be implemented
+> after Phase 13.
+
+- [ ] Export reports as PDF
+- [ ] Export reports as DOCX
+- [ ] Authentication with JWT
+- [ ] Persistent database for saved properties
+- [ ] Persistent chat/session storage

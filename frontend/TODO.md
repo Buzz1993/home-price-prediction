@@ -288,8 +288,8 @@
 
 ## Future Enhancements
 
-> These are not required for backend integration and can be implemented
-> after Phase 13.
+> These enhancements are outside the current project scope and can be
+> implemented after the core application is complete.
 
 - [ ] Export reports as PDF
 - [ ] Export reports as DOCX

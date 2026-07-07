@@ -15,6 +15,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+# The Python `lib/` rule above unintentionally matches the frontend source
+# directory frontend/lib/. Keep the Python rule but track the frontend lib.
+!frontend/lib/
 lib64/
 parts/
 sdist/

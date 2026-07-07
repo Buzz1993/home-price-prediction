@@ -19,8 +19,9 @@
 ## Phase 3 — Authentication
 
 > Authentication UI is complete.
-> Backend authentication endpoints (/login, /signup, /profile) are planned but not yet implemented.
-> Frontend integration will be completed once those endpoints are available.
+> Demo backend endpoints (POST /login, POST /signup, GET /profile, POST /logout)
+> are exposed via src/api/auth_api.py as a thin FastAPI router. These are demo
+> stubs (no JWT, database, or password hashing) pending a future auth phase.
 
 - [x] Landing Page
 - [x] Login

@@ -23,7 +23,7 @@ from src.services.mcp_real_estate_service import (
     clear_enrichment_cache
 )
 
-from src.services.llm_service import ask_deepseek
+from src.llm.deepseek_client import ask_deepseek
 
 # Tight field filters to optimize context window storage
 SEARCH_RESULTS_WHITELIST = [

@@ -2,6 +2,23 @@
 # src/api/main.py
 # ===============================
 
+# =====================================================
+# WINDOWS UTF-8 CONSOLE FIX
+# =====================================================
+# On Windows the console defaults to the legacy cp1252 codec, so any
+# existing backend logging/print that contains Unicode (emoji) raises
+# UnicodeEncodeError. That crashes endpoints executing backend business
+# logic before they can return a response.
+#
+# Reconfigure stdout/stderr to UTF-8 at startup. This preserves all
+# existing logging and emoji without touching business logic.
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    reconfigure = getattr(_stream, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8", errors="backslashreplace")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

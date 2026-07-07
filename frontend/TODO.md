@@ -213,8 +213,8 @@
 > Refactor the chat service to remove direct Streamlit dependencies while
 > remaining compatible with both the Streamlit UI and the FastAPI backend.
 
-- [ ] POST /chat 
-- [ ] Refactor `parse_intent_and_execute()` for Streamlit/FastAPI compatibility 
+- [x] POST /chat 
+- [x] Refactor `parse_intent_and_execute()` for Streamlit/FastAPI compatibility 
 
 ---
 
@@ -223,7 +223,7 @@
 > Expose the existing property details service used by the Streamlit app.
 > Reuse the existing `get_property_details()` backend function.
 
-- [ ] GET /property/{id} 
+- [x] GET /property/{id} 
 
 ---
 
@@ -237,9 +237,9 @@
 > downloadable as Markdown, and can be shared through the existing
 > n8n/WhatsApp workflow.
 
-- [ ] POST /report 
-- [ ] POST /report/share 
-- [ ] Create `create_property_report()` backend wrapper 
+- [x] POST /report 
+- [x] POST /report/share 
+- [x] Create `create_property_report()` backend wrapper 
 
 ---
 
@@ -249,10 +249,10 @@
 > These are new APIs because the Streamlit application does not implement
 > authentication.
 
-- [ ] POST /signup 
-- [ ] POST /login 
-- [ ] GET /profile 
-- [ ] POST /logout 
+- [x] POST /signup 
+- [x] POST /login 
+- [x] GET /profile 
+- [x] POST /logout 
 
 ---
 

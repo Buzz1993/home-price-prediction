@@ -101,6 +101,16 @@ def clear_property_analysis_cache() -> dict:
     return tools.clear_property_analysis_cache()
 
 @mcp.tool()
+def create_property_report(
+    property_ids: list[str]
+) -> str:
+    """
+    Generates an AI property report.
+    """
+    return tools.create_property_report(property_ids)
+
+
+@mcp.tool()
 def send_property_report(
     phone_number: str,
     report: str

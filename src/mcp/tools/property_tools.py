@@ -23,6 +23,8 @@ from src.services.mcp_real_estate_service import (
     clear_enrichment_cache
 )
 
+from src.services.llm_service import ask_deepseek
+
 # Tight field filters to optimize context window storage
 SEARCH_RESULTS_WHITELIST = [
     "id", "project_name", "price", "location", "bhk_type", "amenities_mcp", "search_score"
@@ -324,6 +326,105 @@ def clear_property_analysis_cache() -> dict:
     print("☑️ clear_property_analysis_cache executed")
     clear_enrichment_cache()
     return {"status": "success", "message": "Global downstream property agent enrichment caches successfully flushed."}
+
+
+
+# =====================================================
+# REPORT GENERATION
+# =====================================================
+
+def create_property_report(property_ids: list[str]) -> str:
+    """
+    Generate a Markdown property report for the
+    selected properties.
+
+    The report is returned as plain text and can be:
+
+    • previewed in the frontend
+    • downloaded
+    • sent to n8n via send_property_report()
+    """
+
+    if not property_ids:
+        raise ValueError("At least one property is required.")
+
+    # -------------------------------------------------
+    # Load property details
+    # -------------------------------------------------
+
+    properties = get_properties_by_ids(property_ids)
+
+    if not properties:
+        raise ValueError("No matching properties found.")
+
+    # -------------------------------------------------
+    # Build context for the LLM
+    # -------------------------------------------------
+
+    property_context = ""
+
+    for i, property_data in enumerate(properties, start=1):
+
+        property_context += f"""
+Property {i}
+
+ID: {property_data.get("id")}
+Project: {property_data.get("project_name")}
+Builder: {property_data.get("builder")}
+Location: {property_data.get("location")}
+Price: {property_data.get("price")}
+Area: {property_data.get("area")}
+BHK: {property_data.get("bhk_type")}
+Amenities:
+{property_data.get("amenities_mcp")}
+Features:
+{property_data.get("features_mcp")}
+
+"""
+
+    # -------------------------------------------------
+    # Prompt
+    # -------------------------------------------------
+
+    prompt = f"""
+You are EstateMind AI.
+
+Generate a professional real estate report in Markdown.
+
+Include:
+
+# Executive Summary
+
+# Property Analysis
+
+# Strengths
+
+# Weaknesses
+
+# Investment Potential
+
+# Recommendation
+
+Properties
+
+{property_context}
+
+Use Indian Rupee (₹).
+
+Return Markdown only.
+"""
+
+    # -------------------------------------------------
+    # Generate report
+    # -------------------------------------------------
+
+    report = ask_deepseek(prompt)
+
+    if not report:
+        raise ValueError("Failed to generate report.")
+
+    return report
+
 
 # =====================================================================
 # 3. N8N REPORT DELIVERY

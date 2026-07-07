@@ -5,7 +5,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.copilot_api import router as copilot_router
+from src.api.chat_api import router as chat_router
+from src.api.property_api import router as property_router
+from src.api.analysis_api import router as analysis_router
+from src.api.report_api import router as report_router
+from src.api.auth_api import router as auth_router
+from src.api.saved_api import router as saved_router
+from src.api.profile_api import router as profile_router
 
 # =====================================================
 # FASTAPI APPLICATION
@@ -13,8 +19,8 @@ from src.api.copilot_api import router as copilot_router
 
 app = FastAPI(
     title="EstateMind Copilot API",
-    description="REST API for EstateMind Copilot property analysis services.",
-    version="1.0.0"
+    description="REST API for EstateMind property search, chat, analysis, reports, and user services.",
+    version="2.0.0"
 )
 
 # =====================================================
@@ -40,7 +46,13 @@ app.add_middleware(
 # ROUTERS
 # =====================================================
 
-app.include_router(copilot_router)
+app.include_router(chat_router)
+app.include_router(property_router)
+app.include_router(analysis_router)
+app.include_router(report_router)
+app.include_router(auth_router)
+app.include_router(saved_router)
+app.include_router(profile_router)
 
 # =====================================================
 # ROOT
@@ -53,8 +65,17 @@ def root():
     """
     return {
         "message": "EstateMind Copilot API is running.",
-        "version": "1.0.0",
-        "status": "healthy"
+        "version": "2.0.0",
+        "status": "healthy",
+        "services": [
+            "chat",
+            "property",
+            "analysis",
+            "reports",
+            "authentication",
+            "saved-properties",
+            "profile"
+        ]
     }
 
 

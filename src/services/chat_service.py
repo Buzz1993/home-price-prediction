@@ -583,10 +583,52 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
 # MAIN PIPELINE ENTRY POINT
 # =====================================================================
 
-def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current_ui_sliders: dict = None) -> dict:
+def parse_intent_and_execute(
+    user_prompt: str,
+    session_state_tray: list[str] | None = None,
+    current_ui_sliders: dict | None = None,
+    session_state: dict | None = None,
+):
     """
-    Main entry point executing structured search filters alongside ranking preferences.
+    Main EstateMind Copilot chat workflow.
+
+    Supports both Streamlit and FastAPI.
+
+    Streamlit:
+        Automatically uses `st.session_state` to maintain
+        search history, pagination, filters, and preferences.
+
+    FastAPI:
+        Accepts a standard `session_state` dictionary,
+        allowing future integration with Redis, database,
+        JWT, or other backend session managers.
+
+    Returns a structured response for search, comparison,
+    analysis, recommendations, or general chat.
     """
+
+    # -------------------------------------------------
+    # SESSION STATE COMPATIBILITY
+    # -------------------------------------------------
+
+    if session_state is None:
+        try:
+            import streamlit as st
+            session_state = st.session_state
+        except Exception:
+            session_state = {}
+
+    # -------------------------------------------------
+    # DEFAULT VALUES
+    # -------------------------------------------------
+
+    if session_state_tray is None:
+        session_state_tray = []
+
+    if current_ui_sliders is None:
+        current_ui_sliders = {}
+
+
     print("☑️ parse_intent_and_execute executed")
     prompt_lower = user_prompt.lower().strip()
 
@@ -599,19 +641,19 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
     is_followup = is_followup_query(prompt_lower)
 
     if is_followup:
-        historical_filters = st.session_state.get(
+        historical_filters = session_state.get(
             "last_search_filters",
             {}
         )
 
-        historical_weights = st.session_state.get(
+        historical_weights = session_state.get(
             "last_search_weights",
             {}
         )
 
         # Move to next page
-        st.session_state["search_page"] = (
-            st.session_state.get("search_page", 0) + 1
+        session_state["search_page"] = (
+            session_state.get("search_page", 0) + 1
         )
 
     else:
@@ -619,7 +661,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
         historical_weights = {}
 
         # New search starts from first page
-        st.session_state["search_page"] = 0
+        session_state["search_page"] = 0
 
     print("=========================================")
     print("historical_filters",historical_filters)
@@ -753,9 +795,9 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
             )
 
             # Record operational tracking history safely inside SQLite store
-            st.session_state["last_search_filters"] = extracted_filters
-            st.session_state["last_search_weights"] = synthesized_chat_weights
-            st.session_state["last_search_preferences"] = preferences
+            session_state["last_search_filters"] = extracted_filters
+            session_state["last_search_weights"] = synthesized_chat_weights
+            session_state["last_search_preferences"] = preferences
 
             ranked_df = ranked_df.rename(columns={"hybrid_score": "search_score"})
             ranked_df["amenities_mcp"] = ranked_df.get("amenities_mcp", "")
@@ -779,7 +821,7 @@ def parse_intent_and_execute(user_prompt: str, session_state_tray: list, current
             # Pagination
             # ---------------------------
 
-            page = st.session_state.get(
+            page = session_state.get(
                 "search_page",
                 0
             )

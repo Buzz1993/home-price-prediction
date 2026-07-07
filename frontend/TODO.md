@@ -280,9 +280,9 @@
 > Register all API routers in the FastAPI application and verify that
 > every frontend endpoint is reachable through the backend.
 
-- [ ] Register all routers in `main.py`
-- [ ] Verify FastAPI application startup
-- [ ] Verify endpoint contracts with the frontend
+- [x] Register all routers in `main.py`
+- [x] Verify FastAPI application startup
+- [x] Verify endpoint contracts with the frontend
 
 ---
 

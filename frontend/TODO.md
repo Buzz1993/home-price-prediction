@@ -270,8 +270,8 @@
 
 > Create endpoints for the user profile page.
 
-- [ ] GET /chat-history
-- [ ] GET /reports
+- [x] GET /chat-history
+- [x] GET /reports
 
 ---
 

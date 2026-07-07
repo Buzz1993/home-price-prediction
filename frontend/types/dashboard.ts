@@ -29,11 +29,18 @@ export type PropertyDetail = {
   analysis_msg: string;
 };
 
-// A saved (favourited) property returned by GET /saved-properties. Modeled on
-// SearchResult so the reusable PropertyCard renders it directly. Kept as an
-// alias because the backend does not yet expose the saved-properties endpoints
-// (see project_docs/03_API.md) — the display shape mirrors search results.
-export type SavedProperty = SearchResult;
+// Minimal shape the reusable PropertyCard needs to render one property. A full
+// SearchResult satisfies it directly; saved properties are mapped onto it from
+// GET /property/{id}, where `search_score`/`why_recommended` are unavailable.
+export type PropertyCardData = {
+  id: string;
+  price: number;
+  bhk_type: string;
+  location: string;
+  amenities_mcp: string;
+  why_recommended?: string;
+  search_score?: number;
+};
 
 // The backend returns this shape (HTTP 200) when no property matches the id.
 export type NotFoundResponse = { error: string };
@@ -72,16 +79,6 @@ export type AdvisorRow = {
   risks: string;
 };
 
-// Result returned by POST /report. The backend composes an AI property report
-// (text / markdown) for the given properties; the frontend only previews,
-// downloads and shares it. `report` is the text the backend also feeds to its
-// n8n share tool (send_property_report). Kept lenient because the backend does
-// not yet expose /report — see project_docs/03_API.md.
-export type ReportResult = {
-  report: string;
-  property_ids?: string[];
-};
-
 // Delivery status returned by POST /report/share. Mirrors the backend
 // send_property_report return shape ({ status, status_code }).
 export type ShareResult = {
@@ -103,11 +100,13 @@ export type ChatResponse =
 
 export type ChatResponseType = ChatResponse["type"];
 
-// Request body for POST /chat. The tray travels with the message so the backend
-// can run tray-based analyses (compare, rental, prediction, …).
+// Request body for POST /chat (backend ChatRequest in src/api/chat_api.py). The
+// staged tray travels with the message so the backend can run tray-based
+// analyses (compare, rental, prediction, …). `slider_weights` is optional and
+// unused by the frontend, so it is omitted.
 export type ChatRequest = {
   message: string;
-  tray: string[];
+  staged_property_ids: string[];
 };
 
 // A rendered conversation entry. `text` is the header/message; when the entry

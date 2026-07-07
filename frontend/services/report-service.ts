@@ -11,21 +11,26 @@
 // endpoints are exposed, matching the Phase 4–8 pattern. No API is invented.
 
 import { apiRequest } from "@/lib/api-client";
-import type { ReportResult, ShareResult } from "@/types/dashboard";
+import type { ShareResult } from "@/types/dashboard";
 
 // POST /report — generate an AI property report for the selected properties.
-export function generateReport(ids: string[]): Promise<ReportResult> {
-  return apiRequest<ReportResult>("/report", {
+// The backend (create_property_report in src/mcp/tools/property_tools.py returns
+// str) sends the markdown report back as a bare JSON string, so the response is
+// the report text itself.
+export function generateReport(ids: string[]): Promise<string> {
+  return apiRequest<string>("/report", {
     method: "POST",
     body: { property_ids: ids },
   });
 }
 
-// POST /report/share — send a generated report to a phone number. The backend
-// forwards it to the n8n workflow (send_property_report expects phone + report).
+// POST /report/share — share a report for the selected properties to a phone
+// number. The backend (ShareReportRequest in src/api/report_api.py) regenerates
+// the report from the property ids and forwards it to the n8n workflow
+// (send_property_report), so the request carries the ids, not the report text.
 export function shareReport(payload: {
+  property_ids: string[];
   phone_number: string;
-  report: string;
 }): Promise<ShareResult> {
   return apiRequest<ShareResult>("/report/share", {
     method: "POST",

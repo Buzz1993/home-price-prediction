@@ -87,7 +87,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const message = text.trim();
       if (!message) return;
       setMessages((prev) => [...prev, { role: "user", text: message }]);
-      mutate({ message, tray: trayOverride ?? tray });
+      mutate({ message, staged_property_ids: trayOverride ?? tray });
     },
     [mutate, tray]
   );

@@ -28,7 +28,7 @@ export function ReportsWorkspace() {
   // tray (matches the analysis/report tools, which run on every staged property).
   const targetIds = selected.length > 0 ? selected : tray;
   const canGenerate = targetIds.length > 0 && !generate.isPending;
-  const report = generate.data?.report;
+  const report = generate.data;
 
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -83,7 +83,7 @@ export function ReportsWorkspace() {
           {report && !generate.isPending && (
             <div className="space-y-4">
               <ReportPreview report={report} />
-              <ShareReportForm report={report} />
+              <ShareReportForm propertyIds={targetIds} />
             </div>
           )}
 

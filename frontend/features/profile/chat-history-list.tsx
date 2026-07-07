@@ -11,7 +11,7 @@ export function ChatHistoryList({ entries }: { entries: ChatHistoryEntry[] }) {
       {entries.map((entry, index) => (
         <ChatMessage
           key={entry.id ?? index}
-          message={{ role: entry.role ?? "assistant", text: entry.content }}
+          message={{ role: entry.role ?? "assistant", text: entry.message }}
         />
       ))}
     </div>

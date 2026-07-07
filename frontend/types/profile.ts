@@ -10,11 +10,11 @@ import type { User } from "@/types/auth";
 export type { User };
 
 // One previous AI conversation turn returned by GET /chat-history. Mirrors the
-// backend chat message concept (role + text).
+// backend shape (role + message) in src/api/profile_api.py.
 export type ChatHistoryEntry = {
   id?: string;
   role?: "user" | "assistant";
-  content: string;
+  message: string;
 };
 
 // One previously generated report returned by GET /reports. `property_ids` are

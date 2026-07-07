@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useShareReport } from "./use-report";
 
-export function ShareReportForm({ report }: { report: string }) {
+export function ShareReportForm({ propertyIds }: { propertyIds: string[] }) {
   const [phone, setPhone] = useState("");
   const share = useShareReport();
 
@@ -25,7 +25,7 @@ export function ShareReportForm({ report }: { report: string }) {
 
   const handleShare = () => {
     if (!canShare) return;
-    share.mutate({ phone_number: trimmed, report });
+    share.mutate({ property_ids: propertyIds, phone_number: trimmed });
   };
 
   return (

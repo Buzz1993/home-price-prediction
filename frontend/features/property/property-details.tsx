@@ -26,6 +26,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCr, splitList } from "@/features/dashboard/format";
+import { ApiError } from "@/lib/api-client";
 import type { NotFoundResponse, PropertyDetail } from "@/types/dashboard";
 import { usePropertyDetails } from "./use-property-details";
 
@@ -47,8 +48,11 @@ function BackLink() {
 }
 
 export function PropertyDetails({ id }: { id: string }) {
-  const { data, isLoading, isError, isFetching, refetch } =
+  const { data, error, isLoading, isError, isFetching, refetch } =
     usePropertyDetails(id);
+
+  // The backend returns HTTP 404 when no property matches the id.
+  const notFound = error instanceof ApiError && error.status === 404;
 
   if (isLoading) {
     return (
@@ -60,7 +64,7 @@ export function PropertyDetails({ id }: { id: string }) {
     );
   }
 
-  if (isError) {
+  if (isError && !notFound) {
     return (
       <div className="mx-auto max-w-4xl space-y-4">
         <BackLink />
@@ -74,7 +78,7 @@ export function PropertyDetails({ id }: { id: string }) {
     );
   }
 
-  if (!data || isNotFound(data)) {
+  if (notFound || !data || isNotFound(data)) {
     return (
       <div className="mx-auto max-w-4xl space-y-4">
         <BackLink />

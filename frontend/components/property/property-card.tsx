@@ -14,10 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { formatCr, splitList } from "@/features/dashboard/format";
-import type { SearchResult } from "@/types/dashboard";
+import type { PropertyCardData } from "@/types/dashboard";
 
 type PropertyCardProps = {
-  property: SearchResult;
+  property: PropertyCardData;
   // Whether the property is staged in the evaluation tray.
   staged?: boolean;
   // Called with the property id when the user toggles staging.
@@ -108,9 +108,13 @@ export function PropertyCard({
       </CardContent>
 
       <CardFooter className="justify-between border-t p-4">
-        <span className="text-xs text-muted-foreground tabular-nums">
-          BM25 {property.search_score.toFixed(4)}
-        </span>
+        {property.search_score !== undefined ? (
+          <span className="text-xs text-muted-foreground tabular-nums">
+            BM25 {property.search_score.toFixed(4)}
+          </span>
+        ) : (
+          <span />
+        )}
         {onToggleStage && (
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <Checkbox

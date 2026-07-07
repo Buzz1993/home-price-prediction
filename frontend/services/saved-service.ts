@@ -1,20 +1,16 @@
-// Saved Properties API calls. Thin wrappers over the documented Saved Properties
-// endpoints (GET /saved-properties, POST /save-property, DELETE /save-property —
-// see project_docs/03_API.md). The backend owns persistence of the saved list;
-// the frontend only reads it and toggles membership by property id.
-//
-// Backend limitation: the EstateMind Copilot API (src/api) currently exposes only
-// the /analysis/* endpoints — the saved-properties endpoints are not wired yet.
-// These wrappers target the documented contract so live data flows once the
-// endpoints are exposed, matching the Phase 4–9 pattern. No API is invented and
-// no business logic lives in the frontend.
+// Saved Properties API calls. Thin wrappers over the Saved Properties endpoints
+// (GET /saved-properties, POST /save-property, DELETE /save-property — see
+// src/api/saved_api.py). The backend owns persistence of the saved list; the
+// frontend only reads it and toggles membership by property id.
 
 import { apiRequest } from "@/lib/api-client";
-import type { SavedProperty } from "@/types/dashboard";
 
-// GET /saved-properties — retrieve the user's saved property list.
-export function getSavedProperties(): Promise<SavedProperty[]> {
-  return apiRequest<SavedProperty[]>("/saved-properties");
+// GET /saved-properties — retrieve the user's saved property IDs. The backend
+// stores only IDs and returns them under `saved_properties`.
+export function getSavedProperties(): Promise<string[]> {
+  return apiRequest<{ saved_properties: string[] }>("/saved-properties").then(
+    (res) => res.saved_properties ?? []
+  );
 }
 
 // POST /save-property — add a property to the saved list.

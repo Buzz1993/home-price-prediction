@@ -11,6 +11,7 @@ def price_analysis(row):
     is overpriced, undervalued, or fair
     based on buy_min and buy_max range.
     """
+    print("🟨 price_analysis executed")
     try:
 
         # buy_min = minimum buying price per sqft
@@ -66,7 +67,7 @@ def run_analysis(df):
     and return analysis results as a list.
     """
 
-    print("✅ analysis_agent executed")
+    print("🟨 analysis_agent executed")
 
     missing_benchmark_count = (
         df["buy_min"].isna()

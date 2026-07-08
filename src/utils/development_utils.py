@@ -88,6 +88,8 @@ def get_development_summary(location, city):
     a short development summary for a location.
     """
 
+    print("🟨 get_development_summary executed")
+
     key = f"{location}_{city}".lower()
 
     # -----------------------------

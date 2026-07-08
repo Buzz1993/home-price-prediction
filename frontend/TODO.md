@@ -286,6 +286,399 @@
 
 ---
 
+# Phase 14 — Rich Property Experience
+
+> Enhance the property browsing experience by reusing the existing backend
+> property data. No backend business logic is modified.
+>
+> The backend already provides property metadata including images
+> (`image_urls`) and the original property listing URL (`ap_pjt_url`).
+>
+> The frontend renders this information using reusable UI components.
+
+---
+
+## Phase 14.1 — Rich Property Cards
+
+> Upgrade the reusable PropertyCard component using existing backend data.
+
+- [ ] Display Property ID
+- [ ] Display BHK badge
+- [ ] Display bookmark button
+- [ ] Display primary property image
+- [ ] Display locality
+- [ ] Display bed
+- [ ] Display bath
+- [ ] Display parking
+- [ ] Display balcony
+- [ ] Display area
+- [ ] Display cost per sqft
+- [ ] Display formatted price
+- [ ] Display Recommendation Score
+- [ ] Display Read More button
+
+---
+
+## Phase 14.2 — Property Image Gallery
+
+> Display backend property images using the existing `image_urls` field.
+
+- [ ] Display image gallery
+- [ ] Display thumbnails
+- [ ] Support image carousel
+- [ ] Support fullscreen viewer
+- [ ] Support previous / next navigation
+- [ ] Support mobile swipe
+
+---
+
+## Phase 14.3 — Original Property Listing
+
+> Allow users to open the original property listing using the existing
+> `ap_pjt_url` field.
+
+- [ ] View Original Listing button
+- [ ] Open in new tab
+- [ ] Hide button when URL unavailable
+
+---
+
+## Phase 14.4 — Property Details Enhancement
+
+> Improve the Property Details page using the existing backend data.
+
+- [ ] Reuse image gallery
+- [ ] Display property specifications
+- [ ] Display formatted price
+- [ ] Display Match Score
+- [ ] Display original listing button
+
+---
+
+## Phase 14.4.1 — Property Details Experience
+
+> Display all available backend property information in a clean, categorized layout.
+
+- [ ] Reuse image gallery
+- [ ] Display hero image
+- [ ] Display property overview
+- [ ] Display property specifications
+- [ ] Display project information
+- [ ] Display amenities
+- [ ] Display location information
+- [ ] Display additional backend fields
+- [ ] Organize unknown backend fields automatically
+
+---
+
+## Phase 14.5 — End-to-End Testing
+
+- [ ] Property Card rendering
+- [ ] Image gallery
+- [ ] Fullscreen viewer
+- [ ] Image navigation
+- [ ] Original listing
+- [ ] Mobile responsiveness
+
+---
+
+## Phase 14.6 — Interactive Property Map
+
+> Visualize property locations using backend latitude and longitude.
+> Reuse backend property data without introducing new business logic.
+
+- [ ] Display interactive property map
+- [ ] Display all properties using price-only markers
+- [ ] Display filtered search results on the map
+- [ ] Display rich property markers
+- [ ] Show property image
+- [ ] Show formatted price
+- [ ] Show cost per sqft
+- [ ] Show area
+- [ ] Show BHK
+- [ ] Navigate to Property Details
+- [ ] Reuse Image Gallery from Property Cards
+- [ ] Support zoom and pan
+- [ ] Support marker clustering for large datasets
+- [ ] Mobile responsive
+- [ ] Enable marker clustering for large property datasets (~11k properties)
+
+---
+
+## Phase 14.7 — Landing Page Redesign
+
+> Redesign the public landing page with premium branding.
+
+- [ ] Fullscreen hero background
+- [ ] EstateMind branding
+- [ ] Welcome section
+- [ ] Sign In button
+- [ ] Sign Up button
+- [ ] Features section
+- [ ] Call To Action
+- [ ] Responsive layout
+
+---
+
+## Phase 14.8 — UI Theme Refresh
+
+> Modernize the application's visual design.
+
+- [ ] Green & white color palette
+- [ ] Updated typography
+- [ ] Premium property marketplace styling
+- [ ] Improved buttons
+- [ ] Improved cards
+- [ ] Updated navigation
+- [ ] Responsive polish
+
+---
+
+# Phase 15 — AI Conversational Copilot
+
+> Extend the existing EstateMind Copilot by integrating Claude as a
+> natural-language reasoning layer on top of the existing backend.
+>
+> Claude does **not** replace the Machine Learning models, recommendation
+> engine, or analysis agents.
+>
+> The existing backend remains the single source of truth for:
+>
+> - Property Search
+> - Recommendation Engine
+> - Price Prediction
+> - Risk Analysis
+> - Rental Analysis
+> - Future Growth Analysis
+> - Negotiation Strategy
+> - Property Comparison
+> - Report Generation
+>
+> Claude only explains, summarizes and answers user questions using the
+> structured output already produced by the backend.
+>
+> No business logic should be duplicated inside Claude.
+
+---
+
+## Phase 15.1 — Claude API Integration
+
+> Integrate the Anthropic Claude API into the EstateMind backend.
+> Create a reusable Claude service that can be called by existing FastAPI
+> endpoints without changing backend business logic.
+
+- [ ] Configure Claude API
+- [ ] Create Claude service
+- [ ] Add environment configuration
+- [ ] Verify Claude connectivity
+
+---
+
+## Phase 15.2 — Prompt Builder
+
+> Create reusable prompt builders that transform backend analysis into
+> structured prompts for Claude.
+
+- [ ] Build Search Prompt
+- [ ] Build Property Analysis Prompt
+- [ ] Build Comparison Prompt
+- [ ] Build Report Prompt
+
+---
+
+## Phase 15.3 — AI Search Explanation
+
+> After the existing recommendation engine returns search results,
+> Claude generates a conversational explanation describing why the
+> properties were recommended.
+
+Flow
+
+User
+
+↓
+
+Search Agent
+
+↓
+
+Recommendation Engine
+
+↓
+
+Claude
+
+↓
+
+Natural-language explanation
+
+↓
+
+Frontend
+
+- [ ] Explain search results
+- [ ] Summarize recommended properties
+- [ ] Explain ranking decisions
+
+---
+
+## Phase 15.4 — AI Property Analysis
+
+> Combine the existing backend analysis agents and let Claude explain the
+> results in natural language.
+
+Existing backend agents remain unchanged.
+
+- [ ] Explain Risk Analysis
+- [ ] Explain Rental Analysis
+- [ ] Explain Future Growth
+- [ ] Explain Valuation
+- [ ] Explain Negotiation Strategy
+
+---
+
+## Phase 15.5 — AI Property Comparison
+
+> Use the existing comparison agent to determine the best property and let
+> Claude explain the strengths and weaknesses of each option.
+
+- [ ] Explain comparison results
+- [ ] Summarize investment advantages
+- [ ] Generate recommendation summary
+
+---
+
+## Phase 15.6 — AI Investment Advisor
+
+> Combine all existing backend analysis into a single structured context
+> and let Claude generate a complete investment recommendation.
+
+Existing backend performs:
+
+- Search
+- Recommendation
+- Prediction
+- Rental Analysis
+- Risk Analysis
+- Future Growth
+- Negotiation
+- Valuation
+
+Claude only explains the combined result.
+
+- [ ] Investment summary
+- [ ] Pros and Cons
+- [ ] Final recommendation
+- [ ] Investment reasoning
+
+---
+
+## Phase 15.7 — Conversational Memory
+
+> Maintain conversation context during a user session.
+
+Claude should remember:
+
+- Previous searches
+- Evaluation tray
+- Compared properties
+- User preferences
+- Previous follow-up questions
+
+- [ ] Session memory
+- [ ] Follow-up questions
+- [ ] Multi-turn conversation
+
+---
+
+## Phase 15.8 — Intelligent Tool Orchestration
+
+> Allow Claude to decide which existing backend capability should be
+> executed based on the user's request.
+
+Claude may invoke:
+
+- Search
+- Comparison
+- Prediction
+- Rental Analysis
+- Risk Analysis
+- Future Growth
+- Negotiation
+- Report Generation
+- Report Sharing
+- Saved Properties
+
+No backend business logic is moved into Claude.
+
+- [ ] Search tool
+- [ ] Comparison tool
+- [ ] Analysis tools
+- [ ] Report tools
+- [ ] Saved-property tools
+
+---
+
+## Phase 15.9 — Streaming Responses
+
+> Stream Claude responses to the frontend for a more responsive chat
+> experience.
+
+- [ ] Streaming API
+- [ ] Streaming frontend support
+- [ ] Loading indicators
+
+---
+
+## Phase 15.10 — AI Report Enhancement
+
+> Enhance the existing backend-generated reports by allowing Claude to
+> produce professional summaries.
+
+Backend generates the report.
+
+Claude improves readability.
+
+- [ ] Executive summary
+- [ ] Investment summary
+- [ ] Risk summary
+- [ ] Recommendation summary
+
+---
+
+## Phase 15.11 — AI Suggestions
+
+> Claude suggests useful follow-up actions after every conversation.
+
+Examples:
+
+- Compare these properties
+- Generate report
+- Analyze rental income
+- View property details
+- Save property
+
+- [ ] Suggested actions
+- [ ] Follow-up recommendations
+
+---
+
+## Phase 15.12 — End-to-End Testing
+
+> Verify the complete conversational workflow.
+
+- [ ] Search → Claude explanation
+- [ ] Property Details → Claude explanation
+- [ ] Comparison → Claude explanation
+- [ ] Investment Advisor → Claude explanation
+- [ ] Report Generation → Claude summary
+- [ ] Report Sharing
+- [ ] Session memory
+- [ ] Streaming responses
+- [ ] Error handling
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be
@@ -296,3 +689,6 @@
 - [ ] Authentication with JWT
 - [ ] Persistent database for saved properties
 - [ ] Persistent chat/session storage
+- [ ] Multi-model AI support (Claude, GPT, Gemini)
+- [ ] Voice-based property assistant
+- [ ] Image-based property analysis

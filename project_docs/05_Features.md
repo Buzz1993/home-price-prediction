@@ -90,10 +90,18 @@ Find matching properties.
 
 ```text
 Search Query
-      ↓
+
+↓
+
 Hybrid Search
-      ↓
+
+↓
+
 Ranked Results
+
+↓
+
+Interactive Map
 ```
 
 **Input**
@@ -102,7 +110,32 @@ Ranked Results
 
 **Output**
 
-- Property List
+Ranked Property Cards
+
+Each Property Card displays:
+
+- Primary Image
+- Property Summary
+- Investment Score
+- Price
+- Original Listing Link
+
+Search results are also displayed on an interactive map.
+
+Default View
+
+- Show all properties returned by the backend.
+- Display price-only markers.
+
+Filtered View
+
+- Show only matched properties.
+- Display rich markers containing:
+  - Primary Image
+  - Price
+  - Cost per Sqft
+  - Area
+  - BHK
 
 ---
 
@@ -173,7 +206,170 @@ Recommendation
 
 ---
 
-# 7. Price Prediction
+# 7. Property Details
+
+**Purpose:**
+Display complete property information for a selected property.
+
+**Workflow**
+
+```text
+Property
+
+↓
+
+Property Details
+
+↓
+
+Property Information
+
+↓
+
+Image Gallery
+
+↓
+
+Original Listing
+
+↓
+
+AI Analysis
+```
+
+**Input**
+
+- Property ID
+
+**Output**
+
+- Complete Property Details
+- Organized Property Information
+- Property Specifications
+- Amenities
+- Image Gallery
+- Original Listing
+- AI Analysis
+
+---
+
+# 8. Property Image Gallery
+
+**Purpose:**
+Provide an interactive property image experience.
+
+**Workflow**
+
+```text
+Property
+      ↓
+image_urls
+      ↓
+Gallery
+      ↓
+Fullscreen Viewer
+      ↓
+Image Navigation
+```
+
+**Input**
+
+- image_urls
+
+**Output**
+
+- Image Gallery
+- Fullscreen Viewer
+- Image Carousel
+
+---
+
+# 9. Property Information
+
+Purpose
+
+Display all backend property information in organized sections.
+
+Workflow
+
+Property
+
+↓
+
+Property Details
+
+↓
+
+Organized Information
+
+↓
+
+Amenities
+
+↓
+
+Location
+
+↓
+
+AI Analysis
+
+Input
+
+Complete property metadata returned by the backend.
+
+Output
+
+- Property Overview
+- Pricing
+- Property Specifications
+- Project Information
+- Amenities
+- Location
+- Additional Information
+
+The frontend should organize all backend property metadata into appropriate sections automatically.
+
+---
+
+# 10. Property Map
+
+**Purpose:**
+Visualize property locations on an interactive map.
+
+**Workflow**
+
+```text
+Property Search
+      ↓
+Property Results
+      ↓
+Map Markers
+      ↓
+Property Preview
+      ↓
+Property Details
+```
+
+**Input**
+
+- latitude
+- longitude
+- image_urls
+- price
+- cost_per_sqft
+- area
+- bed
+
+**Output**
+
+- Interactive Map
+- Price Markers
+- Rich Property Preview
+
+---
+
+# 11. Price Prediction
 
 **Purpose:**
 Predict property value.
@@ -198,7 +394,7 @@ Prediction Result
 
 ---
 
-# 8. Rental Analysis
+# 12. Rental Analysis
 
 **Purpose:**
 Analyze rental potential.
@@ -223,7 +419,7 @@ Result
 
 ---
 
-# 9. Property Valuation
+# 13. Property Valuation
 
 **Purpose:**
 Evaluate market valuation.
@@ -248,7 +444,7 @@ Result
 
 ---
 
-# 10. Risk Analysis
+# 14. Risk Analysis
 
 **Purpose:**
 Evaluate investment risks.
@@ -273,7 +469,7 @@ Result
 
 ---
 
-# 11. Future Growth Analysis
+# 15. Future Growth Analysis
 
 **Purpose:**
 Estimate future appreciation.
@@ -298,7 +494,7 @@ Result
 
 ---
 
-# 12. Investment Advisor
+# 16. Investment Advisor
 
 **Purpose:**
 Generate investment recommendations.
@@ -325,7 +521,7 @@ Recommendation
 
 ---
 
-# 13. Negotiation Assistant
+# 17. Negotiation Assistant
 
 **Purpose:**
 Suggest a negotiation strategy.
@@ -350,7 +546,7 @@ Recommendation
 
 ---
 
-# 14. Report Generation
+# 18. Report Generation
 
 **Purpose:**
 Generate an AI property report.
@@ -375,7 +571,7 @@ Report
 
 ---
 
-# 15. Report Sharing
+# 19. Report Sharing
 
 **Purpose:**
 Send a generated report to a phone number.
@@ -407,7 +603,7 @@ Report Sent Successfully
 
 ---
 
-# 16. Saved Properties
+# 20. Saved Properties
 
 **Purpose:**
 Save favourite properties.
@@ -432,7 +628,7 @@ Saved List
 
 ---
 
-# 17. Chat History
+# 21. Chat History
 
 **Purpose:**
 View previous AI conversations.
@@ -465,6 +661,8 @@ AI Chat
 Intent Extraction
       ↓
 Hybrid Property Search
+      ↓
+Interactive Property Map
       ↓
 Recommendation Engine
       ↓

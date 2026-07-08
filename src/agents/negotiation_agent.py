@@ -43,7 +43,7 @@ def run_negotiation_agent(df: pd.DataFrame):
     Returns:
         pd.DataFrame
     """
-    print("✅ negotiation agent executed")
+    print("🟨 negotiation agent executed")
 
     results = []
 

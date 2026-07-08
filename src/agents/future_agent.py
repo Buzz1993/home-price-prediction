@@ -165,7 +165,7 @@ def run_future_agent(df):
     Returns:
         list[dict]
     """
-    print("✅ future_agent executed")
+    print("🟨 future_agent executed")
 
     results = []
 

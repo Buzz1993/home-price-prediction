@@ -4,9 +4,11 @@
 
 EstateMind is an AI-powered real estate platform for property search, analysis, comparison, and investment decisions.
 
-The Python backend is already complete.
+The Python backend and the Next.js frontend are implemented.
 
-Your task is to build only the Next.js frontend.
+Future development focuses on extending the existing EstateMind Copilot with additional AI capabilities while reusing the current architecture.
+
+New features should integrate with the existing backend instead of replacing it.
 
 ---
 
@@ -21,6 +23,9 @@ Priorities:
 3. Reusable components
 4. Simple implementation
 5. Maintainable code
+6. Reuse existing Machine Learning services
+7. Reuse existing AI agents
+8. Keep Claude as an explanation layer
 
 Avoid enterprise-level complexity unless necessary.
 
@@ -169,6 +174,7 @@ Do not redesign workflows unless required.
 - Python
 - Machine Learning Models
 - Multi-Agent System
+- Anthropic Claude API
 - MCP Tools
 - n8n Webhooks
 
@@ -192,6 +198,11 @@ Follow the order defined in frontend/TODO.md.
 
 - Build one page at a time.
 - Do not modify existing backend business logic.
+- When integrating Claude, always reuse existing backend services.
+- Reuse outputs from existing ML models.
+- Reuse outputs from existing analysis agents.
+- Never duplicate recommendation logic.
+- Never duplicate prediction logic.
 - The EstateMind API layer (src/api) may be extended only to expose existing backend functionality. Do not implement new business logic in this layer.
 - Consume backend APIs only.
 - Keep components reusable.
@@ -216,22 +227,72 @@ EstateMind Copilot API
 (src/api/main.py)
       │
       ▼
-property_tools.py
+Search & Recommendation Engine
       │
       ▼
-mcp_real_estate_service.py
+Existing ML Models
++
+Analysis Agents
       │
       ▼
-Existing Backend Services
+Structured Analysis Context
       │
       ▼
-Prediction API (app.py)
+Prompt Builder
       │
       ▼
-Machine Learning Models
+Claude Service
+      │
+      ▼
+Natural Language Response
+      │
+      ▼
+Frontend
 ```
 
 Never move business logic to the frontend.
+
+Claude is an explanation layer only.
+
+---
+
+# Claude Integration Rules
+
+Claude is an explanation layer.
+
+Claude must never replace:
+
+- Property Search
+- Recommendation Engine
+- Price Prediction
+- Rental Analysis
+- Risk Analysis
+- Future Growth Analysis
+- Negotiation Strategy
+- Property Comparison
+- Report Generation
+
+These remain the responsibility of the existing backend.
+
+Claude receives structured backend results and produces:
+
+- Natural-language explanations
+- Investment summaries
+- Comparison summaries
+- Follow-up suggestions
+- Conversational responses
+
+Claude must never invent property data.
+
+Claude must never perform calculations already implemented by the backend.
+
+Claude should explain backend decisions instead of replacing them.
+
+Claude must never call Machine Learning models directly.
+
+Claude must never access datasets directly.
+
+Claude must only consume structured outputs returned by the existing backend services.
 
 ---
 
@@ -280,6 +341,12 @@ Avoid Redux.
 Never hardcode data.
 
 Always fetch data from backend APIs.
+
+Claude responses must always be generated from backend results.
+
+Always minimize the context sent to Claude to only what is required for the current task.
+
+Always execute backend search and analysis before calling Claude.
 
 Handle:
 
@@ -344,18 +411,34 @@ When implementing a feature:
 - Ask before changing project architecture.
 - Prefer simple solutions over clever ones.
 
+When implementing AI features:
+
+1. Execute backend services first.
+2. Collect structured analysis.
+3. Build the Claude prompt.
+4. Send only the required context to Claude.
+5. Return Claude's response.
+
+Do not bypass the backend.
+
+
 ---
 
 # Important
 
 - The Streamlit application is the source of truth.
+- The existing backend is the source of truth.
+- Claude is not the source of truth.
+- Claude explains backend decisions.
+- Claude does not replace Machine Learning models or analysis agents.
+- Claude does not replace backend business logic.
 - Do not redesign the backend.
 - Do not change API contracts.
 - Do not recreate existing backend features.
 - Do not duplicate backend business logic.
 - Do not invent APIs or database schemas.
 - Ask for clarification if an API or dependency is missing.
-- Focus on clean, maintainable frontend code.
+- Focus on clean, maintainable code.
 - Do not continue to the next feature unless I explicitly request it.
 
 ---
@@ -382,10 +465,60 @@ For every task:
    NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
    ```
 
-5. Reuse the existing backend APIs.
-6. Build only the requested task.
-7. Do not modify unrelated files.
-8. Stop after completing the requested task.
+5. If the task requires AI explanations, ensure Claude API credentials are configured.
+6. Reuse the existing backend APIs and analysis services.
+7. Build only the requested task.
+8. Do not modify unrelated files.
+9. Stop after completing the requested task.
+
+---
+
+# AI Workflow
+
+For conversational AI features:
+
+User
+      │
+      ▼
+POST /chat
+      │
+      ▼
+EstateMind Copilot API
+      │
+      ▼
+parse_intent_and_execute()
+      │
+      ▼
+Search / Recommendation
+      │
+      ▼
+Analysis Agents
+      │
+      ▼
+Structured Analysis Context
+      │
+      ▼
+Prompt Builder
+      │
+      ▼
+Claude
+      │
+      ▼
+Natural Language Response
+      │
+      ▼
+Frontend
+
+Claude should never perform:
+
+- Search
+- Ranking
+- Prediction
+- Valuation
+- Recommendation
+- Risk Scoring
+
+Claude should only explain the structured results produced by the backend.
 
 ---
 

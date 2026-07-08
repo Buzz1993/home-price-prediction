@@ -69,6 +69,8 @@ def sanitize_payload(row_dict):
 
 def predict_property_price(property_row):
 
+    print("🟨 predict_property_price executed")
+
     try:
 
         # print("\n========== PROPERTY ROW ==========")

@@ -22,7 +22,7 @@ def prepare_comparison_data(selected_df):
 
     Returns cleaned and enriched dataframe.
     """
-    print("☑️ prepare_comparison_data executed")
+    print("🟨 prepare_comparison_data executed")
 
     # selected_df is the dataframe of selected properties
     # with only rows where Compare column is True
@@ -58,7 +58,7 @@ def run_comparison(selected_df):
     """
     Runs comparison agent on prepared data.
     """
-    print("☑️ run_comparison executed")
+    print("🟨 run_comparison executed")
 
     raw_df = prepare_comparison_data(selected_df) # remove comapare and delete columns and add dev_summary column to selected_df to get raw_df 
     # print("raw_df", raw_df) 

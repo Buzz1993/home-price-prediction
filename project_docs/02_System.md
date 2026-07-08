@@ -63,6 +63,7 @@ The frontend is responsible for:
 * Dashboard
 * AI Chat
 * Property Search
+* Interactive Property Map
 * Property Details
 * Property Comparison
 * Reports
@@ -78,6 +79,8 @@ The frontend should not contain any Machine Learning, search, recommendation, or
 Its responsibilities are:
 
 - Display data
+- Render property images
+- Render interactive maps
 - Collect user input
 - Call backend APIs
 - Manage UI state

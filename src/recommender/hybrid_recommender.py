@@ -24,7 +24,7 @@ def get_dynamic_weights(intent):
 
     Returns normalized weights.
     """
-    print("☑️ get_dynamic_weights executed")
+    print("🟨 get_dynamic_weights executed")
 
     weights = {
         "price": 0.30,
@@ -78,7 +78,7 @@ def sanitize_weights(weights, baseline_keys):
     - Converts values to float.
     - Replaces missing or invalid values with 0.0.
     """
-    #print("☑️ sanitize_weights executed")
+    #print("🟨 sanitize_weights executed")
     if not isinstance(weights, dict):
         return {k: 0.0 for k in baseline_keys}
 
@@ -108,7 +108,7 @@ def combine_weights(intent_weights, slider_weights):
     dict: Final ranking weights.
     """
 
-    print("☑️ combine_weights executed")
+    print("🟨 combine_weights executed")
     fallback_baseline = {
         "price": 0.30, "area": 0.20, "amenities": 0.15,
         "location": 0.15, "connectivity": 0.10, "distance": 0.10
@@ -175,7 +175,7 @@ def compute_weighted_score(df, weights):
     Adds: price_score, area_score, amenities_score, location_score, connectivity_score, distance_score, weighted_score, and why_recommended columns.
     Generate a short explanation for why the property was recommended.
     """
-    print("☑️ compute_weighted_score executed")
+    print("🟨 compute_weighted_score executed")
     temp = df.copy()
 
     price_norm = normalize(temp["price"])
@@ -207,7 +207,7 @@ def apply_hybrid_ranking(similar_df, intent=None, intent_weights=None, slider_we
     The Single Source of Truth Ranking Engine.
     Blends structural vector similarity with normalized business rule filters.
     """
-    print("☑️ apply_hybrid_ranking executed")
+    print("🟨 apply_hybrid_ranking executed")
     if intent_weights is None: 
         intent_weights = get_dynamic_weights(intent)
 

@@ -145,7 +145,28 @@ Search properties.
 
 **Output:**
 
-- Property List
+Ranked Property List
+
+Each property may include:
+
+- property_id
+- image_urls
+- ap_pjt_url
+- latitude
+- longitude
+- project_name
+- locality
+- city
+- bed
+- bath
+- parking
+- balcony
+- area
+- cost_per_sqft
+- price
+- hybrid_score
+
+The frontend should render all available search results on the interactive map using the returned latitude and longitude coordinates.
 
 ---
 
@@ -162,7 +183,45 @@ Retrieve complete property details.
 
 **Output:**
 
-- Property Details
+Property Details
+
+Includes all property metadata available in the backend.
+
+Examples include:
+
+- property_id
+- image_urls
+- ap_pjt_url
+- project_name
+- locality
+- city
+- bed
+- bath
+- parking
+- balcony
+- area
+- cost_per_sqft
+- price
+- hybrid_score
+- property_type
+- furnish
+- status
+- amenities
+- Additional property metadata returned by the backend.
+
+The frontend should display every field returned by the backend whenever possible.
+
+The frontend should dynamically render all backend fields without requiring API changes when additional property metadata becomes available.
+
+Unknown fields should not be ignored. Instead, they should be grouped into logical sections such as:
+
+- Property Information
+- Project Information
+- Amenities
+- Specifications
+- Pricing
+- Location
+- Additional Details
 
 ---
 
@@ -414,6 +473,7 @@ Retrieve previously generated reports.
 - Handle loading, success, empty, and error states.
 - Ask for clarification if an API or backend dependency is unavailable.
 - Keep frontend service functions thin and delegate all business logic to the backend.
+- The frontend should gracefully render optional fields when they are available and hide them when they are not.
 
 ---
 

@@ -220,7 +220,12 @@ Never rewrite backend business logic.
 * AI Chat
 * AI Property Search
 * Hybrid Recommendation
-* Property Details
+* Rich Property Cards
+* Interactive Property Map
+* Rich Property Details
+* Property Image Gallery
+* Original Listing Link
+* Rich Property Information
 * Property Comparison
 * Price Prediction
 * Rental Analysis
@@ -253,6 +258,10 @@ Dashboard
 ↓
 
 Search Properties
+
+↓
+
+Interactive Property Map
 
 ↓
 

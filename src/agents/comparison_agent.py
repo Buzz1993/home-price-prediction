@@ -55,7 +55,7 @@ def run_comparison_agent(df):
     Returns comparison dataframe.
     """
 
-    print("✅ comparison_agent executed")
+    print("🟨 comparison_agent executed")
 
     df = df.copy()
 

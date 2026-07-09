@@ -396,33 +396,56 @@
 > Render every field returned by `GET /property/{id}`.
 > Automatically organize backend fields into logical UI sections.
 > Reuse existing backend fields and UI components without introducing new business logic.
+>
+> The Property Details view (features/property/property-details.tsx) now renders
+> the full backend record dynamically — it never assumes a fixed schema. A pure
+> categorization util (features/property/property-fields.ts) buckets every
+> backend key into the documented logical sections (Pricing, Property Overview,
+> Property Specifications, Project Information, Nearby Places, Reviews, Ratings,
+> Location, AI Insights) using keyword rules; any field that matches no rule is
+> rendered under "Additional Information", so no backend field is ever dropped
+> and the page adapts to future fields without code changes. The page layout is:
+> hero gallery → header → quick highlights → pricing → overview → specifications
+> → project → amenities → features → nearby → reviews → ratings → location →
+> AI insights → additional information → view original listing.
+>
+> Reused components: PropertyImageGallery (14.2) for hero/thumbnail/fullscreen/
+> remaining images, OriginalListingButton (14.3) in the header and as a
+> prominent action, the shared UI primitives, the format helpers, and the
+> saved-property workflow (header bookmark). A reusable PropertyLocationMap
+> placeholder (components/property/property-location-map.tsx) consumes the
+> backend latitude/longitude and exposes external map links — the full
+> interactive property map remains Phase 14.6 and is NOT implemented here.
+> `PropertyDetail` is now an open record (typed core fields + index signature),
+> so rich fields render only when the backend provides them. No backend logic or
+> API contract was changed; this is strictly a frontend rendering improvement.
 
-- [ ] Hero Image
-- [ ] Image Gallery
-- [ ] Thumbnail Carousel
-- [ ] Fullscreen Viewer
-- [ ] Property Header
-- [ ] Quick Highlights
-- [ ] Property Overview
-- [ ] Pricing Section
-- [ ] Property Specifications
-- [ ] Project Information
-- [ ] Amenities Grid
-- [ ] Features Section
-- [ ] Nearby Places
-- [ ] Positive Reviews
-- [ ] Needs Improvement
-- [ ] Ratings
-- [ ] Project Ratings
-- [ ] Review Cards
-- [ ] Location Information
-- [ ] Additional Information
-- [ ] Original Listing Button
-- [ ] AI Insights
-- [ ] Interactive Map
-- [ ] Responsive Layout
-- [ ] Render all backend property fields
-- [ ] Automatically organize unknown backend fields
+- [x] Hero Image
+- [x] Image Gallery
+- [x] Thumbnail Carousel
+- [x] Fullscreen Viewer
+- [x] Property Header
+- [x] Quick Highlights
+- [x] Property Overview
+- [x] Pricing Section
+- [x] Property Specifications
+- [x] Project Information
+- [x] Amenities Grid
+- [x] Features Section
+- [x] Nearby Places
+- [x] Positive Reviews
+- [x] Needs Improvement
+- [x] Ratings
+- [x] Project Ratings
+- [x] Review Cards
+- [x] Location Information
+- [x] Additional Information
+- [x] Original Listing Button
+- [x] AI Insights
+- [x] Interactive Map — reusable location placeholder consuming lat/lng (full map is Phase 14.6)
+- [x] Responsive Layout
+- [x] Render all backend property fields
+- [x] Automatically organize unknown backend fields
 
 ---
 

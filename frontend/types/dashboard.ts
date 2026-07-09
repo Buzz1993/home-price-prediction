@@ -14,8 +14,13 @@ export type SearchResult = {
   why_recommended: string;
 };
 
-// Full property record returned by GET /property/{id}. Mirrors the backend
-// PROPERTY_DETAIL_WHITELIST (src/mcp/tools/property_tools.py -> get_property_details).
+// Full property record returned by GET /property/{id}. The current backend
+// PROPERTY_DETAIL_WHITELIST (src/mcp/tools/property_tools.py ->
+// get_property_details) returns the core fields below, but the documented
+// contract (project_docs/03_API.md) allows any additional property metadata.
+// The Property Details page renders every field the backend returns and never
+// assumes a fixed schema, so this is an open record: known fields are typed and
+// anything else is read through the index signature.
 export type PropertyDetail = {
   id: string;
   project_name: string;
@@ -29,6 +34,16 @@ export type PropertyDetail = {
   analysis_msg: string;
   // Original property listing URL. Optional — rendered only when present.
   ap_pjt_url?: string;
+  // Optional rich fields from the documented contract. Rendered only when the
+  // backend provides them.
+  image_urls?: string[];
+  locality?: string;
+  city?: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  // Any additional backend metadata. The details page categorizes these
+  // dynamically so the UI adapts to future fields without code changes.
+  [key: string]: unknown;
 };
 
 // Minimal shape the reusable PropertyCard needs to render one property. A full

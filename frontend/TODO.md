@@ -337,18 +337,32 @@
 ## Phase 14.2 — Property Image Gallery
 
 > Display backend property images using the existing `image_urls` field.
+>
+> Built a single reusable PropertyImageGallery component
+> (components/property/property-image-gallery.tsx) that renders only the backend
+> `image_urls`. It provides the hero image (image_urls[0]), a horizontally
+> scrollable thumbnail strip with a green active border, an image counter
+> (current / total), previous/next navigation with wrap-around, a fullscreen
+> viewer built on the existing radix Dialog primitive (same one used by the
+> shared Sheet), keyboard navigation (← / → to navigate, Esc to close — active
+> only while the viewer is open), mobile swipe gestures, lazy loading, a loading
+> skeleton (reusing the shared Skeleton), and a graceful ImageOff fallback for
+> missing/broken images. Edge cases (0, 1, many, and large collections) are
+> handled without layout shift. This is the single reusable image component to be
+> consumed by Property Details (Phase 14.4), the interactive map (Phase 14.6) and
+> any future property image display — no page was redesigned in this phase.
 
-- [ ] Display image gallery
-- [ ] Display thumbnails
-- [ ] Display image counter
-- [ ] Support lazy loading
-- [ ] Display image placeholder
-- [ ] Display thumbnail strip
-- [ ] Support image carousel
-- [ ] Support fullscreen viewer
-- [ ] Support previous / next navigation
-- [ ] Support keyboard navigation
-- [ ] Support mobile swipe
+- [x] Display image gallery
+- [x] Display thumbnails
+- [x] Display image counter
+- [x] Support lazy loading
+- [x] Display image placeholder
+- [x] Display thumbnail strip
+- [x] Support image carousel
+- [x] Support fullscreen viewer
+- [x] Support previous / next navigation
+- [x] Support keyboard navigation
+- [x] Support mobile swipe
 
 ---
 

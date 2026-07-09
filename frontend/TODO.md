@@ -370,10 +370,23 @@
 
 > Allow users to open the original property listing using the existing
 > `ap_pjt_url` field.
+>
+> A single reusable OriginalListingButton
+> (components/property/original-listing-button.tsx) opens the backend
+> `ap_pjt_url` in a new tab (target="_blank", rel="noopener noreferrer") with an
+> external-link icon, reusing the existing Button component and design system. It
+> performs lightweight client-side validation (well-formed absolute http(s) URL)
+> and renders nothing when the URL is null/undefined/empty/whitespace/invalid, so
+> no disabled button, placeholder text or broken link is ever shown. It is
+> consumed as a small "View Listing" action in the reusable PropertyCard and as a
+> prominent "View Original Listing" button in the Property Details header. The
+> `ap_pjt_url` field was added as an optional property to the existing
+> PropertyCardData and PropertyDetail types. No backend logic or API contract was
+> changed; this is strictly a UI enhancement.
 
-- [ ] View Original Listing button
-- [ ] Open in new tab
-- [ ] Hide button when URL unavailable
+- [x] View Original Listing button
+- [x] Open in new tab
+- [x] Hide button when URL unavailable
 
 ---
 

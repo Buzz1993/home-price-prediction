@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { OriginalListingButton } from "@/components/property/original-listing-button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCr, splitList } from "@/features/dashboard/format";
@@ -126,11 +127,14 @@ function PropertyDetailsContent({ property }: { property: PropertyDetail }) {
             {property.id}
           </p>
         </div>
-        <div className="text-right">
+        <div className="flex flex-col items-end gap-2">
           <p className="text-2xl font-semibold">{formatCr(property.price)}</p>
-          <Badge variant="secondary" className="mt-1">
+          <Badge variant="secondary">
             <BedDouble /> {property.bhk_type}
           </Badge>
+          {/* Original listing — reuses the shared action; hidden when no valid
+              backend URL exists. */}
+          <OriginalListingButton url={property.ap_pjt_url} size="sm" />
         </div>
       </div>
 

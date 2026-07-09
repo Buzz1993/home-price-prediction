@@ -29,6 +29,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { OriginalListingButton } from "@/components/property/original-listing-button";
 import { cn } from "@/lib/utils";
 import {
   formatArea,
@@ -217,6 +218,15 @@ export function PropertyCard({
             <span className="line-clamp-3">{property.why_recommended}</span>
           </p>
         )}
+
+        {/* Original listing — reuses the shared action; hidden when no valid
+            backend URL exists. */}
+        <OriginalListingButton
+          url={property.ap_pjt_url}
+          label="View Listing"
+          variant="outline"
+          size="sm"
+        />
       </CardContent>
 
       <CardFooter className="justify-between border-t p-4">

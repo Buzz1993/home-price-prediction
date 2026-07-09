@@ -27,6 +27,8 @@ export type PropertyDetail = {
   amenities_mcp: string;
   features_mcp: string;
   analysis_msg: string;
+  // Original property listing URL. Optional — rendered only when present.
+  ap_pjt_url?: string;
 };
 
 // Minimal shape the reusable PropertyCard needs to render one property. A full
@@ -58,6 +60,8 @@ export type PropertyCardData = {
   balcony?: number | string;
   area?: number | string;
   cost_per_sqft?: number | string;
+  // Original property listing URL. Optional — rendered only when present.
+  ap_pjt_url?: string;
 };
 
 // The backend returns this shape (HTTP 200) when no property matches the id.

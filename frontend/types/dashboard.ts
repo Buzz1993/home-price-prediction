@@ -32,6 +32,14 @@ export type PropertyDetail = {
 // Minimal shape the reusable PropertyCard needs to render one property. A full
 // SearchResult satisfies it directly; saved properties are mapped onto it from
 // GET /property/{id}, where `search_score`/`why_recommended` are unavailable.
+//
+// The card is currently fed by the existing POST /chat `search_results`
+// response, which returns only the core fields (id, price, bhk_type, location,
+// amenities_mcp, search_score, why_recommended). The optional rich fields below
+// are ready for the documented POST /search contract (project_docs/03_API.md),
+// which is not yet exposed, so the card renders each rich field only when the
+// backend provides it and hides it otherwise. `search_score` carries the
+// backend hybrid (recommendation) score.
 export type PropertyCardData = {
   id: string;
   price: number;
@@ -40,6 +48,16 @@ export type PropertyCardData = {
   amenities_mcp: string;
   why_recommended?: string;
   search_score?: number;
+  image_urls?: string[];
+  project_name?: string;
+  locality?: string;
+  city?: string;
+  bed?: number | string;
+  bath?: number | string;
+  parking?: number | string;
+  balcony?: number | string;
+  area?: number | string;
+  cost_per_sqft?: number | string;
 };
 
 // The backend returns this shape (HTTP 200) when no property matches the id.

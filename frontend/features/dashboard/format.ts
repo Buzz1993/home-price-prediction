@@ -30,3 +30,17 @@ export function formatCell(value: string | number | null): string {
   if (value === null || value === undefined || value === "") return "—";
   return String(value);
 }
+
+// Area in square feet from the backend. Render with a thousands separator.
+export function formatArea(value: number | string | null | undefined): string {
+  const n = typeof value === "string" ? Number(value) : value;
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return `${n.toLocaleString("en-IN")} sq.ft.`;
+}
+
+// Cost per square foot (₹) from the backend.
+export function formatPerSqft(value: number | string | null | undefined): string {
+  const n = typeof value === "string" ? Number(value) : value;
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return `₹${Math.round(n).toLocaleString("en-IN")}/sq.ft.`;
+}

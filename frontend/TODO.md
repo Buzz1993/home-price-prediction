@@ -302,21 +302,35 @@
 ## Phase 14.1 — Rich Property Cards
 
 > Upgrade the reusable PropertyCard component using existing backend data.
+>
+> The single reusable PropertyCard (components/property/property-card.tsx) now
+> renders rich property fields: primary image (image_urls[0]) with a fallback
+> placeholder, BHK badge, bookmark, project name, property ID (links to
+> /property/{id}), locality/city, bed/bath/parking/balcony, area, cost per sqft,
+> formatted price, the backend recommendation (hybrid) score, and a Read More
+> button. Every rich field is optional and rendered only when the backend
+> provides it. The card is currently fed by the existing POST /chat
+> `search_results` response, which returns only the core fields (id, price,
+> bhk_type, location, amenities_mcp, search_score, why_recommended); the richer
+> fields are ready for the documented POST /search contract
+> (project_docs/03_API.md) once it is exposed, same pattern as prior phases. The
+> bookmark reuses the existing saved-property workflow and no backend logic was
+> changed or duplicated.
 
-- [ ] Display Property ID
-- [ ] Display BHK badge
-- [ ] Display bookmark button
-- [ ] Display primary property image
-- [ ] Display locality
-- [ ] Display bed
-- [ ] Display bath
-- [ ] Display parking
-- [ ] Display balcony
-- [ ] Display area
-- [ ] Display cost per sqft
-- [ ] Display formatted price
-- [ ] Display Recommendation Score
-- [ ] Display Read More button
+- [x] Display Property ID
+- [x] Display BHK badge
+- [x] Display bookmark button
+- [x] Display primary property image
+- [x] Display locality
+- [x] Display bed
+- [x] Display bath
+- [x] Display parking
+- [x] Display balcony
+- [x] Display area
+- [x] Display cost per sqft
+- [x] Display formatted price
+- [x] Display Recommendation Score
+- [x] Display Read More button
 
 ---
 

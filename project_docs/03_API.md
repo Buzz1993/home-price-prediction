@@ -31,7 +31,7 @@ Do not rewrite backend business logic.
 The EstateMind API layer is implemented in:
 
 - src/api/main.py
-- src/api/copilot_api.py
+- src/api/analysis_api.py
 
 These files expose the existing backend services without duplicating business logic.
 
@@ -187,6 +187,21 @@ Property Details
 
 Includes all property metadata available in the backend.
 
+The frontend should render:
+
+- All image_urls
+- ap_pjt_url
+- Amenities
+- Features
+- Nearby Places
+- Reviews
+- Ratings
+- Coordinates
+- Pricing
+- Builder
+- Project
+- Unknown fields
+
 Examples include:
 
 - property_id
@@ -209,19 +224,25 @@ Examples include:
 - amenities
 - Additional property metadata returned by the backend.
 
+The frontend should automatically categorize backend fields into logical sections instead of relying on a fixed schema.
+
 The frontend should display every field returned by the backend whenever possible.
 
 The frontend should dynamically render all backend fields without requiring API changes when additional property metadata becomes available.
 
 Unknown fields should not be ignored. Instead, they should be grouped into logical sections such as:
 
-- Property Information
+- Property Overview
+- Pricing
+- Property Specifications
 - Project Information
 - Amenities
-- Specifications
-- Pricing
+- Features
+- Nearby Places
+- Reviews
 - Location
-- Additional Details
+- AI Insights
+- Additional Information
 
 ---
 

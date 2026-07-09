@@ -167,6 +167,7 @@
 > the backend exposes it. No backend was modified and no endpoint was invented.
 
 - [x] User Profile — GET /profile, GET /chat-history, GET /reports
+- [x] Sign Out Button — POST /logout
 
 ## Phase 12 — Final Polish
 
@@ -325,9 +326,14 @@
 
 - [ ] Display image gallery
 - [ ] Display thumbnails
+- [ ] Display image counter
+- [ ] Support lazy loading
+- [ ] Display image placeholder
+- [ ] Display thumbnail strip
 - [ ] Support image carousel
 - [ ] Support fullscreen viewer
 - [ ] Support previous / next navigation
+- [ ] Support keyboard navigation
 - [ ] Support mobile swipe
 
 ---
@@ -343,31 +349,39 @@
 
 ---
 
-## Phase 14.4 — Property Details Enhancement
+## Phase 14.4 — Rich Property Details Experience
 
-> Improve the Property Details page using the existing backend data.
+> Build a rich property details page using the existing backend property data.
+> Render every field returned by `GET /property/{id}`.
+> Automatically organize backend fields into logical UI sections.
+> Reuse existing backend fields and UI components without introducing new business logic.
 
-- [ ] Reuse image gallery
-- [ ] Display property specifications
-- [ ] Display formatted price
-- [ ] Display Match Score
-- [ ] Display original listing button
-
----
-
-## Phase 14.4.1 — Property Details Experience
-
-> Display all available backend property information in a clean, categorized layout.
-
-- [ ] Reuse image gallery
-- [ ] Display hero image
-- [ ] Display property overview
-- [ ] Display property specifications
-- [ ] Display project information
-- [ ] Display amenities
-- [ ] Display location information
-- [ ] Display additional backend fields
-- [ ] Organize unknown backend fields automatically
+- [ ] Hero Image
+- [ ] Image Gallery
+- [ ] Thumbnail Carousel
+- [ ] Fullscreen Viewer
+- [ ] Property Header
+- [ ] Quick Highlights
+- [ ] Property Overview
+- [ ] Pricing Section
+- [ ] Property Specifications
+- [ ] Project Information
+- [ ] Amenities Grid
+- [ ] Features Section
+- [ ] Nearby Places
+- [ ] Positive Reviews
+- [ ] Needs Improvement
+- [ ] Ratings
+- [ ] Project Ratings
+- [ ] Review Cards
+- [ ] Location Information
+- [ ] Additional Information
+- [ ] Original Listing Button
+- [ ] AI Insights
+- [ ] Interactive Map
+- [ ] Responsive Layout
+- [ ] Render all backend property fields
+- [ ] Automatically organize unknown backend fields
 
 ---
 
@@ -407,30 +421,53 @@
 
 ## Phase 14.7 — Landing Page Redesign
 
-> Redesign the public landing page with premium branding.
+> Redesign the public landing page with a premium first impression.
+> Use a large scenic real estate background image similar to the provided design reference.
+> Preserve existing authentication workflows while modernizing the visual experience.
 
-- [ ] Fullscreen hero background
-- [ ] EstateMind branding
-- [ ] Welcome section
-- [ ] Sign In button
-- [ ] Sign Up button
-- [ ] Features section
-- [ ] Call To Action
-- [ ] Responsive layout
+- [ ] Fullscreen Hero Background
+- [ ] Background Hero Image
+- [ ] Dark Overlay
+- [ ] EstateMind Branding
+- [ ] Welcome Section
+- [ ] Sign In Button
+- [ ] Sign Up Button
+- [ ] Animated Call To Action
+- [ ] AI Features Section
+- [ ] Feature Cards
+- [ ] How EstateMind Works
+- [ ] Premium Landing Page
+- [ ] Responsive Design
 
 ---
 
 ## Phase 14.8 — UI Theme Refresh
 
-> Modernize the application's visual design.
+> Refresh the application's visual design using the provided green-and-white dashboard reference.
+> Update only the design system and styling. Do not modify functionality or existing workflows.
 
-- [ ] Green & white color palette
-- [ ] Updated typography
-- [ ] Premium property marketplace styling
-- [ ] Improved buttons
-- [ ] Improved cards
-- [ ] Updated navigation
-- [ ] Responsive polish
+- [ ] Green Primary Palette
+- [ ] Update all colors to green palette
+- [ ] White Background
+- [ ] Light Gray Cards
+- [ ] Premium Cards
+- [ ] Update Sidebar
+- [ ] Update Navbar
+- [ ] Update Property Cards
+- [ ] Update Cards
+- [ ] Update Badges
+- [ ] Update Forms
+- [ ] Update Buttons
+- [ ] Update Tables
+- [ ] Softer Borders
+- [ ] Better Typography
+- [ ] Better Spacing
+- [ ] Rounded Corners
+- [ ] Soft Shadows
+- [ ] Green Active Navigation
+- [ ] Green Highlights for Important Actions
+- [ ] Keep one consistent design system
+- [ ] Responsive Polish
 
 ---
 

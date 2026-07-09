@@ -63,7 +63,7 @@ All AI, Machine Learning, search, recommendation, and analysis logic remains in 
 The EstateMind backend exposes REST APIs through:
 
 - src/api/main.py
-- src/api/copilot_api.py
+- src/api/analysis_api.py
 
 These APIs are thin wrappers around the existing backend services.
 

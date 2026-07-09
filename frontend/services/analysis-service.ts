@@ -1,6 +1,6 @@
 // AI Analysis API calls. Thin wrappers over the EstateMind Copilot API's
 // per-property analysis endpoints (APIRouter prefix "/analysis" in
-// src/api/copilot_api.py; see project_docs/03_API.md). Each just sends the
+// src/api/analysis_api.py; see project_docs/03_API.md). Each just sends the
 // selected property ids; the backend owns all analysis logic (the MCP tools
 // get_price_prediction, get_rental_analysis, get_valuation_analysis,
 // get_negotiation_strategy and get_investment_advice — see

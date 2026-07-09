@@ -29,7 +29,7 @@ The frontend is responsible only for the user interface and consuming backend AP
                 │
 ┌───────────────▼──────────────┐
 │   API Router                 │
-│ src/api/copilot_api.py       │
+│ src/api/analysis_api.py    │
 └───────────────┬──────────────┘
                 │
 ┌───────────────▼──────────────┐
@@ -129,7 +129,7 @@ The frontend communicates with the EstateMind Copilot API.
 Location:
 
 - src/api/main.py
-- src/api/copilot_api.py
+- src/api/analysis_api.py
 
 The API layer is intentionally thin.
 
@@ -430,7 +430,7 @@ EstateMind/
 │   ├── api/
 │   │   ├── __init__.py
 │   │   ├── main.py
-│   │   └── copilot_api.py
+│   │   └── analysis_api.py
 │   │
 │   ├── agents/
 │   ├── core/

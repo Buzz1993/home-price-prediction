@@ -314,6 +314,40 @@ Prefer a premium dashboard style with reusable UI components.
 
 Avoid excessive animations.
 
+Use the provided green-and-white dashboard design as the visual reference.
+
+Design Guidelines:
+
+- White background
+- Green primary palette
+- Green active navigation
+- Light gray cards
+- Rounded corners
+- Soft shadows
+- Clean typography
+- Premium spacing
+- Green highlights for important actions
+
+Do not change functionality or workflows when updating the UI.
+
+---
+
+### Property Details Rendering Rules
+
+When rendering property details:
+
+- Never hardcode property fields.
+- Render every field returned by the backend.
+- Always display all property images from `image_urls`.
+- Always display the first image as the Hero Image.
+- Render the remaining images as a thumbnail gallery, image carousel, and fullscreen viewer.
+- Automatically group backend fields into logical UI sections.
+- If a field does not belong to any known category, render it under **Additional Information**.
+- Never ignore backend fields.
+- Reuse the same Image Gallery component throughout the application.
+- Use the green-and-white design system consistently across the application.
+- The landing page should use a premium full-screen scenic background similar to the provided design reference.
+
 ---
 
 # Component Rules
@@ -566,3 +600,21 @@ Unless I explicitly request otherwise, ignore:
 Only use files defined in the **Source of Truth** section.
 
 If additional backend information is required, stop and ask for clarification before inspecting other files.
+
+---
+
+# Recommended Implementation Order
+
+When implementing the remaining frontend work, follow this order:
+
+1. Rich Property Details Experience
+2. Property Image Gallery
+3. Original Listing Button
+4. Landing Page Redesign
+5. UI Theme Refresh
+6. Sign Out
+7. Interactive Property Map
+
+Complete shared UI components before building features that depend on them.
+
+Reuse existing backend APIs and frontend components whenever possible.

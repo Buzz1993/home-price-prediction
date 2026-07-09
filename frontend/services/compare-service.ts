@@ -1,5 +1,5 @@
 // Comparison API call. Thin wrapper over the POST /analysis/comparison endpoint
-// (APIRouter prefix "/analysis" in src/api/copilot_api.py) — the backend runs the
+// (APIRouter prefix "/analysis" in src/api/analysis_api.py) — the backend runs the
 // analytical comparison (scoring, ranking, verdict) via compare_properties. The
 // frontend only sends the selected property ids and renders the result. See
 // project_docs/03_API.md and the Streamlit run_comparison reference

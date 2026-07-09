@@ -206,10 +206,11 @@ Recommendation
 
 ---
 
-# 7. Property Details
+# 7. Rich Property Details Experience
 
 **Purpose:**
-Display complete property information for a selected property.
+
+Provide a rich, interactive property details experience by displaying every piece of information returned by the backend in a modern, organized layout.
 
 **Workflow**
 
@@ -218,15 +219,63 @@ Property
 
 ↓
 
-Property Details
+Hero Image
 
 ↓
 
-Property Information
+Thumbnail Gallery
 
 ↓
 
-Image Gallery
+Property Header
+
+↓
+
+Quick Highlights
+
+↓
+
+Pricing
+
+↓
+
+Property Overview
+
+↓
+
+Property Specifications
+
+↓
+
+Project Information
+
+↓
+
+Amenities
+
+↓
+
+Features
+
+↓
+
+Nearby Places
+
+↓
+
+Reviews
+
+↓
+
+Location
+
+↓
+
+AI Insights
+
+↓
+
+Additional Information
 
 ↓
 
@@ -234,22 +283,48 @@ Original Listing
 
 ↓
 
-AI Analysis
+Remaining Images
 ```
 
 **Input**
 
-- Property ID
+
+
+* Property ID
+
+
 
 **Output**
 
-- Complete Property Details
-- Organized Property Information
-- Property Specifications
-- Amenities
+- Hero Image
 - Image Gallery
+- Thumbnail Gallery
+- Fullscreen Viewer
+- Property Header
+- Quick Highlights
+- Pricing
+- Property Overview
+- Property Specifications
+- Project Information
+- Amenities
+- Features
+- Nearby Places
+- Reviews
+- Location
+- AI Insights
 - Original Listing
-- AI Analysis
+- Remaining Images
+- Additional Backend Fields
+
+The frontend should render every backend field returned by the backend.
+
+Automatically organize backend fields into logical sections.
+
+Unknown backend fields should never be ignored and should automatically appear under **Additional Information**.
+
+No backend changes are required.
+
+The frontend must never hardcode property fields.
 
 ---
 
@@ -300,7 +375,19 @@ Property Details
 
 ↓
 
-Organized Information
+Property Overview
+
+↓
+
+Pricing
+
+↓
+
+Property Specifications
+
+↓
+
+Project Information
 
 ↓
 
@@ -308,11 +395,19 @@ Amenities
 
 ↓
 
-Location
+Features
 
 ↓
 
-AI Analysis
+Nearby Places
+
+↓
+
+Location Information
+
+↓
+
+Additional Information
 
 Input
 
@@ -325,6 +420,8 @@ Output
 - Property Specifications
 - Project Information
 - Amenities
+- Features
+- Nearby Places
 - Location
 - Additional Information
 

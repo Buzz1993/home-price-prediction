@@ -454,7 +454,7 @@ Property Details
 - longitude
 - image_urls
 - price
-- cost_per_sqft
+- costpersqft
 - area
 - bed
 

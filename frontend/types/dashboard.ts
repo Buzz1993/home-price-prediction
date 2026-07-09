@@ -4,6 +4,12 @@
 // business logic stays in the backend.
 
 // A single ranked property returned by a search (`type: "search_results"`).
+//
+// The current /chat pipeline returns the core fields below. The optional rich
+// fields mirror the documented POST /search contract (project_docs/03_API.md) —
+// including latitude/longitude for the interactive map — and are rendered only
+// when the backend provides them, so the map shows real markers once /search is
+// exposed and hides gracefully until then. Same pattern as PropertyCardData.
 export type SearchResult = {
   id: string;
   price: number;
@@ -12,6 +18,19 @@ export type SearchResult = {
   amenities_mcp: string;
   search_score: number;
   why_recommended: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  image_urls?: string[];
+  project_name?: string;
+  locality?: string;
+  city?: string;
+  bed?: number | string;
+  bath?: number | string;
+  parking?: number | string;
+  balcony?: number | string;
+  area?: number | string;
+  costpersqft?: number | string;
+  ap_pjt_url?: string;
 };
 
 // Full property record returned by GET /property/{id}. The current backend
@@ -74,7 +93,7 @@ export type PropertyCardData = {
   parking?: number | string;
   balcony?: number | string;
   area?: number | string;
-  cost_per_sqft?: number | string;
+  costpersqft?: number | string;
   // Original property listing URL. Optional — rendered only when present.
   ap_pjt_url?: string;
 };

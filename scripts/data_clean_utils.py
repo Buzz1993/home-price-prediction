@@ -281,7 +281,7 @@ def basic_cleaning(data: pd.DataFrame) -> pd.DataFrame:
             else None
         )
 
-        df['cost_per_sqft'] = df['area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
+        df['costpersqft'] = df['area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
         df['area_unit'] = df['area_work'].str.extract(r'/([^/]+)$')
 
         # STRICT unit check (DO NOT CRASH -> DROP bad rows)
@@ -289,7 +289,7 @@ def basic_cleaning(data: pd.DataFrame) -> pd.DataFrame:
             bad_units = df["area_unit"].astype(str).str.strip().str.lower().isin(["sqm", "kanal"])
             if bad_units.any():
                 logger.warning(f"Unsupported area units found: {df.loc[bad_units, 'area_unit'].unique()}. Setting area fields to NaN instead of dropping.")
-                df.loc[bad_units, ["carpet_area", "cost_per_sqft", "area_unit"]] = np.nan
+                df.loc[bad_units, ["carpet_area", "costpersqft", "area_unit"]] = np.nan
 
 
         df['super_build_area_work'] = df["leftmany_super built-up area"].combine_first(df["many_super built-up area"])
@@ -304,7 +304,7 @@ def basic_cleaning(data: pd.DataFrame) -> pd.DataFrame:
             bad_units = df["initial_unit"].astype(str).str.strip().str.lower().isin(["sqms", "sqyr"])
             if bad_units.any():
                 logger.warning(f"Unsupported initial units found: {df.loc[bad_units, 'initial_unit'].unique()}. Setting super-built-up fields to NaN instead of dropping.")
-                df.loc[bad_units, ["super_build_up_area", "super_build_up_cost_per_sqft", "initial_unit"]] = np.nan
+                df.loc[bad_units, ["super_build_up_area", "super_build_up_costpersqft", "initial_unit"]] = np.nan
 
 
 
@@ -314,7 +314,7 @@ def basic_cleaning(data: pd.DataFrame) -> pd.DataFrame:
             else None
         )
 
-        df['super_build_up_cost_per_sqft'] = df['super_build_area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
+        df['super_build_up_costpersqft'] = df['super_build_area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
         df['super_built_up_area_unit'] = df['super_build_area_work'].str.extract(r'/([^/]+)$')
 
         df['f_area'] = df["carpet_area"].combine_first(df["super_build_up_area"])
@@ -348,9 +348,9 @@ def basic_cleaning(data: pd.DataFrame) -> pd.DataFrame:
         cols_to_drop = [
             'many_carpet area', 'leftmany_carpet area',
             'leftmany_super built-up area', 'many_super built-up area',
-            'area', 'area_work', 'carpet_area', 'cost_per_sqft',
+            'area', 'area_work', 'carpet_area', 'costpersqft',
             'area_unit', 'initial_unit', 'super_build_area_work',
-            'super_build_up_area', 'super_build_up_cost_per_sqft',
+            'super_build_up_area', 'super_build_up_costpersqft',
             'super_built_up_area_unit', 'dupli_f_area',
             'dupli_f_area_unit', 'f_area_unit'
         ]

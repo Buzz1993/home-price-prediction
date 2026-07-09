@@ -44,3 +44,14 @@ export function formatPerSqft(value: number | string | null | undefined): string
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   return `₹${Math.round(n).toLocaleString("en-IN")}/sq.ft.`;
 }
+
+// Compact price label for map markers. Prices from the backend are in Crores;
+// values below 1 Cr are shown in Lakh. Trailing zeros are dropped so 2.00 -> "2
+// Cr", 1.25 -> "1.25 Cr", 0.50 -> "50 Lakh". Formatting only — no business logic.
+export function formatPriceLabel(value: number | string | null | undefined): string {
+  const n = typeof value === "string" ? Number(value) : value;
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  const trim = (s: string) => s.replace(/\.?0+$/, "");
+  if (n >= 1) return `₹${trim(n.toFixed(2))} Cr`;
+  return `₹${trim((n * 100).toFixed(2))} Lakh`;
+}

@@ -7,10 +7,13 @@
 // (Phase 10) so a property can be added to / removed from the saved list; the
 // backend owns persistence via the documented saved-properties endpoints.
 
+import { useState } from "react";
 import { SearchX } from "lucide-react";
 
 import { PropertyCard } from "@/components/property/property-card";
+import { InteractivePropertyMap } from "@/components/property/interactive-property-map";
 import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/utils";
 import {
   useRemoveSavedProperty,
   useSaveProperty,
@@ -24,6 +27,10 @@ export function SearchResultsPanel({ results }: { results: SearchResult[] }) {
   const { data: saved } = useSavedProperties();
   const save = useSaveProperty();
   const remove = useRemoveSavedProperty();
+
+  // Selected marker ↔ card highlight. Selecting a marker highlights the matching
+  // card and vice-versa; the map itself is hidden when no result has coordinates.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const savedIds = new Set((saved ?? []).map((p) => p.id));
   const savePending = save.isPending || remove.isPending;
@@ -45,18 +52,36 @@ export function SearchResultsPanel({ results }: { results: SearchResult[] }) {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {results.map((result) => (
-        <PropertyCard
-          key={result.id}
-          property={result}
-          staged={tray.includes(result.id)}
-          onToggleStage={toggleTray}
-          saved={savedIds.has(result.id)}
-          onToggleSave={toggleSave}
-          savePending={savePending}
-        />
-      ))}
+    <div className="space-y-3">
+      {/* Interactive map — renders every result with valid backend coordinates
+          and hides gracefully otherwise. Reused across the application. */}
+      <InteractivePropertyMap
+        properties={results}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        className="h-72 sm:h-80"
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {results.map((result) => (
+          <div
+            key={result.id}
+            className={cn(
+              "rounded-xl transition-shadow",
+              result.id === selectedId && "ring-2 ring-primary ring-offset-2"
+            )}
+          >
+            <PropertyCard
+              property={result}
+              staged={tray.includes(result.id)}
+              onToggleStage={toggleTray}
+              saved={savedIds.has(result.id)}
+              onToggleSave={toggleSave}
+              savePending={savePending}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

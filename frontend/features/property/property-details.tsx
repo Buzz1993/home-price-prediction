@@ -54,6 +54,11 @@ import { PropertyImageGallery } from "@/components/property/property-image-galle
 import { OriginalListingButton } from "@/components/property/original-listing-button";
 import { PropertyLocationMap } from "@/components/property/property-location-map";
 import {
+  InteractivePropertyMap,
+  getMapCoords,
+  type MapProperty,
+} from "@/components/property/interactive-property-map";
+import {
   formatArea,
   formatCr,
   humanizeKey,
@@ -220,6 +225,26 @@ function PropertyDetailsContent({ property }: { property: PropertyDetail }) {
   if (amenityKey) consumed.add(amenityKey);
   if (featureKey) consumed.add(featureKey);
 
+  // Single-property map input for the reusable interactive map. Only the fields
+  // the map renders are picked from the backend record; coordinates decide
+  // whether the interactive map or the placeholder fallback is shown.
+  const mapProperty: MapProperty = {
+    id: property.id,
+    latitude: property.latitude,
+    longitude: property.longitude,
+    price: property.price,
+    project_name: property.project_name,
+    locality: property.locality,
+    city: property.city,
+    location: property.location,
+    area: property.area,
+    bhk_type: property.bhk_type,
+    bed: record["bed"] as MapProperty["bed"],
+    costpersqft: record["costpersqft"] as MapProperty["costpersqft"],
+    image_urls: property.image_urls,
+  };
+  const hasMapCoords = getMapCoords(mapProperty) !== null;
+
   const { sections, additional } = categorizeFields(record, consumed);
   const byId = new Map(sections.map((s) => [s.id, s] as const));
 
@@ -367,14 +392,24 @@ function PropertyDetailsContent({ property }: { property: PropertyDetail }) {
         </Section>
       )}
 
-      {/* 13. Location — map placeholder (lat/lng) + any location fields. */}
+      {/* 13. Location — the reusable interactive map centred on this property
+          (Phase 14.6), with the coordinate placeholder as a graceful fallback
+          when the backend has no valid coordinates. */}
       <Section title="Location">
         <div className="space-y-4">
-          <PropertyLocationMap
-            latitude={property.latitude}
-            longitude={property.longitude}
-            label={place || undefined}
-          />
+          {hasMapCoords ? (
+            <InteractivePropertyMap
+              properties={[mapProperty]}
+              selectedId={property.id}
+              className="h-80 sm:h-96"
+            />
+          ) : (
+            <PropertyLocationMap
+              latitude={property.latitude}
+              longitude={property.longitude}
+              label={place || undefined}
+            />
+          )}
           {location && <FieldSection entries={location.entries} />}
         </div>
       </Section>

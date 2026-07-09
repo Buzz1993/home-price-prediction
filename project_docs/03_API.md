@@ -162,7 +162,7 @@ Each property may include:
 - parking
 - balcony
 - area
-- cost_per_sqft
+- costpersqft
 - price
 - hybrid_score
 
@@ -215,7 +215,7 @@ Examples include:
 - parking
 - balcony
 - area
-- cost_per_sqft
+- costpersqft
 - price
 - hybrid_score
 - property_type

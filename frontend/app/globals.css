@@ -128,3 +128,20 @@
     @apply font-sans;
   }
 }
+
+/* Interactive Property Map (Phase 14.6) — integrate the Leaflet popup with the
+   design system: a rounded, soft-shadowed card whose padding and link colours
+   defer to our own components (Leaflet's defaults would otherwise recolour the
+   Read More button and add stray padding). */
+.em-map-popup .leaflet-popup-content-wrapper {
+  @apply rounded-xl border bg-popover p-1 text-popover-foreground shadow-lg;
+}
+.em-map-popup .leaflet-popup-content {
+  @apply m-0 text-sm leading-normal;
+}
+.em-map-popup .leaflet-popup-content a {
+  color: inherit;
+}
+.em-map-popup .leaflet-popup-tip {
+  @apply border bg-popover shadow-lg;
+}

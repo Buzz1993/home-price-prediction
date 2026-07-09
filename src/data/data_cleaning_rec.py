@@ -233,7 +233,7 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
 
     # Extract carpet area features
     df["carpet_area"] = df["area_work"].apply(lambda x: float(re.match(r'([\d,\.]+)', x).group(1).replace(',', '')) if pd.notna(x) and re.match(r'^[\d,\.]+', x) else None) 
-    df['cost_per_sqft'] = df['area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
+    df['costpersqft'] = df['area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
     df['area_unit'] = df['area_work'].str.extract(r'/([^/]+)$')
     
     # Remove unwanted area units
@@ -247,12 +247,12 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
     df['initial_unit'] = df['super_build_area_work'].apply(lambda x: ''.join([char for char in str(x)[re.match(r'\d+', str(x)).end():] if char.isalpha()])[:4] if isinstance(x, str) else None)
     df = df[~df['initial_unit'].isin(['sqms', 'sqyr'])]
     df["super_build_up_area"] = df["super_build_area_work"].apply(lambda x: float(re.match(r'([\d,\.]+)', x).group(1).replace(',', '')) if pd.notna(x) and re.match(r'^[\d,\.]+', x) else None)
-    df['super_build_up_cost_per_sqft'] = df['super_build_area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
+    df['super_build_up_costpersqft'] = df['super_build_area_work'].str.extract(r'₹([\d,\.]+)')[0].str.replace(',', '').astype(float)
     df['super_built_up_area_unit'] = df['super_build_area_work'].str.extract(r'/([^/]+)$')
     
     # Final feature selection with combine_first
     df['f_area'] = df["carpet_area"].combine_first(df["super_build_up_area"])
-    df['f_costpersqft'] = df["cost_per_sqft"].combine_first(df["super_build_up_cost_per_sqft"])
+    df['f_costpersqft'] = df["costpersqft"].combine_first(df["super_build_up_costpersqft"])
     df['f_area_unit'] = df["super_built_up_area_unit"].combine_first(df["area_unit"])
     df['f_area'] = df['f_area'].astype('float')
     df['f_costpersqft'] = df['f_costpersqft'].astype('float')
@@ -299,8 +299,8 @@ def basic_cleaning(data: pd.DataFrame, webscraped_df: pd.DataFrame) -> pd.DataFr
     # Drop intermediate columns
     cols_to_drop = [
         'many_carpet area', 'leftmany_carpet area', 'leftmany_super built-up area', 'many_super built-up area', 'area',
-        'area_work', 'carpet_area', 'cost_per_sqft', 'area_unit', 'initial_unit',
-        'super_build_area_work', 'super_build_up_area', 'super_build_up_cost_per_sqft', 'super_built_up_area_unit',
+        'area_work', 'carpet_area', 'costpersqft', 'area_unit', 'initial_unit',
+        'super_build_area_work', 'super_build_up_area', 'super_build_up_costpersqft', 'super_built_up_area_unit',
         'dupli_f_area', 'dupli_f_area_unit', 'dupli_price', 'dupli_costpersqft', 'f_area_unit'
     ]
     df.drop(columns=cols_to_drop, inplace=True)

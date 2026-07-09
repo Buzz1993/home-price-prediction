@@ -142,9 +142,9 @@ export function PropertyCard({
           <p className="text-lg font-semibold leading-none">
             {formatCr(property.price)}
           </p>
-          {hasValue(property.cost_per_sqft) && (
+          {hasValue(property.costpersqft) && (
             <span className="text-xs text-muted-foreground tabular-nums">
-              {formatPerSqft(property.cost_per_sqft)}
+              {formatPerSqft(property.costpersqft)}
             </span>
           )}
         </div>

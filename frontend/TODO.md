@@ -485,22 +485,57 @@
 
 > Visualize property locations using backend latitude and longitude.
 > Reuse backend property data without introducing new business logic.
+>
+> Built one reusable InteractivePropertyMap component
+> (components/property/interactive-property-map.tsx) — the single map used across
+> the application. It consumes only backend data (latitude/longitude + optional
+> rich fields) and never invents coordinates or renders mock markers. Leaflet is
+> client-only, so the react-leaflet implementation
+> (components/property/property-map-view.tsx) is code-split with next/dynamic
+> (ssr:false) behind a Skeleton; the public wrapper filters out
+> missing/invalid/(0,0) coordinates and hides the map gracefully (renders
+> nothing) when there is nothing valid to show, so no broken container appears.
+>
+> Markers show only the formatted price (compact ₹ Cr / Lakh via a new
+> formatPriceLabel helper in features/dashboard/format.ts). Selecting a marker
+> opens a rich preview card (primary image from image_urls, project name,
+> locality/city, formatted price, area, cost per sqft, BHK) with a Read More
+> button that reuses the same /property/[id] navigation as the Property Cards.
+> The map auto-fits its bounds to every marker and re-fits when the property list
+> changes; a single property centres at a comfortable zoom. Marker clustering
+> (leaflet.markercluster with chunkedLoading) keeps rendering efficient for large
+> datasets (~11k). Zoom, pan, marker selection/deselection and responsive
+> resizing (ResizeObserver → invalidateSize) are supported.
+>
+> Reused on Search Results (features/dashboard/search-results-panel.tsx) above
+> the reusable PropertyCard grid with marker↔card highlight sync, and on Property
+> Details (features/property/property-details.tsx) for the single selected
+> property, with the existing PropertyLocationMap placeholder as the
+> no-coordinates fallback. The full PropertyImageGallery (14.2) remains the image
+> component reached via Read More; the popup shows the same primary-image
+> rendering as the cards. SearchResult was extended with the optional map/rich
+> fields from the documented POST /search contract (same pattern as prior
+> phases), so real markers appear once /search is exposed and the map hides until
+> then. react-leaflet-cluster was avoided (React-18 peer); clustering uses the
+> framework-agnostic leaflet.markercluster via a thin createPathComponent binding
+> that is React-19 compatible. No backend logic or API contract was changed; no
+> duplicate map component was created.
 
-- [ ] Display interactive property map
-- [ ] Display all properties using price-only markers
-- [ ] Display filtered search results on the map
-- [ ] Display rich property markers
-- [ ] Show property image
-- [ ] Show formatted price
-- [ ] Show cost per sqft
-- [ ] Show area
-- [ ] Show BHK
-- [ ] Navigate to Property Details
-- [ ] Reuse Image Gallery from Property Cards
-- [ ] Support zoom and pan
-- [ ] Support marker clustering for large datasets
-- [ ] Mobile responsive
-- [ ] Enable marker clustering for large property datasets (~11k properties)
+- [x] Display interactive property map
+- [x] Display all properties using price-only markers
+- [x] Display filtered search results on the map
+- [x] Display rich property markers
+- [x] Show property image
+- [x] Show formatted price
+- [x] Show cost per sqft
+- [x] Show area
+- [x] Show BHK
+- [x] Navigate to Property Details
+- [x] Reuse Image Gallery from Property Cards
+- [x] Support zoom and pan
+- [x] Support marker clustering for large datasets
+- [x] Mobile responsive
+- [x] Enable marker clustering for large property datasets (~11k properties)
 
 ---
 

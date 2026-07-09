@@ -9,6 +9,7 @@ import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChatMessage as ChatMessageType } from "@/types/dashboard";
 import { SearchResultsPanel } from "./search-results-panel";
+import { SearchExplanation } from "./search-explanation";
 import { ComparisonResult } from "./comparison-result";
 import { AnalysisTable } from "./analysis-table";
 import { AdvisorCards, NegotiationCards } from "./analysis-cards";
@@ -20,7 +21,17 @@ function ResponsePayload({
 }) {
   switch (response.type) {
     case "search_results":
-      return <SearchResultsPanel results={response.content} />;
+      // Claude's explanation (Phase 15.3) sits above the ranked property cards.
+      // It only explains the backend results; the results render unchanged and
+      // the card degrades gracefully when no explanation is available.
+      return (
+        <div className="space-y-3">
+          {response.content.length > 0 && (
+            <SearchExplanation explanation={response.ai_explanation} />
+          )}
+          <SearchResultsPanel results={response.content} />
+        </div>
+      );
     case "comparison":
       return <ComparisonResult data={response.content} />;
     case "rental":

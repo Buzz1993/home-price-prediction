@@ -146,7 +146,14 @@ export type ShareResult = {
 // `type` field matches RESPONSE_CONFIG keys in the Streamlit reference.
 export type ChatResponse =
   | { type: "text"; content: string }
-  | { type: "search_results"; content: SearchResult[] }
+  // `ai_explanation` is an optional natural-language summary Claude generates
+  // from the backend search result (Phase 15.3). It never affects `content`
+  // (the ranked properties) and is absent when Claude is unavailable.
+  | {
+      type: "search_results";
+      content: SearchResult[];
+      ai_explanation?: string;
+    }
   | { type: "comparison"; content: ComparisonResult }
   | { type: "rental"; content: AnalysisRow[] }
   | { type: "prediction"; content: AnalysisRow[] }

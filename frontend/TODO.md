@@ -701,6 +701,30 @@
 > After the existing recommendation engine returns search results,
 > Claude generates a conversational explanation describing why the
 > properties were recommended.
+>
+> The existing backend still performs intent extraction, property search,
+> hybrid ranking and recommendation exactly as before
+> (chat_service.parse_intent_and_execute) — its search results are returned
+> unchanged. A thin explanation service (src/llm/search_explanation.py) reuses
+> the Phase 15.2 Search Prompt Builder (build_search_prompt) and the Phase 15.1
+> Claude Client (ask_claude) to turn that structured result into a
+> natural-language explanation of why those properties were recommended. No
+> business logic, ranking or recommendation logic was duplicated or changed, and
+> no new REST endpoint was added.
+>
+> The existing POST /chat controller (src/api/chat_api.py) attaches the
+> explanation as an optional, additive `ai_explanation` field on search_results
+> responses only; `content` (the ranked properties) is never modified. Claude is
+> optional — if it fails or is unavailable, the field is simply omitted and the
+> search results still return, so search never breaks.
+>
+> The frontend reuses the existing AI Chat interface: a single reusable
+> SearchExplanation card (features/dashboard/search-explanation.tsx) renders the
+> explanation above the existing Property Cards inside the chat message, and
+> shows a graceful "AI explanation is temporarily unavailable" message when the
+> backend omits it. The Property Cards, Evaluation Tray, search workflow and
+> existing loading state are unchanged; the search_results response type gained
+> only the optional `ai_explanation` field. tsc, ESLint and next build all pass.
 
 Flow
 
@@ -726,9 +750,9 @@ Natural-language explanation
 
 Frontend
 
-- [ ] Explain search results
-- [ ] Summarize recommended properties
-- [ ] Explain ranking decisions
+- [x] Explain search results
+- [x] Summarize recommended properties
+- [x] Explain ranking decisions
 
 ---
 

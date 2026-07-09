@@ -689,10 +689,10 @@
 > Create reusable prompt builders that transform backend analysis into
 > structured prompts for Claude.
 
-- [ ] Build Search Prompt
-- [ ] Build Property Analysis Prompt
-- [ ] Build Comparison Prompt
-- [ ] Build Report Prompt
+- [x] Build Search Prompt
+- [x] Build Property Analysis Prompt
+- [x] Build Comparison Prompt
+- [x] Build Report Prompt
 
 ---
 

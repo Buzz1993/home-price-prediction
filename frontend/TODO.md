@@ -451,12 +451,33 @@
 
 ## Phase 14.5 — End-to-End Testing
 
-- [ ] Property Card rendering
-- [ ] Image gallery
-- [ ] Fullscreen viewer
-- [ ] Image navigation
-- [ ] Original listing
-- [ ] Mobile responsiveness
+> End-to-end verification of every feature implemented through Phase 14.4. This
+> phase was testing/bug-fixing only — no features, endpoints or workflows were
+> added, and no backend business logic or API contracts were changed.
+>
+> Verified: TypeScript compiles with no errors (`tsc --noEmit`), ESLint passes
+> with no warnings/errors, and the production build (`next build`) succeeds and
+> generates every route (/, /login, /signup, /dashboard, /chat, /compare,
+> /analysis, /reports, /saved, /profile, /property/[id]). Reviewed the reusable
+> Phase 14 components for correctness and design-system consistency:
+> PropertyCard (rich fields render only when the backend provides them; bookmark
+> + Read More navigation to /property/{id}), PropertyImageGallery (hero,
+> thumbnails, counter, prev/next wrap-around, fullscreen viewer with Esc + arrow
+> keys, mobile swipe, lazy loading, skeleton, ImageOff fallback, no layout
+> shift), OriginalListingButton (opens ap_pjt_url in a new tab with
+> target="_blank" rel="noopener noreferrer"; hidden for missing/invalid URLs),
+> the dynamic PropertyDetails page (renders every backend field, categorizes
+> unknown fields into Additional Information), and PropertyLocationMap. No
+> console statements remain in the frontend source; loading/success/empty/error
+> states reuse the shared EmptyState/ErrorState components. No confirmed bugs
+> were found; no code changes were required.
+
+- [x] Property Card rendering
+- [x] Image gallery
+- [x] Fullscreen viewer
+- [x] Image navigation
+- [x] Original listing
+- [x] Mobile responsiveness
 
 ---
 

@@ -677,10 +677,10 @@
 > Create a reusable Claude service that can be called by existing FastAPI
 > endpoints without changing backend business logic.
 
-- [ ] Configure Claude API
-- [ ] Create Claude service
-- [ ] Add environment configuration
-- [ ] Verify Claude connectivity
+- [x] Configure Claude API
+- [x] Create Claude service
+- [x] Add environment configuration
+- [x] Verify Claude connectivity
 
 ---
 

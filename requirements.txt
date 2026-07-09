@@ -68,6 +68,11 @@ langchain
 langchain-openai
 langchain-core
 
+# ===============================
+# Anthropic Claude (EXPLANATION LAYER)
+# ===============================
+anthropic>=0.40.0
+
 # (Optional but recommended for future LangGraph upgrade)
 langgraph
 langchain-community

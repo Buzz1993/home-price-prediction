@@ -142,6 +142,15 @@ export type ShareResult = {
   status_code?: number;
 };
 
+// POST /report?enhance=true response (Phase 15.10). The backend report is
+// returned unchanged under `content`; `ai_enhanced` is Claude's more readable
+// re-presentation of that SAME report, or null when the AI enhancement is
+// unavailable (the backend report still renders in that case).
+export type EnhancedReport = {
+  content: string;
+  ai_enhanced: string | null;
+};
+
 // Discriminated union of every response the /chat endpoint can return. The
 // `type` field matches RESPONSE_CONFIG keys in the Streamlit reference.
 export type ChatResponse =

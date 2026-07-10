@@ -11,28 +11,33 @@
 // endpoints are exposed, matching the Phase 4–8 pattern. No API is invented.
 
 import { apiRequest } from "@/lib/api-client";
-import type { ShareResult } from "@/types/dashboard";
+import type { EnhancedReport, ShareResult } from "@/types/dashboard";
 
-// POST /report — generate an AI property report for the selected properties.
-// The backend (create_property_report in src/mcp/tools/property_tools.py returns
-// str) sends the markdown report back as a bare JSON string, so the response is
-// the report text itself.
-export function generateReport(ids: string[]): Promise<string> {
-  return apiRequest<string>("/report", {
+// POST /report?enhance=true — generate an AI property report for the selected
+// properties and additionally ask Claude to improve its readability (Phase
+// 15.10). The backend still composes the report; the enhancement only
+// re-presents that SAME report. The response is
+// `{ content, ai_enhanced }` — `content` is the unchanged backend report and
+// `ai_enhanced` is the polished version (or null when the AI enhancement is
+// unavailable, so the backend report always renders).
+export function generateReport(ids: string[]): Promise<EnhancedReport> {
+  return apiRequest<EnhancedReport>("/report?enhance=true", {
     method: "POST",
     body: { property_ids: ids },
   });
 }
 
-// POST /report/share — share a report for the selected properties to a phone
-// number. The backend (ShareReportRequest in src/api/report_api.py) regenerates
-// the report from the property ids and forwards it to the n8n workflow
-// (send_property_report), so the request carries the ids, not the report text.
+// POST /report/share?enhance=true — share a report for the selected properties
+// to a phone number. The backend (ShareReportRequest in src/api/report_api.py)
+// regenerates the report from the property ids, enhances its readability with
+// Claude (Phase 15.10) so the shared report matches the enhanced preview, and
+// forwards it to the n8n workflow (send_property_report), so the request carries
+// the ids, not the report text.
 export function shareReport(payload: {
   property_ids: string[];
   phone_number: string;
 }): Promise<ShareResult> {
-  return apiRequest<ShareResult>("/report/share", {
+  return apiRequest<ShareResult>("/report/share?enhance=true", {
     method: "POST",
     body: payload,
   });

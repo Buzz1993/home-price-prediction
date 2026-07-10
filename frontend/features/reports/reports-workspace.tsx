@@ -30,6 +30,15 @@ export function ReportsWorkspace() {
   const canGenerate = targetIds.length > 0 && !generate.isPending;
   const report = generate.data;
 
+  // Phase 15.10: prefer Claude's more readable enhancement; fall back to the
+  // unchanged backend report (with a friendly notice) when the AI enhancement
+  // is unavailable, so report generation is never blocked.
+  const displayReport = report ? report.ai_enhanced ?? report.content : null;
+  const enhancementNotice =
+    report && !report.ai_enhanced
+      ? "The report has been generated successfully, but the AI enhancement is temporarily unavailable."
+      : null;
+
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
@@ -82,7 +91,7 @@ export function ReportsWorkspace() {
 
           {report && !generate.isPending && (
             <div className="space-y-4">
-              <ReportPreview report={report} />
+              <ReportPreview report={displayReport!} notice={enhancementNotice} />
               <ShareReportForm propertyIds={targetIds} />
             </div>
           )}

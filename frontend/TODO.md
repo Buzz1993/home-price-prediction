@@ -1078,10 +1078,41 @@ Backend generates the report.
 
 Claude improves readability.
 
-- [ ] Executive summary
-- [ ] Investment summary
-- [ ] Risk summary
-- [ ] Recommendation summary
+> The existing backend report generator remains unchanged and is the source of
+> truth. After POST /report returns its Markdown report (create_property_report),
+> Claude improves the readability and structure of that SAME report. A thin
+> enhancement service (src/llm/report_enhancement.py) reuses the Phase 15.2
+> Report Prompt Builder (build_report_prompt) and the Phase 15.1 Claude Client
+> (ask_claude) to re-present the report with an executive summary and clear
+> sections (investment, risk, recommendation). It performs NO report generation,
+> analysis or calculation, and never invents prices, analysis, recommendations or
+> changes any backend conclusion.
+>
+> The addition is opt-in and additive: POST /report gained an optional `enhance`
+> query flag (default false → the response is exactly the current bare Markdown
+> string, so the API contract is preserved). When `enhance=true` the same backend
+> report is returned under `content` plus an optional `ai_enhanced` (the polished
+> version). POST /report/share gained the same optional `enhance` flag so the
+> shared report matches the enhanced preview; the existing sharing workflow (MCP
+> tool send_property_report + n8n) is otherwise unchanged. Claude is optional: if
+> the enhancement fails, `ai_enhanced` is null (and share sends the backend
+> report as-is), so an AI failure never blocks report generation or sharing. No
+> new REST endpoint was added, and the report generator, analysis agents,
+> prediction service, recommendation engine, MCP tools and n8n workflow were not
+> modified.
+>
+> The frontend reuses the existing Reports page and workflow (select → generate →
+> preview → download → share) with no redesign: the Report service now requests
+> the enhanced report (POST /report?enhance=true), and the reused ReportPreview
+> renders the enhanced narrative when available, otherwise the unchanged backend
+> report with a friendly "AI enhancement is temporarily unavailable" notice.
+> Download always saves the displayed report; the existing loading, error, share
+> and download actions are unchanged. tsc and ESLint pass.
+
+- [x] Executive summary
+- [x] Investment summary
+- [x] Risk summary
+- [x] Recommendation summary
 
 ---
 

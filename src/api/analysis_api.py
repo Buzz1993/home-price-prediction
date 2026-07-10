@@ -17,6 +17,7 @@ from src.mcp.tools.property_tools import (
     clear_property_analysis_cache,
 )
 from src.llm.analysis_explanation import explain_analysis
+from src.llm.comparison_explanation import explain_comparison
 
 logger = logging.getLogger(__name__)
 
@@ -91,13 +92,52 @@ def attach_analysis_explanation(result, analysis_type: str, explain: bool):
 
 
 # =====================================================
+# AI COMPARISON EXPLANATION (Phase 15.5)
+# =====================================================
+
+def attach_comparison_explanation(result, explain: bool):
+    """
+    Optionally attach a natural-language explanation to a comparison result.
+
+    The backend comparison output is returned UNCHANGED. When `explain` is
+    False (the default) the raw result is returned exactly as before, so the
+    existing API contract is preserved. When `explain` is True the result is
+    wrapped as `{ "content": <comparison>, "ai_explanation": <text|null> }`,
+    where Claude explains why the backend ranked the properties as it did.
+
+    Claude is optional: if the explanation cannot be generated the comparison
+    is still returned (with `ai_explanation` null), so an AI failure never
+    blocks the backend comparison. Claude only explains the result — it never
+    compares, scores or ranks the properties itself.
+    """
+
+    if not explain:
+        return result
+
+    try:
+        explanation = explain_comparison(result)
+    except Exception:
+        # Never let the explanation layer break a working comparison response.
+        logger.exception(
+            "Comparison explanation step failed; returning comparison without it."
+        )
+        explanation = None
+
+    return {"content": result, "ai_explanation": explanation}
+
+
+# =====================================================
 # COMPARISON
 # =====================================================
 
 @router.post("/comparison")
-def comparison(request: PropertyIdsRequest):
+def comparison(request: PropertyIdsRequest, explain: bool = False):
     """
     Compare multiple selected properties.
+
+    The backend comparison agent scores and ranks the properties. When
+    `explain=true`, Claude additionally explains that result (Phase 15.5); the
+    comparison data itself is never modified.
     """
 
     if len(request.property_ids) < 2:
@@ -106,10 +146,12 @@ def comparison(request: PropertyIdsRequest):
             detail="At least two properties are required for comparison."
         )
 
-    return execute(
+    result = execute(
         compare_properties,
         request.property_ids
     )
+
+    return attach_comparison_explanation(result, explain)
 
 
 # =====================================================

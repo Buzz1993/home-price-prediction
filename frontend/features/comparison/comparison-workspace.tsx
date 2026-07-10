@@ -12,6 +12,7 @@ import { Scale } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
+import { AnalysisExplanation } from "@/features/analysis/analysis-explanation";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { ComparisonResult } from "@/features/dashboard/comparison-result";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
@@ -21,7 +22,11 @@ import { useComparison } from "./use-comparison";
 export function ComparisonWorkspace() {
   const { tray } = useWorkspace();
   const comparison = useComparison();
-  const result = comparison.data;
+  // The backend returns { content, ai_explanation } (Phase 15.5). `content` is
+  // the unchanged backend comparison; `ai_explanation` is Claude's optional
+  // summary of it.
+  const result = comparison.data?.content;
+  const explanation = comparison.data?.ai_explanation;
 
   // Retry re-runs the last comparison request with the same property ids.
   const lastIds = comparison.variables;
@@ -60,6 +65,14 @@ export function ComparisonWorkspace() {
 
           {result && !comparison.isPending && (
             <div className="space-y-6">
+              {/* Claude explains the backend comparison; the Score Cards and
+                  Comparison Table below still render the unchanged backend
+                  result even if the explanation is absent. */}
+              <AnalysisExplanation
+                explanation={explanation}
+                unavailableMessage="Property comparison is available, but the AI explanation is temporarily unavailable."
+              />
+
               <div className="space-y-2">
                 <h2 className="text-sm font-semibold text-muted-foreground">
                   Property Score Cards

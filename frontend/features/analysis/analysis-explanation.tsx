@@ -1,12 +1,13 @@
 "use client";
 
-// AI Analysis Explanation (Phase 15.4). Renders Claude's natural-language
-// summary of what the backend analysis means. Shown above the existing
-// analysis cards, it only explains the backend result — it never predicts,
-// values, scores or recomputes anything.
+// AI Explanation card (Phase 15.4). Renders Claude's natural-language summary of
+// what a backend result means. Shown above the existing result renderers, it
+// only explains the backend result — it never predicts, values, scores, ranks
+// or recomputes anything. Reused across AI features (Analysis, Comparison, …);
+// `unavailableMessage` tailors the graceful fallback wording per feature.
 //
 // Claude is optional: when the backend omits the explanation (Claude
-// unavailable / failed), a graceful message is shown and the backend analysis
+// unavailable / failed), a graceful message is shown and the backend result
 // still renders normally.
 
 import { Sparkles } from "lucide-react";
@@ -15,8 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function AnalysisExplanation({
   explanation,
+  unavailableMessage = "Property analysis is available, but the AI explanation is temporarily unavailable.",
 }: {
   explanation?: string | null;
+  unavailableMessage?: string;
 }) {
   const text = explanation?.trim();
 
@@ -34,10 +37,7 @@ export function AnalysisExplanation({
             {text}
           </p>
         ) : (
-          <p className="text-muted-foreground">
-            Property analysis is available, but the AI explanation is
-            temporarily unavailable.
-          </p>
+          <p className="text-muted-foreground">{unavailableMessage}</p>
         )}
       </CardContent>
     </Card>

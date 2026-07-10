@@ -801,10 +801,38 @@ Frontend
 
 > Use the existing comparison agent to determine the best property and let
 > Claude explain the strengths and weaknesses of each option.
+>
+> The existing backend comparison agent remains unchanged and is the source of
+> truth. After POST /analysis/comparison returns its structured result
+> ({ winner, rankings } from compare_properties), Claude explains that result.
+> A thin explanation service (src/llm/comparison_explanation.py) reuses the
+> Phase 15.2 Comparison Prompt Builder (build_comparison_prompt) and the Phase
+> 15.1 Claude Client (ask_claude) to turn the backend comparison into a
+> natural-language explanation. It performs no comparison, scoring or ranking,
+> and never overrides the winner or invents scores/metrics.
+>
+> The addition is opt-in and additive: /analysis/comparison gained an optional
+> `explain` query flag (default false → the response is exactly the current
+> comparison result, so the API contract is preserved). When `explain=true` the
+> same backend comparison is returned under `content` plus an optional
+> `ai_explanation`. Claude is optional: if it fails, `ai_explanation` is null
+> and the backend comparison still returns, so an AI failure never blocks the
+> comparison. No new REST endpoint was added, and comparison_agent.py,
+> comparison_service.py and comparison_node.py were not modified.
+>
+> The frontend reuses the existing Property Comparison page: the reusable
+> AnalysisExplanation card (features/analysis/analysis-explanation.tsx, now with
+> an optional `unavailableMessage`) renders the explanation above the existing
+> Property Score Cards and Comparison Table, and shows a graceful "Property
+> comparison is available, but the AI explanation is temporarily unavailable"
+> message when the backend omits it. The compare service/hook now carry the
+> { content, ai_explanation } response; the existing ComparisonResult,
+> PropertyScoreCards, evaluation tray and loading/error states are unchanged.
+> tsc and ESLint pass.
 
-- [ ] Explain comparison results
-- [ ] Summarize investment advantages
-- [ ] Generate recommendation summary
+- [x] Explain comparison results
+- [x] Summarize investment advantages
+- [x] Generate recommendation summary
 
 ---
 

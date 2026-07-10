@@ -969,11 +969,56 @@ Claude may invoke:
 
 No backend business logic is moved into Claude.
 
-- [ ] Search tool
-- [ ] Comparison tool
-- [ ] Analysis tools
-- [ ] Report tools
-- [ ] Saved-property tools
+> Claude now acts as an intelligent ROUTER on top of the existing chat flow.
+> Before the existing keyword workflow runs, Claude selects which EXISTING
+> backend capability best matches the user's natural-language message; the
+> selected tool is then executed by the existing backend services / MCP tools
+> and its unchanged output is wrapped in the response envelope the frontend
+> already renders. Claude only routes — it never searches, ranks, predicts,
+> values, compares, recommends or generates anything itself.
+>
+> Selection is a thin, modular layer: a new prompt builder
+> (src/llm/prompts/orchestration_prompt.py, reusing the Phase 15.2 `Prompt`
+> object and shared APPLICATION CONTEXT) formats a routing prompt from the user
+> request, the available backend tools, the evaluation-tray state and the
+> Phase 15.7 conversation memory. A new orchestrator
+> (src/llm/tool_orchestrator.py) holds the registry of EXISTING capabilities
+> and reuses the Phase 15.1 Claude Client (`ask_claude`) to return one selected
+> tool (plus internal-only reasoning, or a short `clarify` follow-up). It
+> performs NO business logic and does NOT execute the tool.
+>
+> Execution stays in the existing backend. The existing POST /chat controller
+> (src/api/chat_api.py) delegates the selected tool to the existing MCP tools
+> (`compare_properties`, `get_price_prediction`, `get_rental_analysis`,
+> `get_valuation_analysis`, `get_negotiation_strategy`, `get_investment_advice`,
+> `create_property_report`, `send_property_report`) and the existing
+> saved-property functions — the SAME functions the existing endpoints use, so
+> no backend service or routing logic is duplicated. Search and general chat
+> reuse the existing `parse_intent_and_execute` pipeline unchanged.
+>
+> Fallback is preserved exactly: when Claude is unavailable, unsure, selects
+> search/general chat, or fails to parse, the endpoint falls back to the
+> existing backend chat behaviour (`parse_intent_and_execute`), so every prior
+> phase (15.3 search explanation, 15.4–15.6 analysis/comparison/investment,
+> 15.7 memory) keeps working. Tray-based tools return the existing "add
+> properties to your tray" prompt when the tray is empty, and report sharing
+> asks for a phone number when none is provided — a short clarifying question
+> instead of guessing. Backend tool failures surface as the existing HTTP
+> errors; Claude never fabricates results.
+>
+> The frontend is untouched: the orchestration is invisible. Every routed
+> response uses a `type` the existing chat renderer already handles
+> (search_results / comparison / rental / prediction / valuation / negotiation /
+> advisor, and `text` for reports, saved properties and clarifications). No new
+> REST endpoint was added, no backend business logic, ML model, recommendation
+> or analysis agent was modified, and no API contract changed. Python imports
+> and FastAPI startup verified.
+
+- [x] Search tool — routes to the existing search pipeline (`parse_intent_and_execute`)
+- [x] Comparison tool — routes to the existing `compare_properties`
+- [x] Analysis tools — routes to existing prediction / rental / valuation / negotiation / advisor tools
+- [x] Report tools — routes to existing `create_property_report` / `send_property_report`
+- [x] Saved-property tools — routes to existing saved-property functions
 
 ---
 

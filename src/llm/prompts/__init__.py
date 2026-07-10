@@ -35,6 +35,11 @@ from src.llm.prompts.analysis_prompt import build_analysis_prompt
 from src.llm.prompts.comparison_prompt import build_comparison_prompt
 from src.llm.prompts.investment_prompt import build_investment_prompt
 from src.llm.prompts.report_prompt import build_report_prompt
+from src.llm.prompts.orchestration_prompt import (
+    ToolSpec,
+    build_orchestration_prompt,
+    ROUTER_SYSTEM_PROMPT,
+)
 
 __all__ = [
     # Configuration
@@ -55,4 +60,8 @@ __all__ = [
     "build_comparison_prompt",
     "build_investment_prompt",
     "build_report_prompt",
+    # Tool orchestration (Phase 15.8)
+    "ToolSpec",
+    "build_orchestration_prompt",
+    "ROUTER_SYSTEM_PROMPT",
 ]

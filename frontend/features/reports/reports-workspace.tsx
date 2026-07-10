@@ -30,6 +30,11 @@ export function ReportsWorkspace() {
   const canGenerate = targetIds.length > 0 && !generate.isPending;
   const report = generate.data;
 
+  // Share the SAME properties the previewed report was generated from — not the
+  // live tray/selection, which the user may have changed after generating. This
+  // keeps the shared report consistent with the on-screen preview.
+  const reportedIds = generate.variables ?? targetIds;
+
   // Phase 15.10: prefer Claude's more readable enhancement; fall back to the
   // unchanged backend report (with a friendly notice) when the AI enhancement
   // is unavailable, so report generation is never blocked.
@@ -92,7 +97,7 @@ export function ReportsWorkspace() {
           {report && !generate.isPending && (
             <div className="space-y-4">
               <ReportPreview report={displayReport!} notice={enhancementNotice} />
-              <ShareReportForm propertyIds={targetIds} />
+              <ShareReportForm propertyIds={reportedIds} />
             </div>
           )}
 

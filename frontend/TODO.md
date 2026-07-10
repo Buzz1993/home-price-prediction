@@ -1170,16 +1170,32 @@ Examples:
 ## Phase 15.12 — End-to-End Testing
 
 > Verify the complete conversational workflow.
+>
+> End-to-end verification of every AI feature from Phases 15.1–15.11 was
+> performed: `tsc`, ESLint and `next build` all pass clean, and the AI backend
+> modules (`src/api/main`, `chat_api`, `claude_client`, `suggestions`,
+> `tool_orchestrator`, `conversation_memory`) all import cleanly. The Claude
+> layer degrades gracefully everywhere (missing key / timeout / rate limit /
+> empty response all return structured errors and never break the backend), and
+> memory resets on sign-out because the `WorkspaceProvider` unmounts with the
+> protected layout. Three confirmed bugs were found and fixed in the Report
+> Sharing workflow (frontend only — no backend, MCP tool or n8n change): the
+> "sent successfully" banner now reflects the backend's returned delivery
+> `status_code` instead of any HTTP 2xx; the banner shows the phone number
+> actually sent (mutation variables) instead of the live input; and Share now
+> targets the SAME properties the previewed report was generated from instead of
+> the live tray. No new AI features, APIs, workflows or backend logic were
+> introduced.
 
-- [ ] Search → Claude explanation
-- [ ] Property Details → Claude explanation
-- [ ] Comparison → Claude explanation
-- [ ] Investment Advisor → Claude explanation
-- [ ] Report Generation → Claude summary
-- [ ] Report Sharing
-- [ ] Session memory
-- [ ] Streaming responses
-- [ ] Error handling
+- [x] Search → Claude explanation
+- [x] Property Details → Claude explanation
+- [x] Comparison → Claude explanation
+- [x] Investment Advisor → Claude explanation
+- [x] Report Generation → Claude summary
+- [x] Report Sharing
+- [x] Session memory
+- [x] Streaming responses
+- [x] Error handling
 
 ---
 

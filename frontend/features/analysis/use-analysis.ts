@@ -15,6 +15,7 @@ import {
   getInvestmentAdvice,
   getNegotiationStrategy,
   predictProperties,
+  type AnalysisResponse,
 } from "@/services/analysis-service";
 import type {
   AdvisorRow,
@@ -35,10 +36,17 @@ export type AnalysisKey =
   | "advisor"
   | "negotiation";
 
-export type AnalysisResult = AnalysisRow[] | AdvisorRow[] | NegotiationRow[];
+// The backend analysis rows (unchanged) rendered by the result renderers.
+export type AnalysisRows = AnalysisRow[] | AdvisorRow[] | NegotiationRow[];
+
+// The full backend response: analysis rows plus Claude's optional explanation
+// (Phase 15.4). The rows are always present; `ai_explanation` may be null.
+export type AnalysisResult = AnalysisResponse<AnalysisRows>;
 
 // Runners for the analyses backed by a documented endpoint. "growth" is absent
 // on purpose (no backend support); the workspace never calls run() for it.
+// "risk" and "advisor" share the /advisor endpoint but request a different
+// explanation focus for the same backend rows.
 const RUNNERS: Record<
   Exclude<AnalysisKey, "growth">,
   (ids: string[]) => Promise<AnalysisResult>
@@ -46,8 +54,8 @@ const RUNNERS: Record<
   prediction: predictProperties,
   rental: analyzeRental,
   valuation: analyzeValuation,
-  risk: getInvestmentAdvice,
-  advisor: getInvestmentAdvice,
+  risk: (ids) => getInvestmentAdvice(ids, "risk"),
+  advisor: (ids) => getInvestmentAdvice(ids, "advisor"),
   negotiation: getNegotiationStrategy,
 };
 

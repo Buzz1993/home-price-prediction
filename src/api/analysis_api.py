@@ -2,6 +2,8 @@
 # src/api/analysis_api.py
 # ===============================
 
+import logging
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -14,6 +16,9 @@ from src.mcp.tools.property_tools import (
     get_negotiation_strategy,
     clear_property_analysis_cache,
 )
+from src.llm.analysis_explanation import explain_analysis
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/analysis",
@@ -52,6 +57,40 @@ def execute(func, *args, **kwargs):
 
 
 # =====================================================
+# AI ANALYSIS EXPLANATION (Phase 15.4)
+# =====================================================
+
+def attach_analysis_explanation(result, analysis_type: str, explain: bool):
+    """
+    Optionally attach a natural-language explanation to an analysis result.
+
+    The backend analysis output is returned UNCHANGED. When `explain` is
+    False (the default) the raw result is returned exactly as before, so the
+    existing API contract is preserved. When `explain` is True the result is
+    wrapped as `{ "content": <analysis>, "ai_explanation": <text|null> }`,
+    where Claude describes what the backend analysis means.
+
+    Claude is optional: if the explanation cannot be generated the analysis is
+    still returned (with `ai_explanation` null), so an AI failure never blocks
+    the backend analysis.
+    """
+
+    if not explain:
+        return result
+
+    try:
+        explanation = explain_analysis(analysis_type, result)
+    except Exception:
+        # Never let the explanation layer break a working analysis response.
+        logger.exception(
+            "Analysis explanation step failed; returning analysis without it."
+        )
+        explanation = None
+
+    return {"content": result, "ai_explanation": explanation}
+
+
+# =====================================================
 # COMPARISON
 # =====================================================
 
@@ -78,15 +117,21 @@ def comparison(request: PropertyIdsRequest):
 # =====================================================
 
 @router.post("/predict")
-def predict(request: PropertyIdsRequest):
+def predict(
+    request: PropertyIdsRequest,
+    explain: bool = False,
+    analysis_type: str = "prediction",
+):
     """
     Predict property price.
     """
 
-    return execute(
+    result = execute(
         get_price_prediction,
         request.property_ids
     )
+
+    return attach_analysis_explanation(result, analysis_type, explain)
 
 
 # =====================================================
@@ -94,15 +139,21 @@ def predict(request: PropertyIdsRequest):
 # =====================================================
 
 @router.post("/rental")
-def rental(request: PropertyIdsRequest):
+def rental(
+    request: PropertyIdsRequest,
+    explain: bool = False,
+    analysis_type: str = "rental",
+):
     """
     Rental yield analysis.
     """
 
-    return execute(
+    result = execute(
         get_rental_analysis,
         request.property_ids
     )
+
+    return attach_analysis_explanation(result, analysis_type, explain)
 
 
 # =====================================================
@@ -110,15 +161,21 @@ def rental(request: PropertyIdsRequest):
 # =====================================================
 
 @router.post("/valuation")
-def valuation(request: PropertyIdsRequest):
+def valuation(
+    request: PropertyIdsRequest,
+    explain: bool = False,
+    analysis_type: str = "valuation",
+):
     """
     Fair market valuation.
     """
 
-    return execute(
+    result = execute(
         get_valuation_analysis,
         request.property_ids
     )
+
+    return attach_analysis_explanation(result, analysis_type, explain)
 
 
 # =====================================================
@@ -126,15 +183,24 @@ def valuation(request: PropertyIdsRequest):
 # =====================================================
 
 @router.post("/advisor")
-def advisor(request: PropertyIdsRequest):
+def advisor(
+    request: PropertyIdsRequest,
+    explain: bool = False,
+    analysis_type: str = "advisor",
+):
     """
     Investment advisor analysis.
+
+    The frontend surfaces Risk Analysis from these same rows and can request a
+    risk-focused explanation by passing `analysis_type=risk`.
     """
 
-    return execute(
+    result = execute(
         get_investment_advice,
         request.property_ids
     )
+
+    return attach_analysis_explanation(result, analysis_type, explain)
 
 
 # =====================================================
@@ -142,15 +208,21 @@ def advisor(request: PropertyIdsRequest):
 # =====================================================
 
 @router.post("/negotiation")
-def negotiation(request: PropertyIdsRequest):
+def negotiation(
+    request: PropertyIdsRequest,
+    explain: bool = False,
+    analysis_type: str = "negotiation",
+):
     """
     Negotiation strategy.
     """
 
-    return execute(
+    result = execute(
         get_negotiation_strategy,
         request.property_ids
     )
+
+    return attach_analysis_explanation(result, analysis_type, explain)
 
 
 # =====================================================

@@ -35,8 +35,9 @@ import type {
   NegotiationRow,
 } from "@/types/dashboard";
 import { cn } from "@/lib/utils";
+import { AnalysisExplanation } from "./analysis-explanation";
 import { RiskCards } from "./risk-cards";
-import { useAnalysis, type AnalysisKey, type AnalysisResult } from "./use-analysis";
+import { useAnalysis, type AnalysisKey, type AnalysisRows } from "./use-analysis";
 
 type AnalysisMeta = {
   key: AnalysisKey;
@@ -101,7 +102,7 @@ function AnalysisResultView({
   data,
 }: {
   active: Exclude<AnalysisKey, "growth">;
-  data: AnalysisResult;
+  data: AnalysisRows;
 }) {
   if (Array.isArray(data) && data.length === 0) {
     return (
@@ -242,11 +243,19 @@ export function AnalysisWorkspace() {
             active !== "growth" &&
             mutation.isSuccess &&
             mutation.data && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <h2 className="text-sm font-semibold text-muted-foreground">
                   {activeMeta?.label}
                 </h2>
-                <AnalysisResultView active={active} data={mutation.data} />
+                {/* Claude explains the backend analysis; the cards below still
+                    render the unchanged backend result even if it is absent. */}
+                <AnalysisExplanation
+                  explanation={mutation.data.ai_explanation}
+                />
+                <AnalysisResultView
+                  active={active}
+                  data={mutation.data.content}
+                />
               </div>
             )}
 

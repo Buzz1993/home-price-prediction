@@ -760,14 +760,40 @@ Frontend
 
 > Combine the existing backend analysis agents and let Claude explain the
 > results in natural language.
+>
+> Existing backend agents remain unchanged. After the existing analysis
+> endpoints (POST /analysis/predict, /rental, /valuation, /advisor,
+> /negotiation) return their structured result, Claude explains what that
+> result means. A thin explanation service (src/llm/analysis_explanation.py)
+> reuses the Phase 15.2 Analysis Prompt Builder (build_analysis_prompt) and the
+> Phase 15.1 Claude Client (ask_claude) to turn the backend analysis into a
+> natural-language explanation. It performs no analysis, prediction, valuation
+> or risk scoring, and never invents numbers or recommendations.
+>
+> The addition is opt-in and additive: each existing /analysis/* endpoint gains
+> an optional `explain` query flag (default false → the response is exactly the
+> current list, so the API contract is preserved). When `explain=true` the same
+> backend rows are returned under `content` plus an optional `ai_explanation`
+> (an optional `analysis_type` flag only labels the explanation — e.g. the
+> shared /advisor endpoint can be explained as Risk or Advisor). Claude is
+> optional: if it fails, `ai_explanation` is null and the backend analysis still
+> returns, so an AI failure never blocks the analysis. No new REST endpoint was
+> added, no analysis agent, prediction service or ML model was modified.
+>
+> The frontend reuses the existing AI Analysis page: a single reusable
+> AnalysisExplanation card (features/analysis/analysis-explanation.tsx) renders
+> the explanation above the existing analysis renderers (AnalysisTable /
+> RiskCards / AdvisorCards / NegotiationCards) and shows a graceful "AI
+> explanation is temporarily unavailable" message when the backend omits it. The
+> analysis service/hook now carry the { content, ai_explanation } response; the
+> existing cards, evaluation tray and loading/error states are unchanged. tsc,
+> ESLint and next build all pass.
 
-Existing backend agents remain unchanged.
-
-- [ ] Explain Risk Analysis
-- [ ] Explain Rental Analysis
-- [ ] Explain Future Growth
-- [ ] Explain Valuation
-- [ ] Explain Negotiation Strategy
+- [x] Explain Risk Analysis — POST /analysis/advisor (analysis_type=risk)
+- [x] Explain Rental Analysis — POST /analysis/rental
+- [ ] Explain Future Growth — BLOCKED: no backend future-growth endpoint or tool exists; Claude never invents analysis.
+- [x] Explain Valuation — POST /analysis/valuation
+- [x] Explain Negotiation Strategy — POST /analysis/negotiation
 
 ---
 

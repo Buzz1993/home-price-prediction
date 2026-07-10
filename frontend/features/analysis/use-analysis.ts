@@ -13,6 +13,7 @@ import {
   analyzeRental,
   analyzeValuation,
   getInvestmentAdvice,
+  getInvestmentSummary,
   getNegotiationStrategy,
   predictProperties,
   type AnalysisResponse,
@@ -45,8 +46,10 @@ export type AnalysisResult = AnalysisResponse<AnalysisRows>;
 
 // Runners for the analyses backed by a documented endpoint. "growth" is absent
 // on purpose (no backend support); the workspace never calls run() for it.
-// "risk" and "advisor" share the /advisor endpoint but request a different
-// explanation focus for the same backend rows.
+// "risk" reuses the /advisor endpoint but requests a risk-focused explanation
+// of the same backend rows. "advisor" (Investment Advisor, Phase 15.6) requests
+// the combined investment summary: the backend returns the same advisor rows
+// and Claude summarizes them together with the other existing analyses.
 const RUNNERS: Record<
   Exclude<AnalysisKey, "growth">,
   (ids: string[]) => Promise<AnalysisResult>
@@ -55,7 +58,7 @@ const RUNNERS: Record<
   rental: analyzeRental,
   valuation: analyzeValuation,
   risk: (ids) => getInvestmentAdvice(ids, "risk"),
-  advisor: (ids) => getInvestmentAdvice(ids, "advisor"),
+  advisor: getInvestmentSummary,
   negotiation: getNegotiationStrategy,
 };
 

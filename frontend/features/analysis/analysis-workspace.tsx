@@ -248,9 +248,16 @@ export function AnalysisWorkspace() {
                   {activeMeta?.label}
                 </h2>
                 {/* Claude explains the backend analysis; the cards below still
-                    render the unchanged backend result even if it is absent. */}
+                    render the unchanged backend result even if it is absent.
+                    The Investment Advisor (Phase 15.6) shows a combined
+                    investment summary with a tailored fallback message. */}
                 <AnalysisExplanation
                   explanation={mutation.data.ai_explanation}
+                  unavailableMessage={
+                    active === "advisor"
+                      ? "Investment analysis is available, but the AI summary is temporarily unavailable."
+                      : undefined
+                  }
                 />
                 <AnalysisResultView
                   active={active}

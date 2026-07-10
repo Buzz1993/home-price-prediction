@@ -74,6 +74,27 @@ export function getInvestmentAdvice(
   return analyzeWithExplanation("/analysis/advisor", ids, analysisType);
 }
 
+// POST /advisor?summary=true — AI Investment Advisor summary (Phase 15.6). The
+// backend returns the same Investment Advisor rows under `content`, and
+// combines the other existing analyses (price prediction, valuation, rental,
+// negotiation) so Claude can write ONE investment summary over them under
+// `ai_explanation`. The advisor rows are unchanged; Claude only summarizes and
+// never predicts, values, scores or overrides the backend recommendation.
+// Claude is optional: `ai_explanation` is null when it is unavailable.
+export function getInvestmentSummary(
+  ids: string[]
+): Promise<AnalysisResponse<AdvisorRow[]>> {
+  const query = new URLSearchParams({ summary: "true" });
+
+  return apiRequest<AnalysisResponse<AdvisorRow[]>>(
+    `/analysis/advisor?${query.toString()}`,
+    {
+      method: "POST",
+      body: { property_ids: ids },
+    }
+  );
+}
+
 // POST /negotiation — target price, discount, leverage and talking points.
 export function getNegotiationStrategy(
   ids: string[]

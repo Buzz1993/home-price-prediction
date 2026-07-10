@@ -33,6 +33,7 @@ from src.llm.prompts.templates import (
 from src.llm.prompts.search_prompt import build_search_prompt
 from src.llm.prompts.analysis_prompt import build_analysis_prompt
 from src.llm.prompts.comparison_prompt import build_comparison_prompt
+from src.llm.prompts.investment_prompt import build_investment_prompt
 from src.llm.prompts.report_prompt import build_report_prompt
 
 __all__ = [
@@ -52,5 +53,6 @@ __all__ = [
     "build_search_prompt",
     "build_analysis_prompt",
     "build_comparison_prompt",
+    "build_investment_prompt",
     "build_report_prompt",
 ]

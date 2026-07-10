@@ -18,6 +18,7 @@ from src.mcp.tools.property_tools import (
 )
 from src.llm.analysis_explanation import explain_analysis
 from src.llm.comparison_explanation import explain_comparison
+from src.llm.investment_explanation import explain_investment
 
 logger = logging.getLogger(__name__)
 
@@ -127,8 +128,64 @@ def attach_comparison_explanation(result, explain: bool):
 
 
 # =====================================================
-# COMPARISON
+# AI INVESTMENT SUMMARY (Phase 15.6)
 # =====================================================
+
+def _safe_analysis(func, property_ids: list[str]) -> list[dict]:
+    """
+    Run one existing backend analysis for the investment summary context.
+
+    Used only to GATHER the structured results the backend already produces
+    (price prediction, rental, valuation, negotiation) so Claude can summarize
+    them together. It performs no analysis itself and degrades to an empty list
+    on failure, so a single missing analysis never breaks the summary or the
+    primary Investment Advisor result.
+    """
+
+    try:
+        return func(property_ids) or []
+    except Exception:
+        logger.exception(
+            "Investment summary context step failed (%s); continuing without it.",
+            getattr(func, "__name__", "analysis"),
+        )
+        return []
+
+
+def attach_investment_summary(advisor_result, property_ids: list[str]):
+    """
+    Attach a combined natural-language investment summary to the backend
+    Investment Advisor result (Phase 15.6).
+
+    The backend Investment Advisor output is returned UNCHANGED under
+    `content`. The other EXISTING analyses (price prediction, valuation,
+    rental, negotiation) are gathered for the SAME properties and handed to
+    Claude, which connects them into one investment summary under
+    `ai_explanation`. Claude only summarizes — it never predicts, values,
+    scores, ranks or overrides the backend recommendation.
+
+    Claude is optional: if the summary cannot be generated the advisor result
+    is still returned (with `ai_explanation` null), so an AI failure never
+    blocks the backend Investment Advisor.
+    """
+
+    try:
+        analyses = {
+            "advisor": advisor_result,
+            "prediction": _safe_analysis(get_price_prediction, property_ids),
+            "valuation": _safe_analysis(get_valuation_analysis, property_ids),
+            "rental": _safe_analysis(get_rental_analysis, property_ids),
+            "negotiation": _safe_analysis(get_negotiation_strategy, property_ids),
+        }
+        summary = explain_investment(analyses)
+    except Exception:
+        # Never let the summary layer break a working advisor response.
+        logger.exception(
+            "Investment summary step failed; returning advisor result without it."
+        )
+        summary = None
+
+    return {"content": advisor_result, "ai_explanation": summary}
 
 @router.post("/comparison")
 def comparison(request: PropertyIdsRequest, explain: bool = False):
@@ -229,18 +286,27 @@ def advisor(
     request: PropertyIdsRequest,
     explain: bool = False,
     analysis_type: str = "advisor",
+    summary: bool = False,
 ):
     """
     Investment advisor analysis.
 
     The frontend surfaces Risk Analysis from these same rows and can request a
     risk-focused explanation by passing `analysis_type=risk`.
+
+    When `summary=true` (Phase 15.6), the backend additionally combines the
+    other existing analyses (price prediction, valuation, rental, negotiation)
+    and Claude writes one investment summary over them; the advisor data itself
+    is never modified. `summary` takes precedence over `explain`.
     """
 
     result = execute(
         get_investment_advice,
         request.property_ids
     )
+
+    if summary:
+        return attach_investment_summary(result, request.property_ids)
 
     return attach_analysis_explanation(result, analysis_type, explain)
 

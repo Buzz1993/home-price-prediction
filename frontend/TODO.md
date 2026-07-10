@@ -854,10 +854,44 @@ Existing backend performs:
 
 Claude only explains the combined result.
 
-- [ ] Investment summary
-- [ ] Pros and Cons
-- [ ] Final recommendation
-- [ ] Investment reasoning
+> The existing backend Investment Advisor agent remains unchanged and is the
+> source of truth. When the Investment Advisor is run with `summary=true`, the
+> existing `/analysis/advisor` endpoint returns the same advisor rows under
+> `content` and additionally gathers the other EXISTING analyses for the same
+> properties (price prediction, valuation, rental, negotiation) via the existing
+> MCP tools. A thin explanation service (src/llm/investment_explanation.py)
+> reuses a new Phase 15.2 prompt builder (build_investment_prompt) and the Phase
+> 15.1 Claude Client (ask_claude) to connect those structured results into ONE
+> conversational investment summary under `ai_explanation`. It performs no
+> prediction, valuation, rental, risk or negotiation analysis, computes no
+> investment score, never overrides the backend recommendation, and never
+> invents values, risks or opportunities (e.g. Future Growth, which has no
+> backend endpoint, is omitted rather than invented).
+>
+> The addition is opt-in and additive: `/analysis/advisor` gained an optional
+> `summary` query flag (default false → the response is exactly the current
+> advisor result, so the API contract and the Phase 15.4 `explain`/`analysis_type`
+> behavior are preserved). No new REST endpoint was added, and advisor_agent.py,
+> analysis_agent.py, risk_agent.py, rental_agent.py, future_agent.py,
+> negotiation_agent.py, prediction_service.py and comparison_service.py were not
+> modified. Claude is optional: gathering each supporting analysis is defensive
+> (a failure degrades to an empty section) and if Claude fails `ai_explanation`
+> is null, so the backend Investment Advisor result always returns and never
+> breaks.
+>
+> The frontend reuses the existing AI Analysis page: the Investment Advisor
+> button now runs `getInvestmentSummary` (POST /analysis/advisor?summary=true),
+> and the reusable AnalysisExplanation card renders the combined investment
+> summary above the existing AdvisorCards, with a tailored graceful fallback
+> ("Investment analysis is available, but the AI summary is temporarily
+> unavailable."). The response shape ({ content, ai_explanation }), AdvisorCards,
+> evaluation tray and loading/error states are unchanged; no duplicate components
+> were created. tsc and ESLint pass.
+
+- [x] Investment summary
+- [x] Pros and Cons
+- [x] Final recommendation
+- [x] Investment reasoning
 
 ---
 

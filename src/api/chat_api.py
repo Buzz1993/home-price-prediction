@@ -3,13 +3,19 @@
 # ===============================
 
 import re
+import json
+import math
 import logging
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from src.services.chat_service import parse_intent_and_execute
-from src.llm.search_explanation import explain_search_results
+from src.llm.search_explanation import (
+    explain_search_results,
+    stream_search_explanation,
+)
 from src.llm.conversation_memory import get_session_memory_store
 from src.llm.tool_orchestrator import select_tool, CLARIFY
 from src.mcp.tools.property_tools import (
@@ -260,33 +266,25 @@ def dispatch_selected_tool(selection, request: "ChatRequest"):
 
 
 # =====================================================
-# CHAT
+# SHARED CHAT WORKFLOW
 # =====================================================
+#
+# The business logic shared by the JSON endpoint (POST /chat) and the streaming
+# endpoint (POST /chat/stream). It produces the structured backend result
+# WITHOUT the optional Claude search explanation and WITHOUT recording the
+# assistant turn — those steps differ between the two endpoints (the streaming
+# endpoint streams the explanation token-by-token). No business logic lives
+# here; it only orchestrates the EXISTING backend pipeline, exactly as before.
 
-@router.post("/chat")
-def chat(request: ChatRequest):
+
+def _run_chat_workflow(request: "ChatRequest"):
     """
-    EstateMind Copilot endpoint.
+    Run the existing chat pipeline and return (result, memory, memory_summary).
 
-    Routes the user request to the existing backend chat workflow without
-    duplicating any business logic. For search responses, Claude additionally
-    explains why the backend recommended the returned properties (Phase 15.3).
-
-    Intelligent tool orchestration (Phase 15.8): before falling back to the
-    existing keyword workflow, Claude acts as a ROUTER and selects which
-    EXISTING backend capability should handle the message (search, comparison,
-    analysis, report, saved properties, ...). The selected tool is executed by
-    the existing backend services / MCP tools — Claude never runs the tool or
-    performs any business logic. When Claude is unsure, unavailable, or selects
-    search / general chat, the endpoint falls back to the existing backend chat
-    behaviour (parse_intent_and_execute) exactly as before.
-
-    Conversational memory (Phase 15.7): when the request carries a `session_id`,
-    lightweight session-scoped context is kept so the existing backend follow-up
-    logic works across HTTP requests and Claude can resolve references in
-    follow-up questions. Memory is best-effort context only — it never performs
-    business logic, and if it is unavailable the endpoint still answers using
-    the current request and backend response.
+    result         : the structured backend response envelope (search results,
+                     comparison, analysis, text, ...), before any AI explanation.
+    memory         : the session ConversationMemory (or None if unavailable).
+    memory_summary : compact memory context passed to Claude (or None).
     """
 
     # -------------------------------------------------
@@ -342,15 +340,190 @@ def chat(request: ChatRequest):
             session_state=session_state,
         )
 
+    return result, memory, memory_summary
+
+
+def _record_assistant(memory, result, tray_ids):
+    """Record the assistant turn in session memory (best-effort)."""
+    if memory is None:
+        return
+    try:
+        memory.record_assistant(result, tray_ids)
+    except Exception:
+        logger.exception("Failed to record assistant turn in memory.")
+
+
+# =====================================================
+# CHAT
+# =====================================================
+
+@router.post("/chat")
+def chat(request: ChatRequest):
+    """
+    EstateMind Copilot endpoint.
+
+    Routes the user request to the existing backend chat workflow without
+    duplicating any business logic. For search responses, Claude additionally
+    explains why the backend recommended the returned properties (Phase 15.3).
+
+    Intelligent tool orchestration (Phase 15.8): before falling back to the
+    existing keyword workflow, Claude acts as a ROUTER and selects which
+    EXISTING backend capability should handle the message (search, comparison,
+    analysis, report, saved properties, ...). The selected tool is executed by
+    the existing backend services / MCP tools — Claude never runs the tool or
+    performs any business logic. When Claude is unsure, unavailable, or selects
+    search / general chat, the endpoint falls back to the existing backend chat
+    behaviour (parse_intent_and_execute) exactly as before.
+
+    Conversational memory (Phase 15.7): when the request carries a `session_id`,
+    lightweight session-scoped context is kept so the existing backend follow-up
+    logic works across HTTP requests and Claude can resolve references in
+    follow-up questions. Memory is best-effort context only — it never performs
+    business logic, and if it is unavailable the endpoint still answers using
+    the current request and backend response.
+    """
+
+    result, memory, memory_summary = _run_chat_workflow(request)
+
     result = attach_search_explanation(result, request.message, memory=memory_summary)
 
-    # -------------------------------------------------
-    # Record the assistant turn (best-effort).
-    # -------------------------------------------------
-    if memory is not None:
-        try:
-            memory.record_assistant(result, request.staged_property_ids)
-        except Exception:
-            logger.exception("Failed to record assistant turn in memory.")
+    _record_assistant(memory, result, request.staged_property_ids)
 
     return result
+
+
+# =====================================================
+# CHAT STREAMING (Phase 15.9)
+# =====================================================
+#
+# Streaming is a DELIVERY enhancement only. The backend business logic is
+# identical to POST /chat (same _run_chat_workflow) — the sole difference is
+# that Claude's natural-language SEARCH explanation is streamed token-by-token
+# over Server-Sent Events instead of being returned in one shot. Every other
+# response type (comparison / analysis / text) is structured or backend-produced
+# text with no Claude tokens to stream, so it is delivered as a single `done`
+# event after a brief `thinking` phase.
+#
+# The existing POST /chat JSON contract is untouched; this endpoint is purely
+# additive and shares the same workflow, so no chat logic is duplicated.
+
+# Only search results carry a streamable Claude explanation.
+STREAMABLE_TYPE = "search_results"
+
+
+def _json_safe(value):
+    """
+    Convert non-finite floats (NaN/Infinity) to null so backend DataFrame
+    records serialize cleanly over SSE. Mirrors SafeJSONResponse in
+    src/api/main.py (kept local to avoid importing the app at module load).
+    """
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def _sse(payload: dict) -> str:
+    """Serialize one Server-Sent Event (a single `data:` JSON line)."""
+    return f"data: {json.dumps(_json_safe(payload))}\n\n"
+
+
+def _stream_chat_events(result, request: "ChatRequest", memory, memory_summary):
+    """
+    Yield the SSE event stream for a chat response.
+
+    Event shapes (each a `data: {json}` line):
+      {"type": "thinking"}                     -> backend finished; response next
+      {"type": "delta", "text": "..."}         -> incremental explanation tokens
+      {"type": "done", "response": {...}}       -> full ChatResponse envelope
+      {"type": "error", "message": "...",       -> the Claude stream failed;
+       "recoverable": true}                        a `done` still follows with
+                                                    any partial explanation.
+    """
+
+    # Signal the frontend to switch from the thinking indicator to the response.
+    yield _sse({"type": "thinking"})
+
+    # Stream Claude's explanation only for non-empty search results; everything
+    # else is delivered directly as the final `done` payload.
+    if (
+        isinstance(result, dict)
+        and result.get("type") == STREAMABLE_TYPE
+        and result.get("content")
+    ):
+        query_state = result.get("current_query_state") or {}
+        collected: list[str] = []
+        try:
+            for event in stream_search_explanation(
+                user_query=request.message,
+                results=result.get("content") or [],
+                filters=query_state.get("active_filters"),
+                weights=query_state.get("chat_preference_weights"),
+                memory=memory_summary,
+            ):
+                if event.type == "delta":
+                    collected.append(event.text)
+                    yield _sse({"type": "delta", "text": event.text})
+                elif event.type == "error":
+                    # Degrade gracefully (Phase 15.3): keep any partial text and
+                    # let the search results render without a full explanation.
+                    logger.warning(
+                        "Streamed search explanation failed (error_type=%s).",
+                        event.error_type,
+                    )
+                    yield _sse(
+                        {
+                            "type": "error",
+                            "message": event.error
+                            or "The AI explanation was interrupted.",
+                            "recoverable": True,
+                        }
+                    )
+                # 'done' events carry the full text; we already accumulated the
+                # deltas, so nothing extra is needed here.
+        except Exception:
+            # Never let the explanation layer break a working search response.
+            logger.exception(
+                "Search explanation stream failed; returning results without it."
+            )
+
+        explanation = "".join(collected).strip()
+        if explanation:
+            result["ai_explanation"] = explanation
+
+    # Final structured payload — identical envelope to POST /chat.
+    yield _sse({"type": "done", "response": result})
+
+    # Record the assistant turn once the response is fully delivered.
+    _record_assistant(memory, result, request.staged_property_ids)
+
+
+@router.post("/chat/stream")
+def chat_stream(request: ChatRequest):
+    """
+    Streaming variant of POST /chat (Phase 15.9).
+
+    Runs the SAME backend workflow as POST /chat and streams the result over
+    Server-Sent Events: Claude's search explanation arrives token-by-token,
+    followed by the full structured response envelope. All business logic,
+    AI reasoning, search / analysis / comparison / report workflows and the
+    POST /chat JSON contract are unchanged — only the delivery differs.
+
+    The backend workflow runs BEFORE streaming begins, so any backend error
+    surfaces as a normal HTTP error (the client can retry) rather than mid-stream.
+    """
+
+    # Run business logic first so failures return a proper HTTP status.
+    result, memory, memory_summary = _run_chat_workflow(request)
+
+    return StreamingResponse(
+        _stream_chat_events(result, request, memory, memory_summary),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # disable proxy buffering for live tokens
+        },
+    )

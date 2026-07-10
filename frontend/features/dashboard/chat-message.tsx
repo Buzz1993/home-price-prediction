@@ -49,6 +49,11 @@ function ResponsePayload({
 
 export function ChatMessage({ message }: { message: ChatMessageType }) {
   const isUser = message.role === "user";
+  // While Claude's text is still arriving (Phase 15.9), show a blinking cursor.
+  // An assistant message that is streaming but has no text yet renders nothing
+  // here — the workspace shows the thinking indicator until the first token.
+  const isStreaming = message.streaming === true;
+  const showBubble = Boolean(message.text) || isStreaming;
 
   return (
     <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
@@ -62,7 +67,7 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
       </div>
 
       <div className={cn("min-w-0 max-w-full space-y-3", isUser && "items-end")}>
-        {message.text && (
+        {showBubble && message.text && (
           <div
             className={cn(
               "inline-block max-w-full whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm",
@@ -72,6 +77,12 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
             )}
           >
             {message.text}
+            {isStreaming && (
+              <span
+                aria-hidden
+                className="ml-0.5 inline-block h-4 w-1.5 translate-y-0.5 animate-pulse rounded-sm bg-current align-middle"
+              />
+            )}
           </div>
         )}
 

@@ -1,18 +1,18 @@
 "use client";
 
 // Message composer for the chat workspace. Enter sends, Shift+Enter inserts a
-// newline. Mirrors the Streamlit chat_input.
+// newline. Mirrors the Streamlit chat_input. While a response is streaming, the
+// send button becomes a Stop button that cancels the active stream (Phase 15.9).
 
 import { useState } from "react";
-import { SendHorizontal } from "lucide-react";
+import { SendHorizontal, Square } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useWorkspace } from "./workspace-provider";
 
 export function ChatInput() {
-  const { sendMessage, isSending } = useWorkspace();
+  const { sendMessage, stopStreaming, isSending } = useWorkspace();
   const [value, setValue] = useState("");
 
   const submit = () => {
@@ -36,14 +36,25 @@ export function ChatInput() {
         rows={1}
         className="max-h-40 min-h-10 resize-none"
       />
-      <Button
-        size="icon"
-        aria-label="Send message"
-        disabled={!value.trim() || isSending}
-        onClick={submit}
-      >
-        {isSending ? <Spinner /> : <SendHorizontal />}
-      </Button>
+      {isSending ? (
+        <Button
+          size="icon"
+          variant="secondary"
+          aria-label="Stop generating"
+          onClick={stopStreaming}
+        >
+          <Square className="fill-current" />
+        </Button>
+      ) : (
+        <Button
+          size="icon"
+          aria-label="Send message"
+          disabled={!value.trim()}
+          onClick={submit}
+        >
+          <SendHorizontal />
+        </Button>
+      )}
     </div>
   );
 }

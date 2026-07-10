@@ -2,8 +2,9 @@
 
 // AI Chat Workspace: the main conversation column. Shows the message history
 // (with structured result panels), an empty-state with suggested prompts, a
-// loading indicator and an error state, plus the message composer pinned to the
-// bottom. Reproduces the Streamlit chat-first workflow.
+// thinking indicator, streamed assistant messages and an error state, plus the
+// message composer pinned to the bottom. Reproduces the Streamlit chat-first
+// workflow.
 
 import { useEffect, useRef } from "react";
 import { Bot } from "lucide-react";
@@ -15,17 +16,37 @@ import { SuggestedPrompts } from "./suggested-prompts";
 import { useWorkspace } from "./workspace-provider";
 
 export function ChatWorkspace() {
-  const { messages, isSending, error, retryLastMessage } = useWorkspace();
+  const { messages, isSending, phase, error, retryLastMessage } = useWorkspace();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Whether to keep pinning to the newest message. Stays true while the user is
+  // near the bottom; a manual scroll upward pauses auto-scroll (Phase 15.9) so
+  // reading history is not interrupted, and returning to the bottom resumes it.
+  const stickToBottom = useRef(true);
 
-  // Keep the latest message in view as the conversation grows.
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottom.current = distanceFromBottom < 80;
+  };
+
+  // Follow new content (including streamed tokens) only when the user is at the
+  // bottom. Use instant scrolling while streaming so it tracks tokens smoothly.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isSending]);
+    if (!stickToBottom.current) return;
+    bottomRef.current?.scrollIntoView({
+      behavior: phase === "streaming" ? "auto" : "smooth",
+    });
+  }, [messages, phase]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto p-4">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 space-y-6 overflow-y-auto p-4"
+      >
         {messages.length === 0 && !isSending ? (
           <SuggestedPrompts />
         ) : (
@@ -34,7 +55,9 @@ export function ChatWorkspace() {
           ))
         )}
 
-        {isSending && (
+        {/* Thinking indicator: shown while the backend runs, before the first
+            streamed token replaces it with the live assistant message. */}
+        {phase === "thinking" && (
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <div className="flex size-8 items-center justify-center rounded-full bg-muted">
               <Bot className="size-4" />

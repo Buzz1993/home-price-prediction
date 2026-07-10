@@ -5,20 +5,29 @@
 //   chat_history            -> messages
 //   comparison_tray         -> tray (property ids staged from search)
 //   active_comparison_selection -> selected (ids ticked for comparison)
-// The chat send mutation lives here too so every panel shares one source of
-// truth. All property logic stays in the backend; this only tracks UI state.
+// The chat send lives here too so every panel shares one source of truth. All
+// property logic stays in the backend; this only tracks UI state.
+//
+// Phase 15.9: chat responses stream over Server-Sent Events. Claude's search
+// explanation arrives token-by-token into the active assistant message; the
+// final structured payload renders exactly as before. Streaming only changes
+// delivery — the backend workflow and every response shape are unchanged.
 
 import {
   createContext,
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { useMutation } from "@tanstack/react-query";
 
-import { sendChatMessage } from "@/services/chat-service";
-import type { ChatMessage, ChatResponse } from "@/types/dashboard";
+import { streamChatMessage } from "@/services/chat-service";
+import type {
+  ChatMessage,
+  ChatRequest,
+  ChatResponse,
+} from "@/types/dashboard";
 
 // Header text shown above each structured assistant payload. Matches the
 // RESPONSE_CONFIG titles in the Streamlit reference.
@@ -57,15 +66,28 @@ function createSessionId(): string {
   return `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+// Chat lifecycle:
+//   idle      -> nothing in flight
+//   thinking  -> backend is running (search / analysis); no tokens yet
+//   streaming -> Claude's explanation is arriving token-by-token
+type ChatPhase = "idle" | "thinking" | "streaming";
+
 type WorkspaceContextValue = {
   messages: ChatMessage[];
   tray: string[];
   selected: string[];
+  // True while a response is in flight (thinking or streaming). Kept for
+  // existing consumers (composer disabling, loading UI).
   isSending: boolean;
+  // Finer-grained state for the streaming UI (thinking indicator vs cursor).
+  phase: ChatPhase;
+  isStreaming: boolean;
   error: Error | null;
   // Send a user message. `trayOverride` lets the tray's Compare action send the
   // active selection instead of the whole tray.
   sendMessage: (text: string, trayOverride?: string[]) => void;
+  // Cancel the active streaming response cleanly (keeps any partial text).
+  stopStreaming: () => void;
   // Re-run the last chat request after a failure. The user message stays in the
   // history, so no duplicate bubble is added. Undefined when there is nothing to
   // retry.
@@ -84,39 +106,142 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [tray, setTray] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const [phase, setPhase] = useState<ChatPhase>("idle");
+  const [error, setError] = useState<Error | null>(null);
   // Stable per-session id sent with every chat message so the backend can keep
   // conversational memory scoped to this session (Phase 15.7).
   const [sessionId] = useState(createSessionId);
 
-  const mutation = useMutation({
-    mutationFn: sendChatMessage,
-    onSuccess: (response) => {
-      setMessages((prev) => [...prev, toAssistantMessage(response)]);
-    },
-  });
+  // The in-flight stream's abort controller and the last payload (for retry).
+  const abortRef = useRef<AbortController | null>(null);
+  const lastPayloadRef = useRef<ChatRequest | null>(null);
 
-  const { mutate } = mutation;
+  // Append streamed tokens to the active assistant message (creating it on the
+  // first token). Only the last message changes, keeping re-renders minimal.
+  const appendDelta = useCallback((chunk: string) => {
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.role === "assistant" && last.streaming) {
+        return [...prev.slice(0, -1), { ...last, text: last.text + chunk }];
+      }
+      return [...prev, { role: "assistant", text: chunk, streaming: true }];
+    });
+  }, []);
+
+  // Replace the streaming placeholder with the final structured message.
+  const finalizeDone = useCallback((response: ChatResponse) => {
+    const finalMessage = toAssistantMessage(response);
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.role === "assistant" && last.streaming) {
+        return [...prev.slice(0, -1), finalMessage];
+      }
+      return [...prev, finalMessage];
+    });
+  }, []);
+
+  // Stop the typing cursor on the active assistant message (on stop / error).
+  // Clears the flag on EVERY streaming message — not just the last — so a
+  // message superseded by a new send (which appends a user turn after it) also
+  // has its cursor cleared. The `.some` guard keeps this a no-op (no re-render)
+  // when nothing is streaming.
+  const clearStreamingFlag = useCallback(() => {
+    setMessages((prev) =>
+      prev.some((m) => m.streaming)
+        ? prev.map((m) => (m.streaming ? { ...m, streaming: false } : m))
+        : prev
+    );
+  }, []);
+
+  const runStream = useCallback(
+    (payload: ChatRequest) => {
+      // Cancel any previous stream and finalize its cursor before starting.
+      abortRef.current?.abort();
+      clearStreamingFlag();
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+      lastPayloadRef.current = payload;
+      setError(null);
+      setPhase("thinking");
+
+      streamChatMessage(
+        payload,
+        (event) => {
+          if (controller.signal.aborted) return;
+          switch (event.type) {
+            case "thinking":
+              setPhase("thinking");
+              break;
+            case "delta":
+              setPhase("streaming");
+              appendDelta(event.text);
+              break;
+            case "done":
+              finalizeDone(event.response);
+              break;
+            case "error":
+              // Recoverable errors (e.g. the explanation was interrupted) are
+              // followed by a `done` with any partial text, so they don't block
+              // the response. Nothing to do here.
+              break;
+          }
+        },
+        controller.signal
+      )
+        .catch((err: unknown) => {
+          // A cancellation (new send / Stop) is not an error.
+          if (controller.signal.aborted) return;
+          setError(err instanceof Error ? err : new Error("Chat request failed."));
+          clearStreamingFlag();
+        })
+        .finally(() => {
+          // Only the current stream resets shared state; a stream that was
+          // superseded by a newer send leaves the newer one's state intact.
+          if (abortRef.current === controller) {
+            abortRef.current = null;
+            clearStreamingFlag();
+            setPhase("idle");
+          }
+        });
+    },
+    [appendDelta, finalizeDone, clearStreamingFlag]
+  );
 
   const sendMessage = useCallback(
     (text: string, trayOverride?: string[]) => {
       const message = text.trim();
       if (!message) return;
       setMessages((prev) => [...prev, { role: "user", text: message }]);
-      mutate({
+      runStream({
         message,
         staged_property_ids: trayOverride ?? tray,
         session_id: sessionId,
       });
     },
-    [mutate, tray, sessionId]
+    [runStream, tray, sessionId]
   );
 
-  // Re-send the exact request that failed (same message + tray) using the
-  // mutation's last variables — available only after a send has been attempted.
-  const lastVariables = mutation.variables;
+  const stopStreaming = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    clearStreamingFlag();
+    setPhase("idle");
+  }, [clearStreamingFlag]);
+
+  // Re-send the exact request that failed (same message + tray). The user
+  // message is already in the history, so drop the failed partial assistant
+  // message before retrying to avoid a duplicate.
   const retryLastMessage = useCallback(() => {
-    if (lastVariables) mutate(lastVariables);
-  }, [mutate, lastVariables]);
+    const payload = lastPayloadRef.current;
+    if (!payload) return;
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.role === "assistant") return prev.slice(0, -1);
+      return prev;
+    });
+    runStream(payload);
+  }, [runStream]);
 
   const toggleTray = useCallback((id: string) => {
     setTray((prev) =>
@@ -150,10 +275,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       messages,
       tray,
       selected,
-      isSending: mutation.isPending,
-      error: mutation.error,
+      isSending: phase !== "idle",
+      phase,
+      isStreaming: phase === "streaming",
+      error,
       sendMessage,
-      retryLastMessage: mutation.isError ? retryLastMessage : undefined,
+      stopStreaming,
+      retryLastMessage: error ? retryLastMessage : undefined,
       toggleTray,
       toggleSelected,
       removeFromTray,
@@ -163,10 +291,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       messages,
       tray,
       selected,
-      mutation.isPending,
-      mutation.error,
-      mutation.isError,
+      phase,
+      error,
       sendMessage,
+      stopStreaming,
       retryLastMessage,
       toggleTray,
       toggleSelected,

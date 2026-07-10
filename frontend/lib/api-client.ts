@@ -4,7 +4,7 @@
 
 // Defaults to the EstateMind Copilot API (port 8001). The Next.js app talks to
 // this orchestration layer, not the ML Prediction API on 8000.
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8001";
 
 export class ApiError extends Error {

@@ -1026,10 +1026,46 @@ No backend business logic is moved into Claude.
 
 > Stream Claude responses to the frontend for a more responsive chat
 > experience.
+>
+> Streaming is a DELIVERY enhancement only — no backend business logic, AI
+> reasoning, or API contract changed. The existing `POST /chat` JSON endpoint is
+> byte-identical for non-streaming clients; a thin `POST /chat/stream`
+> (Server-Sent Events) is added alongside it and BOTH share one workflow
+> (`_run_chat_workflow` in `src/api/chat_api.py`), so no chat logic is
+> duplicated. The one reusable Claude Client (Phase 15.1) was extended with a
+> `stream()` generator + `stream_claude()` helper (mirroring `generate()`/
+> `ask_claude` and their exact error categories); `search_explanation.py` gained
+> a `stream_search_explanation()` that reuses the SAME Phase 15.2 Search Prompt
+> Builder. In the chat flow the only Claude-generated natural language is the
+> search `ai_explanation` (Phase 15.3), so search results stream token-by-token
+> then attach the ranked cards on completion, while every other response type
+> (comparison / analysis / text) is delivered as a single `done` event after a
+> brief `thinking` phase. Business logic runs BEFORE streaming begins so backend
+> errors still surface as normal HTTP errors; a failed Claude stream degrades
+> gracefully (partial explanation + results still render). Conversational Memory
+> (15.7) and Tool Orchestration (15.8) are unchanged — the streaming path runs
+> the identical `_run_chat_workflow` and records the assistant turn afterwards.
+>
+> Frontend reuses the existing AI Chat interface with no redesign: a new
+> `streamChatMessage` service reads the SSE stream via `fetch` + a
+> `ReadableStream` reader (honoring an `AbortSignal`), and the shared
+> `WorkspaceProvider` accumulates deltas into ONLY the active assistant message
+> (minimal re-renders), replaces it with the final structured payload on `done`,
+> and exposes `stopStreaming` / `isStreaming` / `phase`. The chat message shows a
+> blinking typing cursor while streaming; the workspace keeps a thinking
+> indicator during the backend phase and auto-scrolls only when the user is near
+> the bottom (a manual scroll upward pauses it, returning resumes it). The
+> composer's send button becomes a Stop button mid-stream to cancel the active
+> stream cleanly (no hanging request). A new send also aborts the previous
+> stream. On failure any partial text is kept and the existing Error/Retry
+> wiring offers a retry. Rendering stays plain-text `whitespace-pre-wrap`,
+> consistent with the existing AI explanation components (no markdown dependency
+> added). tsc, ESLint and `next build` all pass; Python imports and FastAPI
+> startup verified.
 
-- [ ] Streaming API
-- [ ] Streaming frontend support
-- [ ] Loading indicators
+- [x] Streaming API
+- [x] Streaming frontend support
+- [x] Loading indicators
 
 ---
 

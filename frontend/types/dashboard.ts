@@ -177,8 +177,25 @@ export type ChatRequest = {
 
 // A rendered conversation entry. `text` is the header/message; when the entry
 // carries structured data, `response` holds the typed payload to render.
+// `streaming` marks the active assistant message while Claude's text is still
+// arriving (Phase 15.9) so the UI can show a typing cursor.
 export type ChatMessage = {
   role: "user" | "assistant";
   text: string;
   response?: ChatResponse;
+  streaming?: boolean;
 };
+
+// Server-Sent Events emitted by POST /chat/stream (Phase 15.9). Streaming only
+// changes how Claude's response is delivered; the final `done` payload is the
+// same ChatResponse envelope POST /chat returns.
+export type ChatStreamEvent =
+  // Backend finished; the response is about to stream.
+  | { type: "thinking" }
+  // Incremental Claude explanation tokens.
+  | { type: "delta"; text: string }
+  // Full structured response envelope (renders exactly like POST /chat).
+  | { type: "done"; response: ChatResponse }
+  // The Claude stream failed; `recoverable` responses still send a `done` with
+  // any partial explanation so the results render.
+  | { type: "error"; message: string; recoverable?: boolean };

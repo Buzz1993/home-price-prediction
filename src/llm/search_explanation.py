@@ -18,8 +18,9 @@
 # results unchanged.
 
 import logging
+from collections.abc import Iterator
 
-from src.llm.claude_client import ask_claude
+from src.llm.claude_client import ask_claude, stream_claude, ClaudeStreamEvent
 from src.llm.prompts import build_search_prompt
 
 logger = logging.getLogger(__name__)
@@ -77,3 +78,40 @@ def explain_search_results(
         return None
 
     return response.text
+
+
+def stream_search_explanation(
+    user_query: str,
+    results: list[dict],
+    filters: dict | None = None,
+    weights: dict | None = None,
+    memory: str | None = None,
+) -> Iterator[ClaudeStreamEvent]:
+    """
+    Streaming counterpart of `explain_search_results` (Phase 15.9).
+
+    Reuses the SAME Phase 15.2 Search Prompt Builder and generates the SAME
+    explanation — only the delivery changes: it yields ClaudeStreamEvent items
+    (delta / done / error) so the explanation can arrive token-by-token. It
+    performs no business logic and never invents properties, prices or scores.
+
+    Yields nothing when there is nothing to explain (empty results), matching
+    the guard in `explain_search_results`, so no Claude call is spent.
+    """
+
+    # Nothing to explain — do not spend a Claude call on an empty result set.
+    if not results:
+        return
+
+    # Reuse the Phase 15.2 builder; never build prompts inline here.
+    prompt = build_search_prompt(
+        user_query=user_query,
+        results=results,
+        filters=filters,
+        weights=weights,
+        memory=memory,
+    )
+
+    # Reuse the Phase 15.1 streaming client. It never raises: failures arrive as
+    # a terminal `error` event carrying any partial text.
+    yield from stream_claude(prompt.user, system=prompt.system)

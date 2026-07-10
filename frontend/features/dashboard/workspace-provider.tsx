@@ -45,6 +45,18 @@ function toAssistantMessage(response: ChatResponse): ChatMessage {
   };
 }
 
+// A session-scoped id for the backend's conversational memory (Phase 15.7). It
+// lives only for the lifetime of this provider (the active chat session): a
+// fresh id is minted on mount and again after a new chat, so signing out and
+// navigating away (which unmounts the provider) abandons the old memory. Uses
+// crypto.randomUUID when available with a lightweight fallback.
+function createSessionId(): string {
+  const cryptoRef =
+    typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
+  if (cryptoRef?.randomUUID) return cryptoRef.randomUUID();
+  return `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 type WorkspaceContextValue = {
   messages: ChatMessage[];
   tray: string[];
@@ -72,6 +84,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [tray, setTray] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  // Stable per-session id sent with every chat message so the backend can keep
+  // conversational memory scoped to this session (Phase 15.7).
+  const [sessionId] = useState(createSessionId);
 
   const mutation = useMutation({
     mutationFn: sendChatMessage,
@@ -87,9 +102,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const message = text.trim();
       if (!message) return;
       setMessages((prev) => [...prev, { role: "user", text: message }]);
-      mutate({ message, staged_property_ids: trayOverride ?? tray });
+      mutate({
+        message,
+        staged_property_ids: trayOverride ?? tray,
+        session_id: sessionId,
+      });
     },
-    [mutate, tray]
+    [mutate, tray, sessionId]
   );
 
   // Re-send the exact request that failed (same message + tray) using the

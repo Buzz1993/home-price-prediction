@@ -30,6 +30,7 @@ def explain_search_results(
     results: list[dict],
     filters: dict | None = None,
     weights: dict | None = None,
+    memory: str | None = None,
 ) -> str | None:
     """
     Generate a conversational explanation for a backend search result.
@@ -40,6 +41,9 @@ def explain_search_results(
                      (chat_service.parse_intent_and_execute -> "content").
         filters    : Active search filters used by the backend (optional).
         weights    : Preference / hybrid ranking weights (optional).
+        memory     : Optional session conversation-memory summary (Phase 15.7).
+                     Context only — used to keep continuity across follow-up
+                     questions. It never changes the backend results.
 
     Returns:
         The explanation text, or None when Claude is unavailable / fails or
@@ -57,6 +61,7 @@ def explain_search_results(
         results=results,
         filters=filters,
         weights=weights,
+        memory=memory,
     )
 
     # Reuse the Phase 15.1 Claude client. It never raises: failures come back

@@ -166,10 +166,13 @@ export type ChatResponseType = ChatResponse["type"];
 // Request body for POST /chat (backend ChatRequest in src/api/chat_api.py). The
 // staged tray travels with the message so the backend can run tray-based
 // analyses (compare, rental, prediction, …). `slider_weights` is optional and
-// unused by the frontend, so it is omitted.
+// unused by the frontend, so it is omitted. `session_id` scopes the backend's
+// session conversational memory (Phase 15.7) to this active chat session; it is
+// optional and, when omitted, the backend answers statelessly.
 export type ChatRequest = {
   message: string;
   staged_property_ids: string[];
+  session_id?: string;
 };
 
 // A rendered conversation entry. `text` is the header/message; when the entry

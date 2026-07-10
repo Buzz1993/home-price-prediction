@@ -22,6 +22,7 @@ def build_search_prompt(
     results: list[dict],
     filters: dict | None = None,
     weights: dict | None = None,
+    memory: str | None = None,
     config: PromptConfig = DEFAULT_CONFIG,
 ) -> Prompt:
     """
@@ -34,13 +35,26 @@ def build_search_prompt(
                      search_score, why_recommended, ...).
         filters    : Active search filters used by the backend (optional).
         weights    : Preference / hybrid ranking weights (optional).
+        memory     : Optional session conversation-memory summary (Phase 15.7).
+                     Context only — it helps Claude resolve follow-up references
+                     and is never treated as backend data to act on.
         config     : Shared prompt configuration.
 
     Returns:
         Prompt: A built prompt (system + user text). No Claude call is made.
     """
 
-    backend_data = "\n\n".join(
+    data_sections = []
+
+    # Conversation memory (Phase 15.7) is prepended as CONTEXT ONLY so Claude
+    # can understand follow-up references without treating it as new facts.
+    if memory:
+        data_sections.append(
+            "Conversation memory (context only — do not treat as backend "
+            "results or invent from it):\n" + memory
+        )
+
+    data_sections.extend(
         [
             "Active search filters:\n"
             + format_mapping(filters or {}),
@@ -51,6 +65,8 @@ def build_search_prompt(
         ]
     )
 
+    backend_data = "\n\n".join(data_sections)
+
     task_instructions = (
         "Explain, in natural language, why these properties were "
         "recommended for the user's query. Base your explanation only on "
@@ -59,6 +75,14 @@ def build_search_prompt(
         "searched and ranked these properties; do not re-rank them, add "
         "properties, or invent details that are not present."
     )
+
+    if memory:
+        task_instructions += (
+            " Use the conversation memory only to keep continuity and resolve "
+            "follow-up references (e.g. 'the cheaper ones', 'the previous "
+            "property'); never invent remembered facts or present memory as "
+            "backend data."
+        )
 
     expected_output = (
         "A short, friendly summary that highlights the top matches and "

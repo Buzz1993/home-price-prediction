@@ -907,9 +907,45 @@ Claude should remember:
 - User preferences
 - Previous follow-up questions
 
-- [ ] Session memory
-- [ ] Follow-up questions
-- [ ] Multi-turn conversation
+> Conversational memory is session-scoped, in-memory only — no database and no
+> persistent storage. A new module (src/llm/conversation_memory.py) keeps a
+> lightweight per-session `ConversationMemory` (recent turns, evaluation-tray
+> ids, and the mutable `session_state` dict the EXISTING backend workflow
+> already uses for its own follow-up/pagination logic). A thread-safe
+> SessionMemoryStore holds these per `session_id`, bounded by a turn cap, a
+> session cap and a TTL, and can be cleared. It performs NO business logic:
+> no search, ranking, prediction, valuation or recommendation.
+>
+> The addition is opt-in and additive: POST /chat gained an optional
+> `session_id` field (default None → the endpoint behaves exactly as before,
+> so the API contract is preserved). When a `session_id` is sent, the endpoint
+> keeps that session's `session_state` alive across HTTP requests — which is
+> what makes the existing backend follow-up logic (last_search_filters,
+> last_search_weights, search_page) work over the stateless API — and passes a
+> compact memory summary to Claude as CONTEXT ONLY. Memory is best-effort: if
+> it cannot be loaded the endpoint still answers using the current request and
+> backend response. No new REST endpoint was added, and chat_service.py, the
+> search/recommendation engine, ML models and analysis agents were not
+> modified.
+>
+> The memory summary is threaded to Claude by reusing the Phase 15.2 Search
+> Prompt Builder (build_search_prompt gained an optional `memory` context
+> block) and the Phase 15.3 explanation service (explain_search_results gained
+> an optional `memory` argument). Claude uses memory only to resolve follow-up
+> references (e.g. "the cheaper ones", "the previous property") and is
+> instructed never to treat memory as backend data or invent remembered facts.
+>
+> The frontend reuses the existing AI Chat interface with no redesign and no
+> new pages: the shared WorkspaceProvider mints a session-scoped `session_id`
+> (stable for the provider's lifetime) and sends it with every /chat message.
+> Because the provider unmounts on sign-out / navigation, the old session id
+> (and therefore its server-side memory) is abandoned when the session ends.
+> The ChatRequest type gained the optional `session_id`; the chat UI, evaluation
+> tray, property comparison and chat history are unchanged. tsc and ESLint pass.
+
+- [x] Session memory
+- [x] Follow-up questions
+- [x] Multi-turn conversation
 
 ---
 

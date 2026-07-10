@@ -9,6 +9,10 @@
 
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
+// Must precede the plugin import below: it exposes Leaflet as the global `L` the
+// UMD markercluster plugin expects. ES modules evaluate imports in order, so this
+// runs first and the plugin no longer throws "ReferenceError: L is not defined".
+import "./leaflet-globals";
 import "leaflet.markercluster";
 
 import { useEffect, useMemo } from "react";

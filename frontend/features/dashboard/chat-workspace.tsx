@@ -51,7 +51,17 @@ export function ChatWorkspace() {
           <SuggestedPrompts />
         ) : (
           messages.map((message, i) => (
-            <ChatMessage key={i} message={message} />
+            <ChatMessage
+              key={i}
+              message={message}
+              // Suggestions (Phase 15.11) show only under the latest assistant
+              // reply, and only once the response is complete (idle).
+              showSuggestions={
+                i === messages.length - 1 &&
+                message.role === "assistant" &&
+                !isSending
+              }
+            />
           ))
         )}
 

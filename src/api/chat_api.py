@@ -18,6 +18,7 @@ from src.llm.search_explanation import (
 )
 from src.llm.conversation_memory import get_session_memory_store
 from src.llm.tool_orchestrator import select_tool, CLARIFY
+from src.llm.suggestions import generate_suggestions
 from src.mcp.tools.property_tools import (
     compare_properties,
     get_price_prediction,
@@ -115,6 +116,46 @@ def attach_search_explanation(result, user_query: str, memory: str | None = None
 
     if explanation:
         result["ai_explanation"] = explanation
+
+    return result
+
+
+# =====================================================
+# AI SUGGESTIONS (Phase 15.11)
+# =====================================================
+
+def attach_suggestions(result, user_message: str, tray_ids, memory: str | None = None):
+    """
+    Attach optional follow-up SUGGESTIONS to a completed chat response.
+
+    The backend response is returned UNCHANGED — this only adds an optional
+    `suggestions` list of short next-action phrases (Phase 15.11) drawn from the
+    EXISTING EstateMind capabilities. Selecting one in the frontend re-sends it
+    through the existing chat pipeline (Phase 15.8 tool orchestration), so no new
+    workflow or routing logic is introduced.
+
+    Claude is optional: if suggestions cannot be generated the response is
+    returned as-is (the suggestion section is simply hidden). `memory` is the
+    Phase 15.7 session summary passed through as context only.
+    """
+
+    if not isinstance(result, dict):
+        return result
+
+    try:
+        suggestions = generate_suggestions(
+            user_message=user_message,
+            result=result,
+            staged_property_ids=tray_ids,
+            memory=memory,
+        )
+    except Exception:
+        # Never let the suggestion layer break a working chat response.
+        logger.exception("Suggestion step failed; returning response without it.")
+        suggestions = []
+
+    if suggestions:
+        result["suggestions"] = suggestions
 
     return result
 
@@ -387,6 +428,13 @@ def chat(request: ChatRequest):
 
     result = attach_search_explanation(result, request.message, memory=memory_summary)
 
+    result = attach_suggestions(
+        result,
+        request.message,
+        request.staged_property_ids,
+        memory=memory_summary,
+    )
+
     _record_assistant(memory, result, request.staged_property_ids)
 
     return result
@@ -493,6 +541,17 @@ def _stream_chat_events(result, request: "ChatRequest", memory, memory_summary):
         explanation = "".join(collected).strip()
         if explanation:
             result["ai_explanation"] = explanation
+
+    # Attach follow-up suggestions AFTER the streamed explanation is complete
+    # (Phase 15.11). Suggestions are not streamed token-by-token — they travel in
+    # the single `done` payload below, so they appear only once the response is
+    # finished. Best-effort: a failure simply omits the suggestion section.
+    result = attach_suggestions(
+        result,
+        request.message,
+        request.staged_property_ids,
+        memory=memory_summary,
+    )
 
     # Final structured payload — identical envelope to POST /chat.
     yield _sse({"type": "done", "response": result})

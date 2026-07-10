@@ -13,6 +13,7 @@ import { SearchExplanation } from "./search-explanation";
 import { ComparisonResult } from "./comparison-result";
 import { AnalysisTable } from "./analysis-table";
 import { AdvisorCards, NegotiationCards } from "./analysis-cards";
+import { SuggestedActions } from "./suggested-actions";
 
 function ResponsePayload({
   response,
@@ -47,7 +48,15 @@ function ResponsePayload({
   }
 }
 
-export function ChatMessage({ message }: { message: ChatMessageType }) {
+export function ChatMessage({
+  message,
+  showSuggestions = false,
+}: {
+  message: ChatMessageType;
+  // Only the latest assistant message shows follow-up suggestions (Phase 15.11),
+  // keeping earlier turns clean and avoiding repeated chips.
+  showSuggestions?: boolean;
+}) {
   const isUser = message.role === "user";
   // While Claude's text is still arriving (Phase 15.9), show a blinking cursor.
   // An assistant message that is streaming but has no text yet renders nothing
@@ -87,6 +96,12 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
         )}
 
         {message.response && <ResponsePayload response={message.response} />}
+
+        {/* Follow-up suggestions (Phase 15.11): only on the latest assistant
+            message and once its text has finished streaming. */}
+        {showSuggestions && !isStreaming && (
+          <SuggestedActions suggestions={message.suggestions} />
+        )}
       </div>
     </div>
   );

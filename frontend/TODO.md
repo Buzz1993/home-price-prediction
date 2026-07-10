@@ -1128,8 +1128,42 @@ Examples:
 - View property details
 - Save property
 
-- [ ] Suggested actions
-- [ ] Follow-up recommendations
+> After each chat turn, Claude recommends 3-5 short follow-up ACTIONS drawn
+> ONLY from the EXISTING EstateMind capabilities — it never invents features,
+> executes anything or performs business logic. A thin service
+> (`src/llm/suggestions.py`) reuses the Phase 15.2 Prompt Builder (a new
+> `build_suggestions_prompt`, registered in `src/llm/prompts`) and the Phase
+> 15.1 Claude Client (`ask_claude`) to select next actions from a per-response
+> catalog of existing capabilities (search / compare / predict / rental /
+> valuation / negotiation / advisor / report / share / save / view saved). The
+> catalog is filtered by evaluation-tray state so every suggestion is runnable,
+> and the Phase 15.7 conversation memory is passed through as context so
+> suggestions stay relevant and avoid repeating the completed action. Claude is
+> OPTIONAL: any failure (or non-JSON reply) returns an empty list and the
+> suggestion section is simply hidden — the chat response is never affected.
+>
+> Suggestions are attached to the SAME response envelope in `chat_api.py`
+> (`attach_suggestions`) for both `POST /chat` and `POST /chat/stream`. For
+> streaming they are computed only AFTER the streamed explanation completes and
+> travel in the single `done` payload, so they are never streamed
+> token-by-token. No new REST endpoint, backend business logic, ML model,
+> recommendation/analysis agent, MCP tool, report generation/sharing or API
+> contract was changed — `suggestions` is a purely additive optional field.
+>
+> The frontend reuses the existing AI Chat interface with no redesign: a new
+> reusable `SuggestedActions` component renders the suggestions as
+> green-and-white quick-action chips (shared Button) below the completed
+> assistant reply, only on the latest assistant message and only once idle.
+> Selecting a chip re-sends it through the existing `sendMessage` pipeline, so
+> the Phase 15.8 tool orchestration routes it to the correct EXISTING backend
+> capability — no new workflow or routing logic is added. Chips wrap gracefully,
+> are keyboard navigable and disable while a response is in flight.
+> `ChatResponse` / `ChatMessage` gained an optional `suggestions` field. tsc,
+> ESLint and `next build` pass; Python imports and the graceful-failure path
+> were verified.
+
+- [x] Suggested actions
+- [x] Follow-up recommendations
 
 ---
 

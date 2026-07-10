@@ -153,7 +153,7 @@ export type EnhancedReport = {
 
 // Discriminated union of every response the /chat endpoint can return. The
 // `type` field matches RESPONSE_CONFIG keys in the Streamlit reference.
-export type ChatResponse =
+type ChatResponseBody =
   | { type: "text"; content: string }
   // `ai_explanation` is an optional natural-language summary Claude generates
   // from the backend search result (Phase 15.3). It never affects `content`
@@ -169,6 +169,12 @@ export type ChatResponse =
   | { type: "negotiation"; content: NegotiationRow[] }
   | { type: "valuation"; content: AnalysisRow[] }
   | { type: "advisor"; content: AdvisorRow[] };
+
+// `suggestions` are optional follow-up action phrases Claude recommends after a
+// chat turn (Phase 15.11). They only reference EXISTING EstateMind capabilities
+// and never affect `content`; selecting one re-sends it through the existing
+// chat pipeline. Absent when Claude is unavailable, so the section hides.
+export type ChatResponse = ChatResponseBody & { suggestions?: string[] };
 
 export type ChatResponseType = ChatResponse["type"];
 
@@ -187,12 +193,15 @@ export type ChatRequest = {
 // A rendered conversation entry. `text` is the header/message; when the entry
 // carries structured data, `response` holds the typed payload to render.
 // `streaming` marks the active assistant message while Claude's text is still
-// arriving (Phase 15.9) so the UI can show a typing cursor.
+// arriving (Phase 15.9) so the UI can show a typing cursor. `suggestions` holds
+// Claude's optional follow-up actions (Phase 15.11), shown as quick-action chips
+// under the completed assistant response.
 export type ChatMessage = {
   role: "user" | "assistant";
   text: string;
   response?: ChatResponse;
   streaming?: boolean;
+  suggestions?: string[];
 };
 
 // Server-Sent Events emitted by POST /chat/stream (Phase 15.9). Streaming only

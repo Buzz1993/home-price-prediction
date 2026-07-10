@@ -44,13 +44,17 @@ const RESPONSE_TITLES: Record<ChatResponse["type"], string> = {
 };
 
 function toAssistantMessage(response: ChatResponse): ChatMessage {
+  // Follow-up suggestions (Phase 15.11) ride on the response envelope; surface
+  // them on the message so the chat renderer can show quick-action chips.
+  const suggestions = response.suggestions;
   if (response.type === "text") {
-    return { role: "assistant", text: response.content };
+    return { role: "assistant", text: response.content, suggestions };
   }
   return {
     role: "assistant",
     text: RESPONSE_TITLES[response.type],
     response,
+    suggestions,
   };
 }
 

@@ -40,6 +40,10 @@ from src.llm.prompts.orchestration_prompt import (
     build_orchestration_prompt,
     ROUTER_SYSTEM_PROMPT,
 )
+from src.llm.prompts.suggestions_prompt import (
+    build_suggestions_prompt,
+    SUGGESTIONS_SYSTEM_PROMPT,
+)
 
 __all__ = [
     # Configuration
@@ -64,4 +68,7 @@ __all__ = [
     "ToolSpec",
     "build_orchestration_prompt",
     "ROUTER_SYSTEM_PROMPT",
+    # AI suggestions (Phase 15.11)
+    "build_suggestions_prompt",
+    "SUGGESTIONS_SYSTEM_PROMPT",
 ]

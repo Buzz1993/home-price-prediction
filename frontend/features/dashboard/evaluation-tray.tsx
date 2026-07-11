@@ -38,8 +38,8 @@ export function EvaluationTray({ onCompare, isComparing }: EvaluationTrayProps =
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b p-4">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0 border-b p-4">
         <h2 className="font-heading text-sm font-semibold">
           Evaluation Tray
         </h2>
@@ -58,7 +58,8 @@ export function EvaluationTray({ onCompare, isComparing }: EvaluationTrayProps =
         </div>
       ) : (
         <>
-          <div className="flex-1 space-y-2 overflow-y-auto p-4">
+          {/* The staged list is the only scroller; header + actions stay fixed. */}
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
             {tray.map((id) => (
               <div
                 key={id}
@@ -86,7 +87,7 @@ export function EvaluationTray({ onCompare, isComparing }: EvaluationTrayProps =
             ))}
           </div>
 
-          <div className="space-y-2 border-t p-4">
+          <div className="shrink-0 space-y-2 border-t p-4">
             <p className="text-xs text-muted-foreground">
               Selected for comparison: {selected.length} of {tray.length}
             </p>

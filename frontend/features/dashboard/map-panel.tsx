@@ -25,7 +25,9 @@ export function MapPanel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      {/* Fixed header; the map body fills the rest of the column and never
+          scrolls away. */}
+      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
         <div>
           <h2 className="font-heading text-sm font-semibold">Property Map</h2>
           <p className="text-xs text-muted-foreground">

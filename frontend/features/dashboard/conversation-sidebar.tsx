@@ -1,17 +1,24 @@
 "use client";
 
 // ChatGPT-style Conversation Sidebar (Phase 15.13). The far-left column of the
-// Copilot workspace. Lists conversations in Pinned / Recent sections, starts a
-// New Chat, and (per the chosen layout) folds the app's global navigation into
-// the footer so the workspace can run full-bleed without a second sidebar. Each
-// conversation is a complete EstateMind workspace restored on selection.
+// Copilot workspace, laid out top→bottom as:
+//
+//   EstateMind logo → New Chat → Search Chats → Pinned → Recent → Global nav
+//
+// It is a bounded flex column: the logo, New Chat, search box and global
+// navigation stay fixed, and ONLY the Pinned/Recent conversation list scrolls
+// independently. Each conversation is a complete EstateMind workspace restored
+// on selection. "Search Chats" filters the already-loaded conversation titles on
+// the client — it does not touch the conversation, accumulation or backend logic.
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/lib/navigation";
 import { ConversationItem } from "./conversation-item";
@@ -35,9 +42,14 @@ export function ConversationSidebar({
     deleteConversation,
   } = useWorkspace();
   const pathname = usePathname();
+  const [query, setQuery] = useState("");
 
-  // Pinned first, then Recent — each ordered by most recently updated.
-  const byRecent = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+  // Pinned first, then Recent — each ordered by most recently updated, then
+  // filtered by the "Search Chats" query (title match, client-side only).
+  const q = query.trim().toLowerCase();
+  const byRecent = [...conversations]
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .filter((c) => (q ? c.title.toLowerCase().includes(q) : true));
   const pinned = byRecent.filter((c) => c.pinned);
   const recent = byRecent.filter((c) => !c.pinned);
 
@@ -46,20 +58,37 @@ export function ConversationSidebar({
     onNavigate?.();
   };
 
+  const renderItem = (id: string) => {
+    const c = conversations.find((x) => x.id === id)!;
+    return (
+      <ConversationItem
+        key={c.id}
+        conversation={c}
+        active={c.id === activeId}
+        onSelect={handleSelect}
+        onRename={renameConversation}
+        onTogglePin={togglePin}
+        onDelete={deleteConversation}
+      />
+    );
+  };
+
   return (
     <aside
       className={cn(
-        "flex h-full w-full flex-col bg-sidebar text-sidebar-foreground",
+        "flex h-full min-h-0 w-full flex-col bg-sidebar text-sidebar-foreground",
         className
       )}
     >
-      <div className="flex h-16 items-center border-b px-4">
+      {/* Brand — fixed. */}
+      <div className="flex h-16 shrink-0 items-center border-b px-4">
         <Brand />
       </div>
 
-      <div className="p-3">
+      {/* New Chat + Search Chats — fixed. */}
+      <div className="shrink-0 space-y-2 p-3">
         <Button
-          className="w-full justify-center"
+          className="w-full justify-center shadow-sm"
           onClick={() => {
             newChat();
             onNavigate?.();
@@ -67,49 +96,40 @@ export function ConversationSidebar({
         >
           <Plus /> New Chat
         </Button>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search chats"
+            aria-label="Search chats"
+            className="h-9 bg-background/60 pl-8 text-sm"
+          />
+        </div>
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 pb-3">
+      {/* Conversation list — the ONLY scroller in this sidebar. */}
+      <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 pb-3">
         {pinned.length > 0 && (
-          <Section title="Pinned">
-            {pinned.map((c) => (
-              <ConversationItem
-                key={c.id}
-                conversation={c}
-                active={c.id === activeId}
-                onSelect={handleSelect}
-                onRename={renameConversation}
-                onTogglePin={togglePin}
-                onDelete={deleteConversation}
-              />
-            ))}
-          </Section>
+          <Section title="Pinned">{pinned.map((c) => renderItem(c.id))}</Section>
         )}
 
         <Section title="Recent">
           {recent.length > 0 ? (
-            recent.map((c) => (
-              <ConversationItem
-                key={c.id}
-                conversation={c}
-                active={c.id === activeId}
-                onSelect={handleSelect}
-                onRename={renameConversation}
-                onTogglePin={togglePin}
-                onDelete={deleteConversation}
-              />
-            ))
+            recent.map((c) => renderItem(c.id))
           ) : (
             <p className="px-2.5 py-2 text-xs text-muted-foreground">
-              No recent conversations.
+              {q ? "No chats match your search." : "No recent conversations."}
             </p>
           )}
         </Section>
       </nav>
 
-      {/* Global navigation folded into the sidebar footer so the workspace runs
-          full-bleed. Links to the rest of the app. */}
-      <div className="border-t p-3">
+      {/* Global navigation — fixed footer so the workspace runs full-bleed. */}
+      <div className="shrink-0 border-t p-3">
+        <p className="px-1 pb-1.5 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
+          Navigate
+        </p>
         <div className="grid grid-cols-2 gap-1">
           {navItems.map((item) => {
             const active =

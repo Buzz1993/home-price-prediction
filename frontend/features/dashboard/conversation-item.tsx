@@ -83,10 +83,19 @@ export function ConversationItem({
   return (
     <div
       className={cn(
-        "group/item flex items-center gap-1 rounded-lg pr-1 transition-colors",
-        active ? "bg-primary/10 text-foreground" : "hover:bg-muted"
+        "group/item relative flex items-center gap-1 rounded-lg pr-1 transition-all duration-150",
+        active
+          ? "bg-primary/10 text-foreground"
+          : "hover:bg-muted hover:translate-x-0.5"
       )}
     >
+      {/* Active accent bar on the left edge (premium ChatGPT-style cue). */}
+      {active && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+        />
+      )}
       <button
         type="button"
         onClick={() => onSelect(conversation.id)}

@@ -48,11 +48,14 @@ export function ChatWorkspace() {
   });
 
   return (
+    // Bounded flex column: the message list (min-h-0 + overflow-y-auto) is the
+    // ONLY scroller here; the composer below stays pinned. The column itself is
+    // height-bounded by its flex parent, so it never grows the workspace.
     <div className="flex min-h-0 flex-1 flex-col">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 space-y-6 overflow-y-auto p-4"
+        className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5"
       >
         {messages.length === 0 && !isSending ? (
           <SuggestedPrompts />
@@ -98,7 +101,8 @@ export function ChatWorkspace() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t p-4">
+      {/* Composer pinned to the bottom — shrink-0 so it never scrolls away. */}
+      <div className="shrink-0 border-t bg-background/80 px-4 py-3 backdrop-blur">
         <ChatInput />
       </div>
     </div>

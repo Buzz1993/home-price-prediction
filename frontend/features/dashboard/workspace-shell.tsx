@@ -36,17 +36,23 @@ export function WorkspaceShell() {
     conversations.find((c) => c.id === activeId)?.title ?? "EstateMind Copilot";
 
   return (
+    // The workspace is locked to the viewport height. `overflow-hidden` here
+    // means the browser window is NEVER the scroll container — each column owns
+    // its own scroll (see ChatWorkspace / ConversationSidebar / EvaluationTray).
     <div className="flex h-dvh w-full overflow-hidden bg-background">
-      {/* Column 1 — Conversation Sidebar (inline on xl). */}
+      {/* Column 1 — Conversation Sidebar (inline on xl). Fixed full height;
+          scrolls internally. */}
       <div className="hidden w-72 shrink-0 border-r xl:block">
         <ConversationSidebar />
       </div>
 
-      {/* Column 2 — Chat + Results (always visible, primary column). */}
-      <section className="flex min-w-0 flex-1 flex-col">
-        {/* Slim toolbar — panel toggles on smaller screens; a clean title bar
-            on xl where every column is already visible. */}
-        <div className="flex h-14 items-center gap-2 border-b px-3">
+      {/* Column 2 — Chat + Results (always visible, primary column). A bounded
+          flex column: fixed header + scrolling body + fixed input. min-h-0 lets
+          the inner list shrink so IT scrolls instead of the column growing. */}
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {/* Fixed chat header — panel toggles on smaller screens, a clean title
+            bar on xl where every column is already visible. Never scrolls. */}
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
           <Button
             variant="ghost"
             size="icon"
@@ -81,17 +87,18 @@ export function WorkspaceShell() {
           </Button>
         </div>
 
-        <div className="min-h-0 flex-1">
-          <ChatWorkspace />
-        </div>
+        {/* ChatWorkspace is the flex-1 body; it owns the message/card scroll. */}
+        <ChatWorkspace />
       </section>
 
-      {/* Column 3 — Interactive Property Map (inline on xl). */}
+      {/* Column 3 — Interactive Property Map (inline on xl). Fixed full height,
+          never scrolls away. */}
       <aside className="hidden w-[22rem] shrink-0 border-l xl:block">
         <MapPanel />
       </aside>
 
-      {/* Column 4 — Evaluation Tray (inline on xl). */}
+      {/* Column 4 — Evaluation Tray (inline on xl). Fixed full height; the staged
+          list scrolls internally. */}
       <aside className="hidden w-72 shrink-0 border-l xl:block">
         <EvaluationTray />
       </aside>

@@ -2435,8 +2435,13 @@ def parse_intent_and_execute(
             )
 
             print("\n===== FIRST RECORD =====")
+
             if final_records:
                 print(final_records[0])
+
+                print("\nIMAGE_URLS:")
+                print(final_records[0].get("image_urls"))
+
             print("========================\n")
 
             return {

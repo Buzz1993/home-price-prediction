@@ -1,9 +1,29 @@
+"use client";
+
+// Application shell for protected pages. Most pages get the standard chrome: a
+// fixed global sidebar, a top navbar (with mobile navigation) and a padded,
+// scrollable content area.
+//
+// The Copilot workspace routes (/dashboard, /chat) instead run full-bleed so
+// their own four-column WorkspaceShell (Conversation Sidebar | Chat | Map |
+// Tray) fills the viewport — the global navigation is folded into the
+// conversation sidebar's footer there, so no second sidebar is shown.
+
+import { usePathname } from "next/navigation";
+
 import { Navbar } from "./navbar";
 import { Sidebar } from "./sidebar";
 
-// Application shell for protected pages: a fixed sidebar on desktop, a top
-// navbar (with mobile navigation), and a scrollable content area.
+// Routes that render their own full-screen workspace (no global chrome).
+const WORKSPACE_ROUTES = new Set(["/dashboard", "/chat"]);
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  if (WORKSPACE_ROUTES.has(pathname)) {
+    return <div className="h-dvh overflow-hidden">{children}</div>;
+  }
+
   return (
     <div className="flex min-h-dvh">
       <Sidebar className="sticky top-0 hidden h-dvh lg:flex" />

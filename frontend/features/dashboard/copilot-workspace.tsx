@@ -1,21 +1,12 @@
-import { ChatWorkspace } from "./chat-workspace";
-import { EvaluationTray } from "./evaluation-tray";
+// The EstateMind Copilot workspace: the permanent four-column layout
+// (Conversation Sidebar | Chat + Results | Property Map | Evaluation Tray).
+// The shared WorkspaceProvider is mounted by the (dashboard) layout so the
+// tray, conversations and accumulated properties persist across routes. Reused
+// by the Dashboard (Phase 4) and the dedicated AI Chat page (Phase 5) so the
+// layout and chat logic are defined once. Phase 15.13 upgraded this to the
+// full four-column workspace (see WorkspaceShell).
+import { WorkspaceShell } from "./workspace-shell";
 
-// The EstateMind Copilot workspace: a chat-first conversation column with the
-// evaluation tray alongside. The shared WorkspaceProvider is mounted by the
-// (dashboard) layout so staging a property in chat updates the tray and vice
-// versa — and the tray persists onto the Property Comparison page. Reused by the
-// Dashboard (Phase 4) and the dedicated AI Chat page (Phase 5) so the layout and
-// chat logic are defined once.
 export function CopilotWorkspace() {
-  return (
-    <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="flex h-[70dvh] min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm lg:h-auto">
-        <ChatWorkspace />
-      </section>
-      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-sm">
-        <EvaluationTray />
-      </aside>
-    </div>
-  );
+  return <WorkspaceShell />;
 }

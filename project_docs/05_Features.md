@@ -81,6 +81,65 @@ AI Response / Search Results
 
 ---
 
+## 2.1 Conversation History
+
+Purpose
+
+Allow users to organize AI conversations similar to ChatGPT while preserving the complete EstateMind workspace.
+
+Workflow
+
+New Chat
+
+↓
+
+Conversation
+
+↓
+
+Search Properties
+
+↓
+
+Workspace Saved
+
+↓
+
+Resume Conversation
+
+Each conversation preserves:
+
+- Chat Messages
+- Search Results
+- Interactive Property Map
+- Evaluation Tray
+- Compared Properties
+- Property Details state (when applicable)
+
+Sidebar Sections
+
+Pinned
+
+Recent
+
+Pinned Chat Menu
+
+- Rename
+- Unpin Chat
+- Delete
+
+Recent Chat Menu
+
+- Rename
+- Pin Chat
+- Delete
+
+Starting a New Chat creates a completely new workspace.
+
+Switching conversations restores the previous workspace exactly as it was left.
+
+---
+
 # 3. Property Search
 
 **Purpose:**
@@ -725,26 +784,51 @@ Saved List
 
 ---
 
-# 21. Chat History
+# 21. Conversation Management
 
 **Purpose:**
-View previous AI conversations.
+Manage and resume AI conversations while preserving the complete EstateMind workspace.
 
 **Workflow**
 
 ```text
+New Chat
+      ↓
 Conversation
       ↓
-History
+Search & Analysis
+      ↓
+Workspace Saved
+      ↓
+Resume Conversation
 ```
 
-**Input**
+**Features**
 
-- User
+- Create New Chat
+- Rename Conversation
+- Pin Conversation
+- Unpin Conversation
+- Delete Conversation
 
-**Output**
+**Sidebar Sections**
 
-- Chat History
+Pinned
+
+Recent
+
+Each conversation preserves:
+
+- Chat Messages
+- Search Results
+- Interactive Property Map
+- Evaluation Tray
+- Compared Properties
+- Property Details state (when applicable)
+
+Switching conversations restores the complete workspace exactly as it was left.
+
+Starting a New Chat creates a new empty workspace.
 
 ---
 
@@ -782,5 +866,5 @@ Report Sharing
       ↓
 Saved Properties
       ↓
-Chat History
+Conversation Management
 ```

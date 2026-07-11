@@ -1199,6 +1199,56 @@ Examples:
 
 ---
 
+## Phase 15.13 — ChatGPT-style Copilot Workspace
+
+> Redesigned the Copilot into a permanent four-column workspace
+> (Conversation Sidebar | Chat + Results | Property Map | Evaluation Tray) and
+> made every conversation a complete, restorable EstateMind workspace. This is
+> purely frontend state management — no backend, FastAPI endpoint, ML model,
+> search/recommendation engine, analysis agent or API contract was changed.
+>
+> Conversation state (features/dashboard/conversations.ts + rewritten
+> workspace-provider.tsx): each conversation stores its own chat messages, the
+> ACCUMULATED deduplicated property collection, the evaluation tray and the
+> comparison selection, plus a stable id reused as the backend session_id (Phase
+> 15.7 memory). Conversations persist to localStorage (client only) so Recent /
+> Pinned survive a reload; nothing is sent to the backend. New Chat creates an
+> empty workspace; switching a conversation restores its full workspace exactly
+> as left; deleting falls back to another conversation (or a fresh one).
+>
+> Property accumulation: every successful search appends only its NEW properties
+> (deduplicated by property id via mergeProperties) to the active conversation —
+> 5 + 5 unique -> 10, + 3 -> 13. The Property Results panel
+> (property-results-panel.tsx) and the Interactive Property Map (map-panel.tsx)
+> both render from that single accumulated collection, so cards and markers never
+> replace prior results and never duplicate. The accumulated cards render once,
+> under the newest search message; the map auto-fits all markers.
+>
+> Map ↔ card sync: a shared selectedPropertyId highlights the matching card and
+> marker in both directions; clicking a card centres the map on that property
+> (new FocusSelected pan in property-map-view.tsx) and scrolls the card into
+> view.
+>
+> Sidebar (conversation-sidebar.tsx + conversation-item.tsx + the new
+> dropdown-menu primitive): ChatGPT-style Pinned / Recent sections, New Chat, and
+> a per-conversation context menu (Rename inline / Pin or Unpin / Delete). The
+> app's global navigation is folded into the sidebar footer so the workspace runs
+> full-bleed (DashboardLayout hides the standard chrome on /dashboard and /chat).
+> Below xl the map, tray and conversation list open as slide-over sheets so
+> nothing overflows on smaller screens. tsc, ESLint and next build all pass; every
+> route renders (200) in dev.
+
+- [x] Four-column workspace layout
+- [x] Conversation-scoped property accumulation (dedup by id)
+- [x] Shared collection for Property Results + Map
+- [x] Interactive map: fit bounds, card ↔ marker sync, click-to-centre
+- [x] ChatGPT-style Conversation Sidebar (Pinned / Recent)
+- [x] Conversation actions (Rename / Pin / Unpin / Delete)
+- [x] New Chat clears the workspace; switching restores it
+- [x] Premium responsive UI (no backend changes)
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be

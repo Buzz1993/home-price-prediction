@@ -1,22 +1,25 @@
 "use client";
 
-// Central workspace state for the dashboard (React Context per the project's
-// state rules). Mirrors the Streamlit session_state used by the copilot:
-//   chat_history            -> messages
-//   comparison_tray         -> tray (property ids staged from search)
-//   active_comparison_selection -> selected (ids ticked for comparison)
-// The chat send lives here too so every panel shares one source of truth. All
-// property logic stays in the backend; this only tracks UI state.
+// Central workspace state for the Copilot (React Context per the project's state
+// rules). Phase 15.13 turns the single implicit session into a multi-conversation
+// workspace: each conversation is one complete EstateMind workspace (chat
+// messages, an accumulated deduplicated property collection, the evaluation tray
+// and the comparison selection). Switching conversations restores the full
+// workspace; New Chat creates an empty one. Conversations persist to
+// localStorage so they survive a reload (the Recent/Pinned lists).
 //
-// Phase 15.9: chat responses stream over Server-Sent Events. Claude's search
-// explanation arrives token-by-token into the active assistant message; the
-// final structured payload renders exactly as before. Streaming only changes
-// delivery — the backend workflow and every response shape are unchanged.
+// All property logic stays in the backend; this only tracks UI state. Chat still
+// streams over Server-Sent Events (Phase 15.9) — the search explanation arrives
+// token-by-token and the final structured payload renders exactly as before. On
+// a search result the returned properties are accumulated into the active
+// conversation (deduplicated by id), and BOTH the Property Results panel and the
+// Interactive Property Map render from that single accumulated collection.
 
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -27,7 +30,16 @@ import type {
   ChatMessage,
   ChatRequest,
   ChatResponse,
+  SearchResult,
 } from "@/types/dashboard";
+import {
+  Conversation,
+  createConversation,
+  deriveTitle,
+  loadWorkspace,
+  mergeProperties,
+  saveWorkspace,
+} from "./conversations";
 
 // Header text shown above each structured assistant payload. Matches the
 // RESPONSE_CONFIG titles in the Streamlit reference.
@@ -58,18 +70,6 @@ function toAssistantMessage(response: ChatResponse): ChatMessage {
   };
 }
 
-// A session-scoped id for the backend's conversational memory (Phase 15.7). It
-// lives only for the lifetime of this provider (the active chat session): a
-// fresh id is minted on mount and again after a new chat, so signing out and
-// navigating away (which unmounts the provider) abandons the old memory. Uses
-// crypto.randomUUID when available with a lightweight fallback.
-function createSessionId(): string {
-  const cryptoRef =
-    typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
-  if (cryptoRef?.randomUUID) return cryptoRef.randomUUID();
-  return `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
 // Chat lifecycle:
 //   idle      -> nothing in flight
 //   thinking  -> backend is running (search / analysis); no tokens yet
@@ -77,28 +77,38 @@ function createSessionId(): string {
 type ChatPhase = "idle" | "thinking" | "streaming";
 
 type WorkspaceContextValue = {
+  // --- Active conversation (derived) -------------------------------------
   messages: ChatMessage[];
+  // Accumulated, deduplicated properties for the active conversation. Both the
+  // Property Results panel and the map render from this.
+  properties: SearchResult[];
   tray: string[];
   selected: string[];
-  // True while a response is in flight (thinking or streaming). Kept for
-  // existing consumers (composer disabling, loading UI).
+  // The property currently highlighted (card <-> marker sync). Ephemeral.
+  selectedPropertyId: string | null;
+  setSelectedPropertyId: (id: string | null) => void;
+
+  // --- Conversation list --------------------------------------------------
+  conversations: Conversation[];
+  activeId: string | null;
+  newChat: () => void;
+  switchConversation: (id: string) => void;
+  renameConversation: (id: string, title: string) => void;
+  togglePin: (id: string) => void;
+  deleteConversation: (id: string) => void;
+
+  // --- Chat ---------------------------------------------------------------
+  // True while a response is in flight for the ACTIVE conversation.
   isSending: boolean;
-  // Finer-grained state for the streaming UI (thinking indicator vs cursor).
   phase: ChatPhase;
   isStreaming: boolean;
   error: Error | null;
-  // Send a user message. `trayOverride` lets the tray's Compare action send the
-  // active selection instead of the whole tray.
   sendMessage: (text: string, trayOverride?: string[]) => void;
-  // Cancel the active streaming response cleanly (keeps any partial text).
   stopStreaming: () => void;
-  // Re-run the last chat request after a failure. The user message stays in the
-  // history, so no duplicate bubble is added. Undefined when there is nothing to
-  // retry.
   retryLastMessage?: () => void;
-  // Toggle a search result in/out of the tray.
+
+  // --- Evaluation tray ----------------------------------------------------
   toggleTray: (id: string) => void;
-  // Toggle whether a staged property is selected for comparison.
   toggleSelected: (id: string, checked: boolean) => void;
   removeFromTray: (id: string) => void;
   clearTray: () => void;
@@ -107,66 +117,143 @@ type WorkspaceContextValue = {
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [tray, setTray] = useState<string[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
   const [phase, setPhase] = useState<ChatPhase>("idle");
   const [error, setError] = useState<Error | null>(null);
-  // Stable per-session id sent with every chat message so the backend can keep
-  // conversational memory scoped to this session (Phase 15.7).
-  const [sessionId] = useState(createSessionId);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
+    null
+  );
+  // Which conversation the in-flight stream belongs to, so the thinking /
+  // streaming indicator only shows on that conversation (switching away hides
+  // it) while the stream keeps updating its own conversation.
+  const [streamingConvId, setStreamingConvId] = useState<string | null>(null);
 
-  // The in-flight stream's abort controller and the last payload (for retry).
   const abortRef = useRef<AbortController | null>(null);
   const lastPayloadRef = useRef<ChatRequest | null>(null);
 
-  // Append streamed tokens to the active assistant message (creating it on the
-  // first token). Only the last message changes, keeping re-renders minimal.
-  const appendDelta = useCallback((chunk: string) => {
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === "assistant" && last.streaming) {
-        return [...prev.slice(0, -1), { ...last, text: last.text + chunk }];
-      }
-      return [...prev, { role: "assistant", text: chunk, streaming: true }];
-    });
+  // Hydrate the persisted workspace once, on the client. Reading localStorage
+  // must happen after mount to avoid an SSR hydration mismatch.
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    const stored = loadWorkspace();
+    if (stored && stored.conversations.length > 0) {
+      setConversations(stored.conversations);
+      const validActive =
+        stored.activeId &&
+        stored.conversations.some((c) => c.id === stored.activeId)
+          ? stored.activeId
+          : stored.conversations[0].id;
+      setActiveId(validActive);
+    } else {
+      const conv = createConversation(Date.now());
+      setConversations([conv]);
+      setActiveId(conv.id);
+    }
+    setHydrated(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
-  // Replace the streaming placeholder with the final structured message.
-  const finalizeDone = useCallback((response: ChatResponse) => {
-    const finalMessage = toAssistantMessage(response);
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === "assistant" && last.streaming) {
-        return [...prev.slice(0, -1), finalMessage];
-      }
-      return [...prev, finalMessage];
-    });
-  }, []);
+  // Persist on every change once hydrated.
+  useEffect(() => {
+    if (!hydrated) return;
+    saveWorkspace({ conversations, activeId });
+  }, [conversations, activeId, hydrated]);
 
-  // Stop the typing cursor on the active assistant message (on stop / error).
-  // Clears the flag on EVERY streaming message — not just the last — so a
-  // message superseded by a new send (which appends a user turn after it) also
-  // has its cursor cleared. The `.some` guard keeps this a no-op (no re-render)
-  // when nothing is streaming.
-  const clearStreamingFlag = useCallback(() => {
-    setMessages((prev) =>
-      prev.some((m) => m.streaming)
-        ? prev.map((m) => (m.streaming ? { ...m, streaming: false } : m))
-        : prev
-    );
-  }, []);
+  const active = useMemo(
+    () => conversations.find((c) => c.id === activeId) ?? null,
+    [conversations, activeId]
+  );
+
+  // Immutable update of a single conversation by id.
+  const updateConversation = useCallback(
+    (id: string, updater: (c: Conversation) => Conversation) => {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? updater(c) : c))
+      );
+    },
+    []
+  );
+
+  // --- Streaming helpers (scoped to a specific conversation id) -----------
+
+  const appendDelta = useCallback(
+    (convId: string, chunk: string) => {
+      updateConversation(convId, (c) => {
+        const last = c.messages[c.messages.length - 1];
+        if (last && last.role === "assistant" && last.streaming) {
+          return {
+            ...c,
+            messages: [
+              ...c.messages.slice(0, -1),
+              { ...last, text: last.text + chunk },
+            ],
+          };
+        }
+        return {
+          ...c,
+          messages: [
+            ...c.messages,
+            { role: "assistant", text: chunk, streaming: true },
+          ],
+        };
+      });
+    },
+    [updateConversation]
+  );
+
+  // Replace the streaming placeholder with the final structured message and, for
+  // a search result, accumulate the returned properties into the conversation.
+  const finalizeDone = useCallback(
+    (convId: string, response: ChatResponse) => {
+      const finalMessage = toAssistantMessage(response);
+      updateConversation(convId, (c) => {
+        const last = c.messages[c.messages.length - 1];
+        const messages =
+          last && last.role === "assistant" && last.streaming
+            ? [...c.messages.slice(0, -1), finalMessage]
+            : [...c.messages, finalMessage];
+        const properties =
+          response.type === "search_results"
+            ? mergeProperties(c.properties, response.content)
+            : c.properties;
+        return { ...c, messages, properties };
+      });
+    },
+    [updateConversation]
+  );
+
+  // Stop the typing cursor on any streaming message of a conversation.
+  const clearStreamingFlag = useCallback(
+    (convId: string) => {
+      updateConversation(convId, (c) =>
+        c.messages.some((m) => m.streaming)
+          ? {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.streaming ? { ...m, streaming: false } : m
+              ),
+            }
+          : c
+      );
+    },
+    [updateConversation]
+  );
 
   const runStream = useCallback(
-    (payload: ChatRequest) => {
+    (convId: string, payload: ChatRequest) => {
       // Cancel any previous stream and finalize its cursor before starting.
       abortRef.current?.abort();
-      clearStreamingFlag();
+      const prevConv = streamingConvId;
+      if (prevConv) clearStreamingFlag(prevConv);
 
       const controller = new AbortController();
       abortRef.current = controller;
       lastPayloadRef.current = payload;
       setError(null);
+      setStreamingConvId(convId);
       setPhase("thinking");
 
       streamChatMessage(
@@ -179,109 +266,215 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
               break;
             case "delta":
               setPhase("streaming");
-              appendDelta(event.text);
+              appendDelta(convId, event.text);
               break;
             case "done":
-              finalizeDone(event.response);
+              finalizeDone(convId, event.response);
               break;
             case "error":
-              // Recoverable errors (e.g. the explanation was interrupted) are
-              // followed by a `done` with any partial text, so they don't block
-              // the response. Nothing to do here.
+              // Recoverable errors are followed by a `done` with any partial
+              // text, so they don't block the response. Nothing to do here.
               break;
           }
         },
         controller.signal
       )
         .catch((err: unknown) => {
-          // A cancellation (new send / Stop) is not an error.
           if (controller.signal.aborted) return;
-          setError(err instanceof Error ? err : new Error("Chat request failed."));
-          clearStreamingFlag();
+          setError(
+            err instanceof Error ? err : new Error("Chat request failed.")
+          );
+          clearStreamingFlag(convId);
         })
         .finally(() => {
-          // Only the current stream resets shared state; a stream that was
-          // superseded by a newer send leaves the newer one's state intact.
+          // Only the current stream resets shared state; a superseded stream
+          // leaves the newer one's state intact.
           if (abortRef.current === controller) {
             abortRef.current = null;
-            clearStreamingFlag();
+            clearStreamingFlag(convId);
             setPhase("idle");
+            setStreamingConvId(null);
           }
         });
     },
-    [appendDelta, finalizeDone, clearStreamingFlag]
+    [appendDelta, finalizeDone, clearStreamingFlag, streamingConvId]
   );
 
   const sendMessage = useCallback(
     (text: string, trayOverride?: string[]) => {
       const message = text.trim();
-      if (!message) return;
-      setMessages((prev) => [...prev, { role: "user", text: message }]);
-      runStream({
+      if (!message || !activeId) return;
+      const convId = activeId;
+      const stagedIds = trayOverride ?? active?.tray ?? [];
+      updateConversation(convId, (c) => ({
+        ...c,
+        title: c.messages.length === 0 ? deriveTitle(message) : c.title,
+        updatedAt: Date.now(),
+        messages: [...c.messages, { role: "user", text: message }],
+      }));
+      runStream(convId, {
         message,
-        staged_property_ids: trayOverride ?? tray,
-        session_id: sessionId,
+        staged_property_ids: stagedIds,
+        session_id: convId,
       });
     },
-    [runStream, tray, sessionId]
+    [activeId, active, updateConversation, runStream]
   );
 
   const stopStreaming = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    clearStreamingFlag();
+    if (streamingConvId) clearStreamingFlag(streamingConvId);
     setPhase("idle");
-  }, [clearStreamingFlag]);
+    setStreamingConvId(null);
+  }, [clearStreamingFlag, streamingConvId]);
 
-  // Re-send the exact request that failed (same message + tray). The user
-  // message is already in the history, so drop the failed partial assistant
-  // message before retrying to avoid a duplicate.
   const retryLastMessage = useCallback(() => {
     const payload = lastPayloadRef.current;
     if (!payload) return;
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === "assistant") return prev.slice(0, -1);
-      return prev;
+    const convId = payload.session_id ?? activeId;
+    if (!convId) return;
+    updateConversation(convId, (c) => {
+      const last = c.messages[c.messages.length - 1];
+      if (last && last.role === "assistant") {
+        return { ...c, messages: c.messages.slice(0, -1) };
+      }
+      return c;
     });
-    runStream(payload);
-  }, [runStream]);
+    runStream(convId, payload);
+  }, [activeId, updateConversation, runStream]);
 
-  const toggleTray = useCallback((id: string) => {
-    setTray((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
-    // Staging a property never auto-selects it for comparison (matches the
-    // Streamlit tray: Compare stays unchecked until the user ticks it). Removing
-    // a property from the tray also drops it from the selection.
-    setSelected((prev) => prev.filter((p) => p !== id));
-  }, []);
+  // --- Conversation actions ----------------------------------------------
 
-  const toggleSelected = useCallback((id: string, checked: boolean) => {
-    setSelected((prev) => {
-      if (checked) return prev.includes(id) ? prev : [...prev, id];
-      return prev.filter((p) => p !== id);
-    });
-  }, []);
+  const newChat = useCallback(() => {
+    setError(null);
+    setSelectedPropertyId(null);
+    // If the active conversation is already an untouched blank workspace, just
+    // stay on it instead of stacking empty conversations (ChatGPT behaviour).
+    if (active && active.messages.length === 0) return;
+    const conv = createConversation(Date.now());
+    setConversations((prev) => [conv, ...prev]);
+    setActiveId(conv.id);
+  }, [active]);
 
-  const removeFromTray = useCallback((id: string) => {
-    setTray((prev) => prev.filter((p) => p !== id));
-    setSelected((prev) => prev.filter((p) => p !== id));
-  }, []);
+  const switchConversation = useCallback(
+    (id: string) => {
+      if (id === activeId) return;
+      setError(null);
+      setSelectedPropertyId(null);
+      setActiveId(id);
+    },
+    [activeId]
+  );
+
+  const renameConversation = useCallback(
+    (id: string, title: string) => {
+      const next = title.trim();
+      updateConversation(id, (c) => ({
+        ...c,
+        title: next || c.title,
+      }));
+    },
+    [updateConversation]
+  );
+
+  const togglePin = useCallback(
+    (id: string) => {
+      updateConversation(id, (c) => ({ ...c, pinned: !c.pinned }));
+    },
+    [updateConversation]
+  );
+
+  const deleteConversation = useCallback(
+    (id: string) => {
+      // Handle active-id fixup here (a user action) rather than in an effect, so
+      // deleting the active conversation immediately falls back to another one.
+      const remaining = conversations.filter((c) => c.id !== id);
+      if (remaining.length > 0) {
+        setConversations(remaining);
+        if (activeId === id) setActiveId(remaining[0].id);
+      } else {
+        const conv = createConversation(Date.now());
+        setConversations([conv]);
+        setActiveId(conv.id);
+      }
+      setSelectedPropertyId(null);
+    },
+    [conversations, activeId]
+  );
+
+  // --- Evaluation tray (scoped to the active conversation) ----------------
+
+  const toggleTray = useCallback(
+    (id: string) => {
+      if (!activeId) return;
+      updateConversation(activeId, (c) => {
+        const inTray = c.tray.includes(id);
+        return {
+          ...c,
+          tray: inTray ? c.tray.filter((p) => p !== id) : [...c.tray, id],
+          // Staging never auto-selects for comparison; removing drops selection.
+          selected: c.selected.filter((p) => p !== id),
+        };
+      });
+    },
+    [activeId, updateConversation]
+  );
+
+  const toggleSelected = useCallback(
+    (id: string, checked: boolean) => {
+      if (!activeId) return;
+      updateConversation(activeId, (c) => {
+        const selected = checked
+          ? c.selected.includes(id)
+            ? c.selected
+            : [...c.selected, id]
+          : c.selected.filter((p) => p !== id);
+        return { ...c, selected };
+      });
+    },
+    [activeId, updateConversation]
+  );
+
+  const removeFromTray = useCallback(
+    (id: string) => {
+      if (!activeId) return;
+      updateConversation(activeId, (c) => ({
+        ...c,
+        tray: c.tray.filter((p) => p !== id),
+        selected: c.selected.filter((p) => p !== id),
+      }));
+    },
+    [activeId, updateConversation]
+  );
 
   const clearTray = useCallback(() => {
-    setTray([]);
-    setSelected([]);
-  }, []);
+    if (!activeId) return;
+    updateConversation(activeId, (c) => ({ ...c, tray: [], selected: [] }));
+  }, [activeId, updateConversation]);
+
+  // The indicator only reflects the active conversation's stream.
+  const activePhase: ChatPhase =
+    streamingConvId === activeId ? phase : "idle";
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
-      messages,
-      tray,
-      selected,
-      isSending: phase !== "idle",
-      phase,
-      isStreaming: phase === "streaming",
+      messages: active?.messages ?? [],
+      properties: active?.properties ?? [],
+      tray: active?.tray ?? [],
+      selected: active?.selected ?? [],
+      selectedPropertyId,
+      setSelectedPropertyId,
+      conversations,
+      activeId,
+      newChat,
+      switchConversation,
+      renameConversation,
+      togglePin,
+      deleteConversation,
+      isSending: activePhase !== "idle",
+      phase: activePhase,
+      isStreaming: activePhase === "streaming",
       error,
       sendMessage,
       stopStreaming,
@@ -292,10 +485,16 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       clearTray,
     }),
     [
-      messages,
-      tray,
-      selected,
-      phase,
+      active,
+      selectedPropertyId,
+      conversations,
+      activeId,
+      newChat,
+      switchConversation,
+      renameConversation,
+      togglePin,
+      deleteConversation,
+      activePhase,
       error,
       sendMessage,
       stopStreaming,

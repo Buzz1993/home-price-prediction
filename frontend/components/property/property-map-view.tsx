@@ -84,6 +84,7 @@ export function PropertyMapView({
       </ClusterGroup>
 
       <FitBounds points={points} />
+      <FocusSelected points={points} selectedId={selectedId} />
       <ResponsiveResize />
     </MapContainer>
   );
@@ -160,6 +161,31 @@ function FitBounds({ points }: { points: MapPropertyWithCoords[] }) {
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, boundsKey]);
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Centre the map on the selected property when the selection changes (e.g. a
+// Property Card was clicked). Panning only — it never refits the whole set, so
+// the user's zoom is preserved. FitBounds handles reframing when the property
+// set itself changes.
+function FocusSelected({
+  points,
+  selectedId,
+}: {
+  points: MapPropertyWithCoords[];
+  selectedId: string | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const point = points.find((p) => p.id === selectedId);
+    if (!point) return;
+    map.panTo([point.lat, point.lng], { animate: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, selectedId]);
 
   return null;
 }

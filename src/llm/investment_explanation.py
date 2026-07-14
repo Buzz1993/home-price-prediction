@@ -24,7 +24,7 @@
 
 import logging
 
-from src.llm.claude_client import ask_claude
+from src.llm.claude_client import ask_claude, strip_markdown
 from src.llm.prompts import build_investment_prompt
 
 logger = logging.getLogger(__name__)
@@ -66,4 +66,4 @@ def explain_investment(analyses: dict) -> str | None:
         )
         return None
 
-    return response.text
+    return strip_markdown(response.text)

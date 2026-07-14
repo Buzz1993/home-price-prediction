@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 // AI Analysis page body (Phase 8). Reuses the shared evaluation tray (staged
 // from AI Chat search results) to pick which properties to analyze, then runs
@@ -9,6 +9,12 @@ import { useEffect } from "react";
 // NegotiationCards). No analysis logic lives here — the backend owns it; this
 // only triggers a request and displays the response, mirroring the Streamlit
 // copilot where each analysis is a single tool call against the staged tray.
+//
+// The former Property Comparison page now lives here as the FIRST card: it
+// reuses the existing useComparison hook (POST /analysis/comparison via
+// compare-service) and the extracted ComparisonView renderer, so the whole
+// analysis workflow — compare first, then per-property analyses — happens in
+// this single workspace against the same tray selection.
 
 import {
   Brain,
@@ -16,6 +22,7 @@ import {
   Handshake,
   KeyRound,
   LineChart,
+  Scale,
   ShieldAlert,
   Sparkles,
   TrendingUp,
@@ -36,16 +43,32 @@ import type {
   NegotiationRow,
 } from "@/types/dashboard";
 import { cn } from "@/lib/utils";
+import { ComparisonView } from "@/features/comparison/comparison-view";
+import { useComparison } from "@/features/comparison/use-comparison";
 import { AnalysisExplanation } from "./analysis-explanation";
 import { RiskCards } from "./risk-cards";
 import { FutureGrowthCards } from "./future-growth-cards";
 import { useAnalysis, type AnalysisKey, type AnalysisRows } from "./use-analysis";
 
+// Cards offered by the workspace: the comparison card plus the per-property
+// analyses. "compare" is not an AnalysisKey — it runs through the existing
+// comparison mutation, not the analysis mutation.
+type CardKey = "compare" | AnalysisKey;
+
 type AnalysisMeta = {
-  key: AnalysisKey;
+  key: CardKey;
   label: string;
   icon: LucideIcon;
   blurb: string;
+};
+
+// Property Comparison, relocated from the removed /compare page (the backend
+// comparison needs at least two selected properties).
+const COMPARE_CARD: AnalysisMeta = {
+  key: "compare",
+  label: "Compare Properties",
+  icon: Scale,
+  blurb: "Score, rank and pick the winner among the selected properties.",
 };
 
 // The seven Phase 8 analyses, in the order requested. "growth" (Future Growth)
@@ -134,11 +157,18 @@ function AnalysisResultView({
 export function AnalysisWorkspace() {
   const { tray, selected } = useWorkspace();
   const { active, setActive, run, mutation } = useAnalysis();
+  const comparison = useComparison();
+
+  // Whether the result panel shows the comparison (Compare Properties card)
+  // or a per-property analysis. The last clicked card wins.
+  const [showCompare, setShowCompare] = useState(false);
 
   // Analyze the ticked properties when there is a selection, otherwise the whole
   // tray (matches the Streamlit tools, which run on every staged property).
   const targetIds = selected.length > 0 ? selected : tray;
   const canRun = targetIds.length > 0;
+  // The backend comparison requires at least two properties.
+  const canCompare = targetIds.length >= 2;
 
   const activeMeta = ANALYSES.find((a) => a.key === active);
 
@@ -155,10 +185,29 @@ export function AnalysisWorkspace() {
   const lastRun = mutation.variables;
   const retryAnalysis = lastRun ? () => mutation.mutate(lastRun) : undefined;
 
+  // Comparison state (reused hook; selections are never cleared by running it).
+  const compareResult = comparison.data?.content;
+  const lastCompareIds = comparison.variables;
+  const retryComparison = lastCompareIds
+    ? () => comparison.mutate(lastCompareIds)
+    : undefined;
+
+  const runComparison = (ids: string[]) => {
+    setShowCompare(true);
+    comparison.mutate(ids);
+  };
+
   const handlePick = (meta: AnalysisMeta) => {
-    setActive(meta.key);
+    const key = meta.key;
+    if (key === "compare") {
+      if (!canCompare) return;
+      runComparison(targetIds);
+      return;
+    }
+    setShowCompare(false);
+    setActive(key);
     if (!canRun) return;
-    run(meta.key, targetIds);
+    run(key, targetIds);
   };
 
   return (
@@ -167,14 +216,18 @@ export function AnalysisWorkspace() {
         <div className="border-b p-4">
           <h1 className="font-heading text-lg font-semibold">AI Analysis</h1>
           <p className="text-sm text-muted-foreground">
-            Stage properties in the tray, then run an AI analysis on them.
+            Stage properties in the tray, then compare and analyze them here.
           </p>
         </div>
 
-        {/* Analysis picker */}
+        {/* Card picker: Compare Properties first, then the analyses */}
         <div className="grid gap-2 border-b p-4 sm:grid-cols-2 xl:grid-cols-3">
-          {ANALYSES.map((meta) => {
-            const isActive = active === meta.key;
+          {[COMPARE_CARD, ...ANALYSES].map((meta) => {
+            const isCompare = meta.key === "compare";
+            const isActive = isCompare
+              ? showCompare
+              : !showCompare && active === meta.key;
+            const disabled = isCompare ? !canCompare : !canRun;
             return (
               <Button
                 key={meta.key}
@@ -183,7 +236,7 @@ export function AnalysisWorkspace() {
                   "h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left",
                   isActive && "ring-2 ring-primary/30"
                 )}
-                disabled={!canRun}
+                disabled={disabled}
                 onClick={() => handlePick(meta)}
               >
                 <span className="flex items-center gap-2 font-medium">
@@ -221,14 +274,44 @@ export function AnalysisWorkspace() {
             </p>
           )}
 
-          {mutation.isPending && (
+          {/* Comparison result (Compare Properties card) — reuses the
+              existing comparison mutation and the extracted ComparisonView. */}
+          {showCompare && comparison.isPending && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Spinner className="size-4" />
+              <span>Comparing selected properties…</span>
+            </div>
+          )}
+
+          {showCompare && comparison.isError && (
+            <ErrorState
+              title="Comparison failed"
+              description="Something went wrong while comparing your properties. Please try again."
+              onRetry={retryComparison}
+              retrying={comparison.isPending}
+            />
+          )}
+
+          {showCompare && compareResult && !comparison.isPending && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                {COMPARE_CARD.label}
+              </h2>
+              <ComparisonView
+                content={compareResult}
+                explanation={comparison.data?.ai_explanation}
+              />
+            </div>
+          )}
+
+          {!showCompare && mutation.isPending && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Spinner className="size-4" />
               <span>Running {activeMeta?.label ?? "analysis"}…</span>
             </div>
           )}
 
-          {mutation.isError && (
+          {!showCompare && mutation.isError && (
             <ErrorState
               title={`${activeMeta?.label ?? "Analysis"} failed`}
               description="Something went wrong while running this analysis. Please try again."
@@ -237,7 +320,8 @@ export function AnalysisWorkspace() {
             />
           )}
 
-          {active &&
+          {!showCompare &&
+            active &&
             mutation.isSuccess &&
             mutation.data && (
               <div className="space-y-3">
@@ -264,11 +348,11 @@ export function AnalysisWorkspace() {
               </div>
             )}
 
-          {!active && canRun && (
+          {!showCompare && !active && canRun && (
             <EmptyState
               icon={Sparkles}
               title="Pick an analysis"
-              description="Choose an analysis above to evaluate your staged properties."
+              description="Start with Compare Properties or choose an analysis above to evaluate your staged properties."
               className="h-full"
             />
           )}
@@ -276,7 +360,13 @@ export function AnalysisWorkspace() {
       </section>
 
       <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-sm">
-        <EvaluationTray />
+        {/* The tray's Compare button reuses the same comparison mutation, so
+            comparing from the tray or the card is identical and selections
+            are never cleared. */}
+        <EvaluationTray
+          onCompare={runComparison}
+          isComparing={comparison.isPending}
+        />
       </aside>
     </div>
   );

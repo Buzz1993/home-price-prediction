@@ -13,7 +13,7 @@
 # This builder only formats that data and asks Claude to explain the
 # comparison. It performs no ranking, scoring or reasoning.
 
-from src.llm.prompts.config import PromptConfig, DEFAULT_CONFIG
+from src.llm.prompts.config import PromptConfig, DEFAULT_CONFIG, CARD_FORMAT_RULES
 from src.llm.prompts.templates import Prompt, build_prompt
 from src.llm.prompts.formatting import format_record, format_records
 
@@ -59,7 +59,8 @@ def build_comparison_prompt(
     expected_output = (
         "A clear comparison summary that names the recommended property, "
         "explains the reasoning behind the ranking, and briefly contrasts the "
-        "options. If a value is missing, say so instead of guessing."
+        "options. If a value is missing, say so instead of guessing.\n\n"
+        + CARD_FORMAT_RULES
     )
 
     return build_prompt(

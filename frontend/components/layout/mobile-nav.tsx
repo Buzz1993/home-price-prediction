@@ -7,15 +7,14 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Brand } from "./brand";
-import { SidebarNav } from "./sidebar-nav";
+import { Sidebar } from "./sidebar";
 
-// Slide-over navigation for small screens. Closes automatically after a
-// link is selected.
+// Slide-over navigation for small screens. Renders the full redesigned
+// sidebar (nav, New Chat, search, recent chats, user) so mobile gets the same
+// experience as desktop. Closes automatically after any selection.
 export function MobileNav() {
   const [open, setOpen] = useState(false);
 
@@ -31,12 +30,9 @@ export function MobileNav() {
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0" showCloseButton={false}>
-        <SheetHeader className="h-16 flex-row items-center border-b px-5 py-0">
-          <Brand />
-          <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-        </SheetHeader>
-        <SidebarNav onNavigate={() => setOpen(false)} />
+      <SheetContent side="left" className="w-[280px] p-0" showCloseButton={false}>
+        <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+        <Sidebar className="h-full w-full border-r-0" onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );

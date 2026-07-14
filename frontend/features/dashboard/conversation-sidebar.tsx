@@ -1,26 +1,28 @@
 "use client";
 
-// ChatGPT-style Conversation Sidebar (Phase 15.13). The far-left column of the
-// Copilot workspace, laid out top→bottom as:
+// Dashboard conversation sidebar (Phase 15.13, redesigned as a modern AI
+// SaaS rail). The user's chat workspace home, laid out top→bottom as:
 //
-//   EstateMind logo → New Chat → Search Chats → Pinned → Recent → Global nav
+//   Brand + badge → Navigation → New Chat → Search chats → Pinned/Recent →
+//   Signed-in user
 //
-// It is a bounded flex column: the logo, New Chat, search box and global
-// navigation stay fixed, and ONLY the Pinned/Recent conversation list scrolls
-// independently. Each conversation is a complete EstateMind workspace restored
-// on selection. "Search Chats" filters the already-loaded conversation titles on
-// the client — it does not touch the conversation, accumulation or backend logic.
+// It is a bounded flex column: header, nav, New Chat, search and the user
+// footer stay fixed, and ONLY the Pinned/Recent conversation list scrolls
+// independently. Each conversation is a complete EstateMind workspace
+// restored on selection. "Search chats" filters the already-loaded titles on
+// the client — no conversation, accumulation or backend logic is touched.
+// The header, navigation and user footer are the same shared components the
+// global sidebar uses, so nothing is duplicated.
 
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 
-import { Brand } from "@/components/layout/brand";
+import { SidebarHeader } from "@/components/layout/sidebar-header";
+import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { SidebarUser } from "@/components/layout/sidebar-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { navItems } from "@/lib/navigation";
 import { ConversationItem } from "./conversation-item";
 import { useWorkspace } from "./workspace-provider";
 
@@ -41,11 +43,10 @@ export function ConversationSidebar({
     togglePin,
     deleteConversation,
   } = useWorkspace();
-  const pathname = usePathname();
   const [query, setQuery] = useState("");
 
   // Pinned first, then Recent — each ordered by most recently updated, then
-  // filtered by the "Search Chats" query (title match, client-side only).
+  // filtered by the search query (title match, client-side only).
   const q = query.trim().toLowerCase();
   const byRecent = [...conversations]
     .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -80,15 +81,16 @@ export function ConversationSidebar({
         className
       )}
     >
-      {/* Brand — fixed. */}
-      <div className="flex h-16 shrink-0 items-center border-b px-4">
-        <Brand />
-      </div>
+      {/* 1. Brand + badge — fixed (shared header). */}
+      <SidebarHeader />
 
-      {/* New Chat + Search Chats — fixed. */}
-      <div className="shrink-0 space-y-2 p-3">
+      {/* 2. Primary navigation — fixed (shared nav rows). */}
+      <SidebarNav onNavigate={onNavigate} />
+
+      {/* 3–5. New Chat (primary CTA) + Search chats — fixed. */}
+      <div className="shrink-0 space-y-2.5 px-4 pt-5">
         <Button
-          className="w-full justify-center shadow-sm"
+          className="w-full rounded-xl shadow-sm transition-all duration-200 hover:-translate-y-px hover:shadow-md active:translate-y-0"
           onClick={() => {
             newChat();
             onNavigate?.();
@@ -97,26 +99,28 @@ export function ConversationSidebar({
           <Plus /> New Chat
         </Button>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search chats"
+            placeholder="Search chats..."
             aria-label="Search chats"
-            className="h-9 bg-background/60 pl-8 text-sm"
+            className="h-9 rounded-xl border-border/70 bg-background/60 pl-9 text-sm"
           />
         </div>
       </div>
 
-      {/* Conversation list — the ONLY scroller in this sidebar. */}
-      <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 pb-3">
+      {/* 6. Conversation list — the ONLY scroller in this sidebar. */}
+      <nav className="mt-5 min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-3">
         {pinned.length > 0 && (
           <Section title="Pinned">{pinned.map((c) => renderItem(c.id))}</Section>
         )}
 
         <Section title="Recent">
           {recent.length > 0 ? (
-            recent.map((c) => renderItem(c.id))
+            <div className="space-y-0.5 duration-300 animate-in fade-in slide-in-from-left-1">
+              {recent.map((c) => renderItem(c.id))}
+            </div>
           ) : (
             <p className="px-2.5 py-2 text-xs text-muted-foreground">
               {q ? "No chats match your search." : "No recent conversations."}
@@ -125,40 +129,8 @@ export function ConversationSidebar({
         </Section>
       </nav>
 
-      {/* Global navigation — fixed footer so the workspace runs full-bleed. */}
-      <div className="shrink-0 border-t p-3">
-        <p className="px-1 pb-1.5 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
-          Navigate
-        </p>
-        <div className="grid grid-cols-2 gap-1">
-          {navItems.map((item) => {
-            // Dashboard is the single Copilot Workspace entry point, so it stays
-            // highlighted anywhere inside the workspace — including the retained
-            // /chat compatibility route which renders the same shell.
-            const active =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard" || pathname === "/chat"
-                : pathname === item.href ||
-                  pathname.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
-                  active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className="size-3.5 shrink-0" />
-                <span className="truncate">{item.title}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      {/* 7. Signed-in user — fixed footer (shared component). */}
+      <SidebarUser onNavigate={onNavigate} />
     </aside>
   );
 }
@@ -172,7 +144,7 @@ function Section({
 }) {
   return (
     <div className="space-y-1">
-      <p className="px-2.5 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="px-2.5 text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </p>
       <div className="space-y-0.5">{children}</div>

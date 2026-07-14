@@ -15,7 +15,13 @@
 # and never invents a section for which the backend provided no data (e.g.
 # Future Growth, which has no backend endpoint).
 
-from src.llm.prompts.config import PromptConfig, DEFAULT_CONFIG
+from src.llm.prompts.config import (
+    PromptConfig,
+    DEFAULT_CONFIG,
+    PRICE_INTERPRETATION_RULES,
+    CARD_FORMAT_RULES,
+    MULTI_PROPERTY_RULES,
+)
 from src.llm.prompts.templates import Prompt, build_prompt
 from src.llm.prompts.formatting import format_records
 from src.llm.prompts.analysis_prompt import ANALYSIS_LABELS
@@ -74,9 +80,11 @@ def build_investment_prompt(
 
     backend_data = "\n\n".join(blocks) if blocks else format_records([])
 
+    advisor_count = len(analyses.get("advisor") or [])
+
     task_instructions = (
         "Combine the separate backend analyses above into ONE coherent, "
-        "easy-to-understand investment summary for the selected property. "
+        "easy-to-understand investment summary for the selected properties. "
         "Connect the individual results — the Investment Advisor verdict, and "
         "where available the price prediction, valuation, rental analysis, "
         "risk and negotiation — into a single narrative that explains what the "
@@ -85,19 +93,35 @@ def build_investment_prompt(
         "already performed every prediction, valuation, rental estimate, risk "
         "assessment and recommendation; do not recompute any value, change any "
         "figure, override the backend's recommendation, or add analysis "
-        "(such as ROI, yield or future growth) that is not present above."
+        "(such as ROI, yield or future growth) that is not present above.\n\n"
+        + (
+            f"The backend returned 1 property, so write exactly 1 property "
+            "section.\n\n"
+            if advisor_count == 1
+            else (
+                f"The backend returned {advisor_count} properties, so write "
+                f"exactly {advisor_count} property sections — evaluate EVERY "
+                "property individually — followed by one Overall "
+                "Recommendation that clearly ranks them for investment (best, "
+                "second best, and so on), explaining WHY using only the "
+                "backend verdicts, scores and figures above.\n\n"
+            )
+        )
+        + MULTI_PROPERTY_RULES
+        + "\n\n"
+        + PRICE_INTERPRETATION_RULES
     )
 
     expected_output = (
         "A professional but conversational investment summary that draws only "
-        "on the backend results. Where the data supports it, cover: an "
-        "executive summary, investment strengths, investment risks, rental "
-        "potential, valuation summary, price outlook, negotiation "
-        "considerations, an overall recommendation and the key takeaways. "
-        "Only include a section when the backend provided the relevant data — "
-        "omit any section (for example future growth) that has no supporting "
-        "data instead of inventing it. Always defer to the backend's "
-        "Investment Advisor recommendation rather than forming a new one."
+        "on the backend results. Where the data supports it, cover the "
+        "property's strengths, risks, rental potential, valuation, price "
+        "outlook and negotiation considerations, and always defer to the "
+        "backend's Investment Advisor recommendation rather than forming a new "
+        "one. Only include a point when the backend provided the relevant data "
+        "— omit anything (for example future growth) that has no supporting "
+        "data instead of inventing it.\n\n"
+        + CARD_FORMAT_RULES
     )
 
     return build_prompt(

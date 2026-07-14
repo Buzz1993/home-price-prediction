@@ -1,7 +1,7 @@
 "use client";
 
 // Report preview + download. Renders the AI report returned by the backend and
-// lets the user download it as a Markdown file (client-side Blob — no business
+// lets the user download it as a plain-text file (client-side Blob — no business
 // logic, the report content is produced entirely by the backend).
 //
 // Phase 15.10: the displayed narrative is Claude's more readable re-presentation
@@ -21,11 +21,11 @@ export function ReportPreview({
   notice?: string | null;
 }) {
   const handleDownload = () => {
-    const blob = new Blob([report], { type: "text/markdown;charset=utf-8" });
+    const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "estatemind-report.md";
+    link.download = "estatemind-report.txt";
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -49,7 +49,7 @@ export function ReportPreview({
       )}
 
       <div className="max-h-[24rem] overflow-y-auto rounded-lg border bg-muted/30 p-4">
-        <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground">
+        <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground sm:text-sm">
           {report}
         </pre>
       </div>

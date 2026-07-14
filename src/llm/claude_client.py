@@ -2,35 +2,27 @@
 # src/llm/claude_client.py
 # ===============================
 #
-# Reusable Anthropic Claude service.
+# Reusable LLM service (EXPLANATION layer only).
 #
-# Claude is an EXPLANATION layer only. This client knows nothing about
-# property search, recommendation, prediction, reports, MCP or FastAPI.
-# It only turns a prompt into a text response and returns a structured
-# result so callers can handle failures without the backend crashing.
+# The public interface (ClaudeResponse, ClaudeStreamEvent, ClaudeClient,
+# get_claude_client, ask_claude, stream_claude) is preserved so existing
+# callers keep working unchanged. Internally the Anthropic SDK has been
+# replaced by the project's existing DeepSeek/Ollama client
+# (src/llm/deepseek_client.py: ask_deepseek / ask_deepseek_stream).
 #
-# All Claude communication in the project should go through this service.
+# This service knows nothing about property search, recommendation,
+# prediction, reports, MCP or FastAPI. It only turns a prompt into a text
+# response and returns a structured result so callers can handle failures
+# without the backend crashing. All LLM communication should go through here.
 
-import os
 import logging
+import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from dotenv import load_dotenv
-
-# Load environment variables (ANTHROPIC_API_KEY, model config, ...).
-load_dotenv()
+from src.llm.deepseek_client import ask_deepseek, ask_deepseek_stream
 
 logger = logging.getLogger(__name__)
-
-# =====================================================
-# CONFIGURATION (environment driven, with safe defaults)
-# =====================================================
-
-DEFAULT_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
-DEFAULT_MAX_TOKENS = int(os.getenv("ANTHROPIC_MAX_TOKENS", "1024"))
-DEFAULT_TEMPERATURE = float(os.getenv("ANTHROPIC_TEMPERATURE", "0.3"))
-DEFAULT_TIMEOUT = float(os.getenv("ANTHROPIC_TIMEOUT", "60"))
 
 
 # =====================================================
@@ -40,9 +32,9 @@ DEFAULT_TIMEOUT = float(os.getenv("ANTHROPIC_TIMEOUT", "60"))
 @dataclass
 class ClaudeResponse:
     """
-    Structured result returned by every Claude call.
+    Structured result returned by every LLM call.
 
-    success    : Whether Claude returned usable text.
+    success    : Whether the model returned usable text.
     text       : The generated natural-language response.
     error      : Human-readable error message (when success is False).
     error_type : Machine-readable error category, e.g.
@@ -60,10 +52,10 @@ class ClaudeResponse:
 @dataclass
 class ClaudeStreamEvent:
     """
-    One event yielded by a streaming Claude call (Phase 15.9).
+    One event yielded by a streaming LLM call (Phase 15.9).
 
-    Streaming is a DELIVERY enhancement only — it changes how Claude's text
-    reaches the caller, not what Claude produces. The event mirrors the same
+    Streaming is a DELIVERY enhancement only — it changes how the text
+    reaches the caller, not what the model produces. The event mirrors the same
     error categories as ClaudeResponse so callers handle failures identically.
 
     type       : 'delta' (an incremental text chunk),
@@ -82,16 +74,47 @@ class ClaudeStreamEvent:
 
 
 # =====================================================
-# CLAUDE CLIENT
+# DEEPSEEK RESULT ADAPTER
+# =====================================================
+#
+# ask_deepseek / ask_deepseek_stream never raise: they return (or yield) an
+# error STRING with a known prefix instead. These helpers map those strings to
+# the structured error categories used by ClaudeResponse / ClaudeStreamEvent.
+
+def _compose_prompt(prompt: str, system: str | None) -> str:
+    """
+    Merge an optional system instruction and the user prompt into a single
+    prompt string, since the DeepSeek/Ollama client accepts one prompt only.
+    """
+    if system:
+        return f"{system}\n\n{prompt}"
+    return prompt
+
+
+def _classify_deepseek_error(text: str) -> str | None:
+    """
+    Return the error_type for a DeepSeek/Ollama sentinel error string, or None
+    when the text is a normal (successful) response.
+    """
+    if text.startswith("REQUEST EXCEPTION:") or text.startswith("STREAM EXCEPTION:"):
+        return "connection_error"
+    if text.startswith("OLLAMA ERROR") or text.startswith("OLLAMA STREAM ERROR"):
+        return "api_error"
+    return None
+
+
+# =====================================================
+# LLM CLIENT
 # =====================================================
 
 class ClaudeClient:
     """
-    Thin, reusable wrapper around the Anthropic Claude API.
+    Thin, reusable wrapper around the LLM backend.
 
-    The underlying SDK client is created lazily and reused across calls.
-    Model, temperature and max tokens are configurable per instance and
-    can also be overridden per request.
+    Backed by the existing DeepSeek/Ollama client. The constructor keeps its
+    previous signature for backward compatibility, but model / temperature /
+    max_tokens / timeout are managed by the DeepSeek/Ollama backend and are
+    accepted here only so existing construction and call sites keep working.
     """
 
     def __init__(
@@ -102,36 +125,20 @@ class ClaudeClient:
         max_tokens: int | None = None,
         timeout: float | None = None,
     ):
-        self._api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        self.model = model or DEFAULT_MODEL
-        self.temperature = (
-            DEFAULT_TEMPERATURE if temperature is None else temperature
-        )
-        self.max_tokens = (
-            DEFAULT_MAX_TOKENS if max_tokens is None else max_tokens
-        )
-        self.timeout = DEFAULT_TIMEOUT if timeout is None else timeout
-
-        # Lazily initialized single SDK client instance.
-        self._client = None
+        # Retained for interface compatibility; not used by the DeepSeek backend.
+        self._api_key = api_key
+        self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.timeout = timeout
 
     @property
     def is_configured(self) -> bool:
-        """True when an API key is available."""
-        return bool(self._api_key)
-
-    def _get_client(self):
         """
-        Create (once) and return the shared Anthropic SDK client.
+        The DeepSeek/Ollama backend needs no API key, so the client is always
+        considered configured.
         """
-        if self._client is None:
-            import anthropic
-
-            self._client = anthropic.Anthropic(
-                api_key=self._api_key,
-                timeout=self.timeout,
-            )
-        return self._client
+        return True
 
     # -------------------------------------------------
     # PUBLIC INTERFACE
@@ -146,136 +153,57 @@ class ClaudeClient:
         max_tokens: int | None = None,
     ) -> ClaudeResponse:
         """
-        Send a prompt to Claude and return a structured response.
+        Send a prompt to the LLM and return a structured response.
 
         Args:
             prompt      : User prompt text.
-            system      : Optional system instruction.
-            model       : Optional model override.
-            temperature : Optional temperature override.
-            max_tokens  : Optional max tokens override.
+            system      : Optional system instruction (prepended to the prompt).
+            model       : Accepted for compatibility; ignored by the backend.
+            temperature : Accepted for compatibility; ignored by the backend.
+            max_tokens  : Accepted for compatibility; ignored by the backend.
 
         Returns:
             ClaudeResponse: Structured success/error result. This method
-            never raises; API failures are returned as structured errors.
+            never raises; failures are returned as structured errors.
         """
 
-        # -- Missing API key ---------------------------------------
-        if not self.is_configured:
-            logger.error(
-                "Claude request failed: ANTHROPIC_API_KEY is not configured."
-            )
-            return ClaudeResponse(
-                success=False,
-                error="ANTHROPIC_API_KEY is not configured.",
-                error_type="missing_api_key",
-            )
+        full_prompt = _compose_prompt(prompt, system)
 
-        # -- Missing SDK dependency --------------------------------
-        try:
-            import anthropic
-        except ImportError:
-            logger.error(
-                "Claude request failed: 'anthropic' package is not installed."
-            )
-            return ClaudeResponse(
-                success=False,
-                error="The 'anthropic' package is not installed.",
-                error_type="missing_dependency",
-            )
-
-        resolved_model = model or self.model
-
-        # Never log the prompt content or the API key.
-        logger.info("Claude request start (model=%s)", resolved_model)
+        logger.info("LLM request start (backend=deepseek)")
 
         try:
-            client = self._get_client()
-
-            request_kwargs = {
-                "model": resolved_model,
-                "max_tokens": self.max_tokens if max_tokens is None else max_tokens,
-                "temperature": (
-                    self.temperature if temperature is None else temperature
-                ),
-                "messages": [{"role": "user", "content": prompt}],
-            }
-            if system:
-                request_kwargs["system"] = system
-
-            message = client.messages.create(**request_kwargs)
-
-            text = "".join(
-                block.text
-                for block in message.content
-                if getattr(block, "type", None) == "text"
-            ).strip()
-
-            # -- Empty response ------------------------------------
-            if not text:
-                logger.warning("Claude request returned an empty response.")
-                return ClaudeResponse(
-                    success=False,
-                    error="Claude returned an empty response.",
-                    error_type="empty_response",
-                )
-
-            logger.info("Claude request success (model=%s)", resolved_model)
-            return ClaudeResponse(success=True, text=text)
-
-        # -- Invalid / missing credentials -------------------------
-        except anthropic.AuthenticationError as exc:
-            logger.error("Claude authentication failed: %s", exc)
-            return ClaudeResponse(
-                success=False,
-                error="Invalid Anthropic API key.",
-                error_type="authentication_error",
-            )
-
-        # -- Rate limiting -----------------------------------------
-        except anthropic.RateLimitError as exc:
-            logger.error("Claude rate limit exceeded: %s", exc)
-            return ClaudeResponse(
-                success=False,
-                error="Claude rate limit exceeded. Please try again later.",
-                error_type="rate_limit",
-            )
-
-        # -- Timeout -----------------------------------------------
-        except anthropic.APITimeoutError as exc:
-            logger.error("Claude request timed out: %s", exc)
-            return ClaudeResponse(
-                success=False,
-                error="Claude request timed out.",
-                error_type="timeout",
-            )
-
-        # -- Network / connection ----------------------------------
-        except anthropic.APIConnectionError as exc:
-            logger.error("Claude connection error: %s", exc)
-            return ClaudeResponse(
-                success=False,
-                error="Could not connect to the Claude API.",
-                error_type="connection_error",
-            )
-
-        # -- Any other API status error ----------------------------
-        except anthropic.APIStatusError as exc:
-            logger.error("Claude API error (status=%s): %s", exc.status_code, exc)
-            return ClaudeResponse(
-                success=False,
-                error=f"Claude API error (status {exc.status_code}).",
-                error_type="api_error",
-            )
-
-        # -- Unexpected failure ------------------------------------
+            raw = ask_deepseek(full_prompt)
         except Exception as exc:  # noqa: BLE001 - never crash the backend
-            logger.exception("Unexpected Claude request failure.")
+            logger.exception("Unexpected DeepSeek request failure.")
             return ClaudeResponse(
                 success=False,
-                error=f"Unexpected Claude error: {exc}",
+                error=f"Unexpected DeepSeek error: {exc}",
                 error_type="unknown_error",
             )
+
+        text = (raw or "").strip()
+
+        # -- Sentinel error string returned by the DeepSeek client -----
+        error_type = _classify_deepseek_error(text)
+        if error_type:
+            logger.error("DeepSeek request failed (error_type=%s).", error_type)
+            return ClaudeResponse(
+                success=False,
+                error=text,
+                error_type=error_type,
+            )
+
+        # -- Empty response --------------------------------------------
+        if not text:
+            logger.warning("DeepSeek request returned an empty response.")
+            return ClaudeResponse(
+                success=False,
+                error="DeepSeek returned an empty response.",
+                error_type="empty_response",
+            )
+
+        logger.info("LLM request success (backend=deepseek)")
+        return ClaudeResponse(success=True, text=text)
 
     def stream(
         self,
@@ -286,154 +214,88 @@ class ClaudeClient:
         max_tokens: int | None = None,
     ) -> Iterator[ClaudeStreamEvent]:
         """
-        Stream a prompt to Claude, yielding text as it is generated (Phase 15.9).
+        Stream a prompt to the LLM, yielding text as it is generated (Phase 15.9).
 
-        This is the streaming counterpart of `generate()`. It reuses the SAME
-        SDK client, configuration and error categories — only the delivery
-        changes: incremental `delta` events arrive as Claude produces them,
-        followed by a single terminal `done` (success) or `error` (failure)
-        event. The full accumulated text is always available on the terminal
-        event, so callers that don't care about streaming can ignore the deltas.
+        Streaming counterpart of `generate()`, backed by the existing
+        `ask_deepseek_stream`. Incremental `delta` events arrive as the model
+        produces them, followed by a single terminal `done` (success) or
+        `error` (failure) event. The full accumulated text is always available
+        on the terminal event.
 
-        Args mirror `generate()`. This generator never raises: API failures are
-        yielded as an `error` event carrying any partial text collected so far,
-        so an interrupted stream can still be shown to the user.
+        This generator never raises: failures are yielded as an `error` event
+        carrying any partial text collected so far.
         """
 
-        # -- Missing API key ---------------------------------------
-        if not self.is_configured:
-            logger.error(
-                "Claude stream failed: ANTHROPIC_API_KEY is not configured."
-            )
-            yield ClaudeStreamEvent(
-                type="error",
-                error="ANTHROPIC_API_KEY is not configured.",
-                error_type="missing_api_key",
-            )
-            return
+        full_prompt = _compose_prompt(prompt, system)
 
-        # -- Missing SDK dependency --------------------------------
-        try:
-            import anthropic
-        except ImportError:
-            logger.error(
-                "Claude stream failed: 'anthropic' package is not installed."
-            )
-            yield ClaudeStreamEvent(
-                type="error",
-                error="The 'anthropic' package is not installed.",
-                error_type="missing_dependency",
-            )
-            return
-
-        resolved_model = model or self.model
-
-        # Never log the prompt content or the API key.
-        logger.info("Claude stream start (model=%s)", resolved_model)
+        logger.info("LLM stream start (backend=deepseek)")
 
         # Collect text so the terminal event (and any interrupted stream) can
         # return the partial response.
         collected: list[str] = []
 
         try:
-            client = self._get_client()
+            for chunk in ask_deepseek_stream(full_prompt):
+                if not chunk:
+                    continue
 
-            request_kwargs = {
-                "model": resolved_model,
-                "max_tokens": self.max_tokens if max_tokens is None else max_tokens,
-                "temperature": (
-                    self.temperature if temperature is None else temperature
-                ),
-                "messages": [{"role": "user", "content": prompt}],
-            }
-            if system:
-                request_kwargs["system"] = system
+                # The stream yields a single sentinel error string on failure.
+                error_type = _classify_deepseek_error(chunk)
+                if error_type:
+                    logger.error("DeepSeek stream failed (error_type=%s).", error_type)
+                    yield ClaudeStreamEvent(
+                        type="error",
+                        text="".join(collected),
+                        error=chunk,
+                        error_type=error_type,
+                    )
+                    return
 
-            # The SDK context manager keeps the upstream connection open only
-            # while we iterate. If the caller stops consuming (client
-            # disconnect / cancellation), the generator is closed and this
-            # `with` block exits, cleanly terminating the Claude request.
-            with client.messages.stream(**request_kwargs) as stream:
-                for chunk in stream.text_stream:
-                    if not chunk:
-                        continue
-                    collected.append(chunk)
-                    yield ClaudeStreamEvent(type="delta", text=chunk)
+                collected.append(chunk)
+                yield ClaudeStreamEvent(type="delta", text=chunk)
 
-            text = "".join(collected).strip()
-
-            # -- Empty response ------------------------------------
-            if not text:
-                logger.warning("Claude stream returned an empty response.")
-                yield ClaudeStreamEvent(
-                    type="error",
-                    error="Claude returned an empty response.",
-                    error_type="empty_response",
-                )
-                return
-
-            logger.info("Claude stream success (model=%s)", resolved_model)
-            yield ClaudeStreamEvent(type="done", text=text)
-
-        # -- Invalid / missing credentials -------------------------
-        except anthropic.AuthenticationError as exc:
-            logger.error("Claude authentication failed: %s", exc)
-            yield ClaudeStreamEvent(
-                type="error",
-                text="".join(collected),
-                error="Invalid Anthropic API key.",
-                error_type="authentication_error",
-            )
-
-        # -- Rate limiting -----------------------------------------
-        except anthropic.RateLimitError as exc:
-            logger.error("Claude rate limit exceeded: %s", exc)
-            yield ClaudeStreamEvent(
-                type="error",
-                text="".join(collected),
-                error="Claude rate limit exceeded. Please try again later.",
-                error_type="rate_limit",
-            )
-
-        # -- Timeout -----------------------------------------------
-        except anthropic.APITimeoutError as exc:
-            logger.error("Claude stream timed out: %s", exc)
-            yield ClaudeStreamEvent(
-                type="error",
-                text="".join(collected),
-                error="Claude request timed out.",
-                error_type="timeout",
-            )
-
-        # -- Network / connection ----------------------------------
-        except anthropic.APIConnectionError as exc:
-            logger.error("Claude connection error: %s", exc)
-            yield ClaudeStreamEvent(
-                type="error",
-                text="".join(collected),
-                error="Could not connect to the Claude API.",
-                error_type="connection_error",
-            )
-
-        # -- Any other API status error ----------------------------
-        except anthropic.APIStatusError as exc:
-            logger.error("Claude API error (status=%s): %s", exc.status_code, exc)
-            yield ClaudeStreamEvent(
-                type="error",
-                text="".join(collected),
-                error=f"Claude API error (status {exc.status_code}).",
-                error_type="api_error",
-            )
-
-        # -- Unexpected failure ------------------------------------
         except Exception as exc:  # noqa: BLE001 - never crash the backend
-            logger.exception("Unexpected Claude stream failure.")
+            logger.exception("Unexpected DeepSeek stream failure.")
             yield ClaudeStreamEvent(
                 type="error",
                 text="".join(collected),
-                error=f"Unexpected Claude error: {exc}",
+                error=f"Unexpected DeepSeek error: {exc}",
                 error_type="unknown_error",
             )
+            return
+
+        text = "".join(collected).strip()
+
+        # -- Empty response --------------------------------------------
+        if not text:
+            logger.warning("DeepSeek stream returned an empty response.")
+            yield ClaudeStreamEvent(
+                type="error",
+                error="DeepSeek returned an empty response.",
+                error_type="empty_response",
+            )
+            return
+
+        logger.info("LLM stream success (backend=deepseek)")
+        yield ClaudeStreamEvent(type="done", text=text)
+
+
+# =====================================================
+# MARKDOWN SANITIZER (UI explanations)
+# =====================================================
+
+def strip_markdown(text: str) -> str:
+    """
+    Remove Markdown formatting from LLM output so UI-card explanations render
+    as plain text. Unwraps **bold**/*italic* markers and strips heading
+    hashes, keeping the text content itself unchanged. Currency symbols,
+    '•' bullets and normal punctuation are untouched. NOT applied to the
+    report enhancer (Markdown by design) or to JSON tool outputs.
+    """
+    text = re.sub(r"^\s*```[\w-]*\s*$", "", text or "", flags=re.MULTILINE)
+    text = re.sub(r"^\s{0,3}#{1,6}\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\*{1,3}([^*\n]+)\*{1,3}", r"\1", text)
+    return text.replace("*", "").replace("#", "").replace("`", "").strip()
 
 
 # =====================================================
@@ -490,8 +352,3 @@ def stream_claude(
         temperature=temperature,
         max_tokens=max_tokens,
     )
-
-
-#======================================================================================================================================================
-
-

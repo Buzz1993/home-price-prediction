@@ -59,7 +59,7 @@ def execute(func, *args, **kwargs):
 # AI REPORT ENHANCEMENT (Phase 15.10)
 # =====================================================
 
-def attach_report_enhancement(report, enhance: bool):
+def attach_report_enhancement(report, enhance: bool, property_ids: list[str] | None = None):
     """
     Optionally attach a Claude-enhanced version of a backend-generated report.
 
@@ -79,7 +79,7 @@ def attach_report_enhancement(report, enhance: bool):
         return report
 
     try:
-        enhanced = enhance_report(report)
+        enhanced = enhance_report(report, property_ids)
     except Exception:
         # Never let the enhancement layer break a working report response.
         logger.exception(
@@ -116,7 +116,7 @@ def generate_report(request: ReportRequest, enhance: bool = False):
         request.property_ids
     )
 
-    return attach_report_enhancement(report, enhance)
+    return attach_report_enhancement(report, enhance, request.property_ids)
 
 
 # =====================================================
@@ -143,7 +143,7 @@ def share_report(request: ShareReportRequest, enhance: bool = False):
 
     if enhance:
         try:
-            enhanced = enhance_report(report)
+            enhanced = enhance_report(report, request.property_ids)
         except Exception:
             logger.exception(
                 "Report enhancement step failed; sharing backend report without it."

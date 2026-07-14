@@ -12,7 +12,7 @@
 #
 # It performs no search, ranking or reasoning.
 
-from src.llm.prompts.config import PromptConfig, DEFAULT_CONFIG
+from src.llm.prompts.config import PromptConfig, DEFAULT_CONFIG, CARD_FORMAT_RULES
 from src.llm.prompts.templates import Prompt, build_prompt
 from src.llm.prompts.formatting import format_records, format_mapping
 
@@ -88,7 +88,8 @@ def build_search_prompt(
         "A short, friendly summary that highlights the top matches and "
         "clearly explains how they fit the user's request, followed by a "
         "brief note on the ranking rationale. If a detail is missing, say "
-        "so rather than guessing."
+        "so rather than guessing.\n\n"
+        + CARD_FORMAT_RULES
     )
 
     return build_prompt(

@@ -20,7 +20,7 @@
 import logging
 from collections.abc import Iterator
 
-from src.llm.claude_client import ask_claude, stream_claude, ClaudeStreamEvent
+from src.llm.claude_client import ask_claude, stream_claude, strip_markdown, ClaudeStreamEvent
 from src.llm.prompts import build_search_prompt
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ def explain_search_results(
         )
         return None
 
-    return response.text
+    return strip_markdown(response.text)
 
 
 def stream_search_explanation(

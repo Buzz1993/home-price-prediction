@@ -7,7 +7,23 @@
 // provider.
 
 import { useEffect, useRef, useState } from "react";
-import { MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from "lucide-react";
+import {
+  Brain,
+  Building2,
+  Gauge,
+  KeyRound,
+  LineChart,
+  MessageSquare,
+  MoreHorizontal,
+  Pencil,
+  Pin,
+  PinOff,
+  Scale,
+  ShieldAlert,
+  Trash2,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +45,52 @@ type ConversationItemProps = {
   onDelete: (id: string) => void;
 };
 
+// Pick a row icon from the conversation title so known conversation types
+// (comparison, prediction, rental, …) are visually distinguishable. Purely
+// cosmetic — conversations store no type field, so this infers from the
+// title and falls back to a generic chat icon.
+const TITLE_ICONS: Array<[RegExp, LucideIcon]> = [
+  [/compar/i, Scale],
+  [/predict|price/i, TrendingUp],
+  [/invest|advis/i, Brain],
+  [/rent/i, KeyRound],
+  [/valuat/i, Gauge],
+  [/risk/i, ShieldAlert],
+  [/growth|future/i, LineChart],
+  [/bhk|flat|apartment|property|home|house|luxur/i, Building2],
+];
+
+function iconForTitle(title: string): LucideIcon {
+  for (const [pattern, icon] of TITLE_ICONS) {
+    if (pattern.test(title)) return icon;
+  }
+  return MessageSquare;
+}
+
+// Compact relative timestamp for the metadata line ("Yesterday", "2 days
+// ago", "Last week"). Returns null when the timestamp is missing so the line
+// is only shown when data exists.
+function relativeTime(timestamp: number): string | null {
+  if (!timestamp) return null;
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  if (timestamp >= startOfToday.getTime()) {
+    const minutes = Math.floor((Date.now() - timestamp) / 60_000);
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    return "Today";
+  }
+
+  const dayMs = 86_400_000;
+  const daysAgo = Math.ceil((startOfToday.getTime() - timestamp) / dayMs);
+  if (daysAgo <= 1) return "Yesterday";
+  if (daysAgo < 7) return `${daysAgo} days ago`;
+  if (daysAgo < 14) return "Last week";
+  return new Date(timestamp).toLocaleDateString();
+}
+
 export function ConversationItem({
   conversation,
   active,
@@ -47,6 +109,9 @@ export function ConversationItem({
       inputRef.current?.select();
     }
   }, [renaming]);
+
+  const RowIcon = iconForTitle(conversation.title);
+  const updatedLabel = relativeTime(conversation.updatedAt);
 
   const startRename = () => {
     setDraft(conversation.title);
@@ -99,15 +164,28 @@ export function ConversationItem({
       <button
         type="button"
         onClick={() => onSelect(conversation.id)}
-        className="flex min-w-0 flex-1 items-center gap-2 px-2.5 py-2 text-left text-sm"
+        className="flex min-w-0 flex-1 items-start gap-2 px-2.5 py-2 text-left text-sm"
       >
-        <span
+        <RowIcon
           className={cn(
-            "truncate",
-            active ? "font-medium" : "text-foreground/80"
+            "mt-0.5 size-3.5 shrink-0",
+            active ? "text-primary" : "text-muted-foreground"
           )}
-        >
-          {conversation.title}
+        />
+        <span className="min-w-0 flex-1">
+          <span
+            className={cn(
+              "block truncate",
+              active ? "font-medium" : "text-foreground/80"
+            )}
+          >
+            {conversation.title}
+          </span>
+          {updatedLabel && (
+            <span className="block truncate text-[0.7rem] text-muted-foreground">
+              {updatedLabel}
+            </span>
+          )}
         </span>
       </button>
 

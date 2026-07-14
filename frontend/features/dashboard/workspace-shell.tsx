@@ -160,7 +160,7 @@ export function WorkspaceShell() {
     <div className="flex h-dvh w-full overflow-hidden bg-background">
       {/* Column 1 — Conversation Sidebar (inline on xl). Fixed full height;
           scrolls internally. */}
-      <div className="hidden w-72 shrink-0 border-r xl:block">
+      <div className="hidden w-[280px] shrink-0 border-r xl:block">
         <ConversationSidebar />
       </div>
 

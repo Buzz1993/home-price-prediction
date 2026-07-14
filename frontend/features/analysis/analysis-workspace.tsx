@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 // AI Analysis page body (Phase 8). Reuses the shared evaluation tray (staged
 // from AI Chat search results) to pick which properties to analyze, then runs
 // the documented per-property analysis endpoints and renders each result with
@@ -17,7 +19,6 @@ import {
   ShieldAlert,
   Sparkles,
   TrendingUp,
-  TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { AnalysisExplanation } from "./analysis-explanation";
 import { RiskCards } from "./risk-cards";
+import { FutureGrowthCards } from "./future-growth-cards";
 import { useAnalysis, type AnalysisKey, type AnalysisRows } from "./use-analysis";
 
 type AnalysisMeta = {
@@ -44,12 +46,11 @@ type AnalysisMeta = {
   label: string;
   icon: LucideIcon;
   blurb: string;
-  blocked?: boolean;
 };
 
 // The seven Phase 8 analyses, in the order requested. "growth" (Future Growth)
-// has no backend endpoint or tool, so it is flagged blocked and rendered as an
-// unavailable state rather than calling an invented API.
+// reuses the advisor endpoint: the backend embeds the growth fields produced by
+// run_future_agent inside the investment advice rows (Phase 15.15).
 const ANALYSES: AnalysisMeta[] = [
   {
     key: "prediction",
@@ -79,8 +80,7 @@ const ANALYSES: AnalysisMeta[] = [
     key: "growth",
     label: "Future Growth",
     icon: LineChart,
-    blurb: "Long-term appreciation outlook.",
-    blocked: true,
+    blurb: "Long-term appreciation outlook and infrastructure signals.",
   },
   {
     key: "advisor",
@@ -101,7 +101,7 @@ function AnalysisResultView({
   active,
   data,
 }: {
-  active: Exclude<AnalysisKey, "growth">;
+  active: AnalysisKey;
   data: AnalysisRows;
 }) {
   if (Array.isArray(data) && data.length === 0) {
@@ -122,6 +122,8 @@ function AnalysisResultView({
       return <AnalysisTable rows={data as AnalysisRow[]} />;
     case "risk":
       return <RiskCards rows={data as AdvisorRow[]} />;
+    case "growth":
+      return <FutureGrowthCards rows={data as AdvisorRow[]} />;
     case "advisor":
       return <AdvisorCards rows={data as AdvisorRow[]} />;
     case "negotiation":
@@ -140,14 +142,23 @@ export function AnalysisWorkspace() {
 
   const activeMeta = ANALYSES.find((a) => a.key === active);
 
+  // Debug logging: run outside the JSX so React executes it instead of
+  // rendering the statements as text.
+  useEffect(() => {
+    if (!mutation.data) return;
+
+    console.log("ACTIVE ANALYSIS:", active);
+    console.log("BACKEND RESPONSE:", mutation.data.content);
+  }, [active, mutation.data]);
+
   // Retry re-runs the last analysis request with the same key and property ids.
   const lastRun = mutation.variables;
   const retryAnalysis = lastRun ? () => mutation.mutate(lastRun) : undefined;
 
   const handlePick = (meta: AnalysisMeta) => {
     setActive(meta.key);
-    if (meta.blocked || !canRun) return;
-    run(meta.key as Exclude<AnalysisKey, "growth">, targetIds);
+    if (!canRun) return;
+    run(meta.key, targetIds);
   };
 
   return (
@@ -172,7 +183,7 @@ export function AnalysisWorkspace() {
                   "h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left",
                   isActive && "ring-2 ring-primary/30"
                 )}
-                disabled={!meta.blocked && !canRun}
+                disabled={!canRun}
                 onClick={() => handlePick(meta)}
               >
                 <span className="flex items-center gap-2 font-medium">
@@ -210,26 +221,14 @@ export function AnalysisWorkspace() {
             </p>
           )}
 
-          {/* Future Growth: no backend endpoint or tool exists for it. */}
-          {activeMeta?.blocked && (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
-              <span>
-                <strong>Future Growth analysis is not available yet.</strong> The
-                backend exposes no future-growth endpoint or tool, so there is no
-                data to display. This view will light up once the backend adds it.
-              </span>
-            </div>
-          )}
-
-          {!activeMeta?.blocked && mutation.isPending && (
+          {mutation.isPending && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Spinner className="size-4" />
               <span>Running {activeMeta?.label ?? "analysis"}…</span>
             </div>
           )}
 
-          {!activeMeta?.blocked && mutation.isError && (
+          {mutation.isError && (
             <ErrorState
               title={`${activeMeta?.label ?? "Analysis"} failed`}
               description="Something went wrong while running this analysis. Please try again."
@@ -238,9 +237,7 @@ export function AnalysisWorkspace() {
             />
           )}
 
-          {!activeMeta?.blocked &&
-            active &&
-            active !== "growth" &&
+          {active &&
             mutation.isSuccess &&
             mutation.data && (
               <div className="space-y-3">
@@ -259,6 +256,7 @@ export function AnalysisWorkspace() {
                       : undefined
                   }
                 />
+
                 <AnalysisResultView
                   active={active}
                   data={mutation.data.content}

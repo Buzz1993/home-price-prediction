@@ -40,13 +40,6 @@ export function ChatWorkspace() {
     });
   }, [messages, phase]);
 
-  // Index of the newest search-results message. Only that message renders the
-  // accumulated Property Results panel, so cards don't repeat per search.
-  let lastSearchIndex = -1;
-  messages.forEach((m, i) => {
-    if (m.response?.type === "search_results") lastSearchIndex = i;
-  });
-
   return (
     // Bounded flex column: the message list (min-h-0 + overflow-y-auto) is the
     // ONLY scroller here; the composer below stays pinned. The column itself is
@@ -71,9 +64,6 @@ export function ChatWorkspace() {
                 message.role === "assistant" &&
                 !isSending
               }
-              // The accumulated Property Results panel renders once, under the
-              // newest search-results message (Phase 15.13).
-              isLatestSearch={i === lastSearchIndex}
             />
           ))
         )}

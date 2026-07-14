@@ -133,6 +133,15 @@ export type AdvisorRow = {
   verdict: string;
   positives: string;
   risks: string;
+  // Future Growth fields the backend advisor rows already carry (produced by
+  // run_future_agent during enrichment, exposed via /analysis/advisor). Used by
+  // the Future Growth view. Optional because only growth_label/growth_reason are
+  // selected by the backend advisor schema today; the rest render when present.
+  growth_label?: string | null;
+  growth_reason?: string | null;
+  future_signals?: string | null;
+  infra_detected?: string | null;
+  growth_score?: number | string | null;
 };
 
 // Delivery status returned by POST /report/share. Mirrors the backend

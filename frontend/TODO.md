@@ -104,7 +104,7 @@
 - [x] Rental Analysis — POST /analysis/rental
 - [x] Property Valuation — POST /analysis/valuation
 - [x] Risk Analysis — surfaced from POST /analysis/advisor
-- [ ] Future Growth — BLOCKED: no backend endpoint or MCP tool is currently available.
+- [x] Future Growth — surfaced from POST /analysis/advisor (growth_label / growth_reason produced by run_future_agent during enrichment; analysis_type=future for the AI explanation)
 - [x] Investment Advisor — POST /analysis/advisor
 - [x] Negotiation Strategy — POST /analysis/negotiation
 
@@ -791,7 +791,7 @@ Frontend
 
 - [x] Explain Risk Analysis — POST /analysis/advisor (analysis_type=risk)
 - [x] Explain Rental Analysis — POST /analysis/rental
-- [ ] Explain Future Growth — BLOCKED: no backend future-growth endpoint or tool exists; Claude never invents analysis.
+- [x] Explain Future Growth — POST /analysis/advisor (analysis_type=future; explains the growth_label / growth_reason the backend already produced)
 - [x] Explain Valuation — POST /analysis/valuation
 - [x] Explain Negotiation Strategy — POST /analysis/negotiation
 
@@ -1246,6 +1246,51 @@ Examples:
 - [x] Conversation actions (Rename / Pin / Unpin / Delete)
 - [x] New Chat clears the workspace; switching restores it
 - [x] Premium responsive UI (no backend changes)
+
+---
+
+## Phase 15.14 — Workspace Layout & Navigation
+
+> Frontend-only navigation and UX cleanup. The Dashboard is now the single entry
+> point for the Copilot Workspace: the duplicate "AI Chat" sidebar item was
+> removed (both routes rendered the same shell). The /chat route still works
+> internally for compatibility, and Dashboard stays highlighted anywhere inside
+> the workspace (including /chat). The former Map and Tray columns were merged
+> into one right column that stacks the Property Map above the Evaluation Tray
+> with a draggable divider to resize the map (min 300px, max 85%, tray fills the
+> rest; persisted to localStorage). Staged property cards now switch the entire
+> card to a premium light-green wash. No backend, API, conversation, map or tray
+> logic was changed. tsc and ESLint pass on the changed files.
+
+- [x] Remove duplicate "AI Chat" sidebar item (Dashboard is the single entry)
+- [x] Keep /chat route working for compatibility
+- [x] Dashboard stays active across the whole workspace
+- [x] Right column: Property Map stacked above Evaluation Tray
+- [x] Drag-to-resize divider (clamped, smooth, no page scroll) + localStorage
+- [x] Premium light-green staged property card styling
+
+---
+
+## Phase 15.15 — Workspace Card & Resize Polish
+
+> Frontend-only visual/layout polish. Staged property cards now switch the whole
+> card to a richer (but still elegant) light-green appearance — stronger
+> gradient, darker green border, green ring, soft glow and a deeper recommendation
+> badge — so staged items are immediately recognizable; unstaged cards are
+> unchanged. The workspace split now also resizes horizontally: a draggable
+> col-resize divider between the chat column and the right panel, clamped to
+> keep the right panel between 25% and 45% of the chat+right region (chat always
+> ≥ 55%) and persisted to localStorage; the existing vertical Map/Tray resize is
+> untouched and both work together. Property cards in the results list adopt a
+> horizontal layout (image left, details right) from the md breakpoint up and
+> fall back to the vertical layout on mobile — no information removed, just
+> rearranged. No backend, API, conversation, search, map or tray logic changed.
+> tsc and ESLint pass on the changed files.
+
+- [x] Stronger premium light-green staged card state (+ deeper recommendation badge)
+- [x] Horizontal chat ↔ right-panel resize (25%–45%, persisted)
+- [x] Horizontal vertical resize continue working together
+- [x] Responsive horizontal property card (md+ horizontal, mobile vertical)
 
 ---
 

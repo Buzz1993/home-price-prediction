@@ -1544,7 +1544,6 @@
 #=============================================================================================================================================
 #=============================================================================================================================================
 
-
 # ===============================
 # chat_service.py 
 # ===============================
@@ -1692,7 +1691,7 @@ def generate_custom_recommendation_reason(row: pd.Series, preferences: dict) -> 
     Creates a personalized explanation describing why a property
     was recommended based on the user's preferences.
     """
-    print("☑️ generate_custom_recommendation_reason executed")
+    #print("☑️ generate_custom_recommendation_reason executed")
     reasons = []
 
     price_pref = preferences.get("price_importance", "none")
@@ -2263,6 +2262,7 @@ def parse_intent_and_execute(
         if error:
             return error
         return {"type": "advisor", "content": tools.get_investment_advice(session_state_tray)}
+    
 
     # -----------------------------------------------------------------
     # STEP 3: EXECUTE UNIFIED EXTRACTION (FILTERS + PREFERENCES)
@@ -3138,3 +3138,6 @@ def parse_intent_and_execute(
 # Finally, this output has exactly the same structure as the LLM output.
 # Therefore, the recommendation engine can use it without knowing whether
 # the data came from the LLM parser or the regex fallback parser.
+
+
+#=============================================================================================================================================

@@ -24,10 +24,10 @@ import type {
   NegotiationRow,
 } from "@/types/dashboard";
 
-// The analysis types offered by the page. "growth" (Future Growth) has no
-// backend endpoint or tool, so it carries no runner and is rendered as a
-// blocked state by the workspace. "risk" reuses the advisor endpoint because
-// the backend embeds risk metrics inside the investment advice.
+// The analysis types offered by the page. "risk" and "growth" (Future Growth)
+// both reuse the advisor endpoint because the backend embeds risk metrics and
+// the future-growth fields (growth_label / growth_reason) inside the investment
+// advice; each just requests a differently focused explanation of the same rows.
 export type AnalysisKey =
   | "prediction"
   | "rental"
@@ -44,20 +44,23 @@ export type AnalysisRows = AnalysisRow[] | AdvisorRow[] | NegotiationRow[];
 // (Phase 15.4). The rows are always present; `ai_explanation` may be null.
 export type AnalysisResult = AnalysisResponse<AnalysisRows>;
 
-// Runners for the analyses backed by a documented endpoint. "growth" is absent
-// on purpose (no backend support); the workspace never calls run() for it.
-// "risk" reuses the /advisor endpoint but requests a risk-focused explanation
-// of the same backend rows. "advisor" (Investment Advisor, Phase 15.6) requests
-// the combined investment summary: the backend returns the same advisor rows
-// and Claude summarizes them together with the other existing analyses.
+// Runners for the analyses. "risk" reuses the /advisor endpoint but requests a
+// risk-focused explanation of the same backend rows. "growth" (Future Growth,
+// Phase 15.15) likewise reuses /advisor: the advisor rows already carry the
+// growth_label / growth_reason produced by run_future_agent during enrichment,
+// and analysis_type="future" asks Claude for a Future Growth explanation of
+// them. "advisor" (Investment Advisor, Phase 15.6) requests the combined
+// investment summary: the backend returns the same advisor rows and Claude
+// summarizes them together with the other existing analyses.
 const RUNNERS: Record<
-  Exclude<AnalysisKey, "growth">,
+  AnalysisKey,
   (ids: string[]) => Promise<AnalysisResult>
 > = {
   prediction: predictProperties,
   rental: analyzeRental,
   valuation: analyzeValuation,
   risk: (ids) => getInvestmentAdvice(ids, "risk"),
+  growth: (ids) => getInvestmentAdvice(ids, "future"),
   advisor: getInvestmentSummary,
   negotiation: getNegotiationStrategy,
 };
@@ -70,14 +73,14 @@ export function useAnalysis() {
       key,
       ids,
     }: {
-      key: Exclude<AnalysisKey, "growth">;
+      key: AnalysisKey;
       ids: string[];
     }) => RUNNERS[key](ids),
   });
 
   // Run an analysis on the given property ids. `active` is set first so the
   // result panel always reflects the analysis currently being requested.
-  const run = (key: Exclude<AnalysisKey, "growth">, ids: string[]) => {
+  const run = (key: AnalysisKey, ids: string[]) => {
     setActive(key);
     mutation.mutate({ key, ids });
   };

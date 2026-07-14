@@ -1,13 +1,18 @@
 "use client";
 
-// Property Results panel (Phase 15.13). Renders the conversation's ACCUMULATED,
-// deduplicated property collection (from the workspace provider) as a responsive
-// grid of reusable PropertyCards — not just the latest search. Every successful
-// search appends its unique properties to this collection, so the grid grows
-// (5 -> 10 -> 13) instead of being replaced. The Interactive Property Map renders
-// from the same collection, and selecting a card highlights its marker (and vice
-// versa) via the shared selectedPropertyId. Each card keeps the tray-staging and
-// save toggles; the backend owns search, ranking and persistence.
+// Property Results panel (Phase 15.13). Renders the property cards returned by ONE
+// search — the `results` owned by that specific assistant message
+// (message.response.content) — as a responsive grid of reusable PropertyCards.
+// Each assistant search response permanently owns and displays its own cards;
+// they are never moved to, or replaced by, another message.
+//
+// This is the MESSAGE-LEVEL view. The CONVERSATION-LEVEL accumulated,
+// deduplicated collection (conversation.properties) is used ONLY by the
+// Interactive Property Map (see MapPanel), which shows every unique property
+// discovered across the whole conversation. Selecting a card highlights its
+// marker (and vice versa) through the shared selectedPropertyId; each card keeps
+// the tray-staging and save toggles. The backend owns search, ranking and
+// persistence.
 
 import { useEffect, useRef } from "react";
 
@@ -18,16 +23,12 @@ import {
   useSaveProperty,
   useSavedProperties,
 } from "@/features/saved/use-saved";
+import type { SearchResult } from "@/types/dashboard";
 import { useWorkspace } from "./workspace-provider";
 
-export function PropertyResultsPanel() {
-  const {
-    properties,
-    tray,
-    toggleTray,
-    selectedPropertyId,
-    setSelectedPropertyId,
-  } = useWorkspace();
+export function PropertyResultsPanel({ results }: { results: SearchResult[] }) {
+  const { tray, toggleTray, selectedPropertyId, setSelectedPropertyId } =
+    useWorkspace();
   const { data: saved } = useSavedProperties();
   const save = useSaveProperty();
   const remove = useRemoveSavedProperty();
@@ -50,17 +51,18 @@ export function PropertyResultsPanel() {
     else save.mutate(id);
   };
 
-  if (properties.length === 0) return null;
+  if (results.length === 0) return null;
 
   return (
     <div className="space-y-3">
       <p className="text-xs font-medium text-muted-foreground">
-        {properties.length}{" "}
-        {properties.length === 1 ? "property" : "properties"} in this
-        conversation
+        {results.length} {results.length === 1 ? "property" : "properties"} for
+        this search
       </p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {properties.map((result) => (
+      {/* Single column so the horizontal cards get the full width — this keeps
+          each card short and lets more properties show without scrolling. */}
+      <div className="grid gap-3">
+        {results.map((result) => (
           <div
             key={result.id}
             ref={(el) => {
@@ -75,6 +77,7 @@ export function PropertyResultsPanel() {
           >
             <PropertyCard
               property={result}
+              horizontal
               staged={tray.includes(result.id)}
               onToggleStage={toggleTray}
               saved={savedIds.has(result.id)}

@@ -2,7 +2,6 @@ import {
   Bookmark,
   FileText,
   LayoutDashboard,
-  MessageSquare,
   Scale,
   Sparkles,
   User,
@@ -16,10 +15,12 @@ export type NavItem = {
 };
 
 // Primary navigation shared by the desktop sidebar and the mobile menu.
-// Routes point to the pages implemented in later phases.
+// The Dashboard is the single entry point for the Copilot Workspace — the
+// former "AI Chat" item was removed (Phase 15.14) because it rendered the exact
+// same workspace, creating duplicate navigation. The /chat route still works
+// internally (see DashboardLayout WORKSPACE_ROUTES) for compatibility.
 export const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "AI Chat", href: "/chat", icon: MessageSquare },
   { title: "Property Comparison", href: "/compare", icon: Scale },
   { title: "AI Analysis", href: "/analysis", icon: Sparkles },
   { title: "Saved Properties", href: "/saved", icon: Bookmark },

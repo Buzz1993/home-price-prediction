@@ -76,7 +76,7 @@ def process_response(response):
     print("==============================")
     print("response_type: \n", response_type) #eg o/p : text, comparison, rental, prediction, negotiation, valuation, advisor, search_results
     print("content: \n", content) # dataframe which going to show in o/p for that query
-    print("==============================")
+    print("//////////////////////////////")
 
     # 2. Look up the response type in our configuration dictionary to get its title and key name
     title, payload_key = RESPONSE_CONFIG[response_type]
@@ -317,8 +317,8 @@ def render_chat_history():
     """Loops through and renders standard history, updating internal component references safely."""
     print("☑️ render_chat_history executed")
     print("=" * 50)
-    print("render_chat_history() executed")
-    print("chat_history:", st.session_state.chat_history)
+    #print("render_chat_history() executed")
+    #print("chat_history:", st.session_state.chat_history)
     print("=" * 50)
     for msg_idx, message in enumerate(st.session_state.chat_history):
         with st.chat_message(message["role"]):

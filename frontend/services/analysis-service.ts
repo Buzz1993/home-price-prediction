@@ -63,13 +63,15 @@ export function analyzeValuation(
 }
 
 // POST /advisor — investment recommendation (suitability, verdict, positives,
-// risks) per property. Risk Analysis is surfaced from these same rows: the
-// backend embeds risk metrics inside the investment advice
-// (get_investment_advice). `analysisType` selects a risk- or advisor-focused
-// explanation of the identical backend rows.
+// risks) per property. Risk Analysis and Future Growth are surfaced from these
+// same rows: the backend embeds risk metrics AND the future-growth fields
+// (growth_label / growth_reason, produced by run_future_agent during
+// enrichment) inside the investment advice (get_investment_advice).
+// `analysisType` selects a risk-, growth- or advisor-focused explanation of the
+// identical backend rows ("future" maps to the backend's Future Growth label).
 export function getInvestmentAdvice(
   ids: string[],
-  analysisType: "advisor" | "risk" = "advisor"
+  analysisType: "advisor" | "risk" | "future" = "advisor"
 ): Promise<AnalysisResponse<AdvisorRow[]>> {
   return analyzeWithExplanation("/analysis/advisor", ids, analysisType);
 }

@@ -51,6 +51,11 @@ type PropertyCardProps = {
   onToggleSave?: (id: string) => void;
   // Disables the save toggle while a save/remove request is in flight.
   savePending?: boolean;
+  // Opt-in horizontal layout (image left, details right) from the md breakpoint
+  // up — used by the workspace results list to fit more properties on screen.
+  // Below md the card always falls back to the default vertical layout. No
+  // information changes; only the arrangement does.
+  horizontal?: boolean;
 };
 
 // A backend value is renderable when it is neither missing nor empty.
@@ -65,6 +70,7 @@ export function PropertyCard({
   saved = false,
   onToggleSave,
   savePending = false,
+  horizontal = false,
 }: PropertyCardProps) {
   const [imageError, setImageError] = useState(false);
 
@@ -88,12 +94,28 @@ export function PropertyCard({
   return (
     <Card
       className={cn(
-        "gap-0 overflow-hidden py-0 transition-shadow hover:shadow-md",
-        staged && "border-primary ring-1 ring-primary"
+        "gap-0 overflow-hidden py-0 transition-all duration-[250ms] hover:shadow-md",
+        // Horizontal layout (md+): image on the left, details on the right.
+        horizontal && "md:flex-row",
+        // Staged: the ENTIRE card switches to a rich (but still elegant) premium
+        // light-green appearance — a clear green gradient wash, a darker green
+        // border, a green ring and a soft green glow — so staged properties are
+        // immediately recognizable. Kept light enough that all text stays fully
+        // readable. Reverts smoothly (250ms) when unstaged.
+        staged &&
+          "border-primary/60 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 shadow-lg shadow-primary/25 ring-2 ring-primary/40"
       )}
     >
-      {/* Primary image (image_urls[0]) with a consistent fallback placeholder. */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+      {/* Primary image (image_urls[0]) with a consistent fallback placeholder.
+          Horizontal: a fixed-width column on the left (a touch narrower on
+          tablet, wider from lg) that stretches to the card's height. */}
+      <div
+        className={cn(
+          "relative aspect-[4/3] w-full overflow-hidden bg-muted",
+          horizontal &&
+            "md:aspect-auto md:w-48 md:shrink-0 md:self-stretch lg:w-60"
+        )}
+      >
         {showImage ? (
           // Plain img keeps arbitrary external listing URLs working without
           // per-domain Next image config; lazy + object-cover avoids distortion.
@@ -136,6 +158,15 @@ export function PropertyCard({
         )}
       </div>
 
+      {/* Details column — vertical stack of every backend field. In horizontal
+          mode it fills the space beside the image and stays a bounded flex
+          column so long text truncates instead of pushing the image. */}
+      <div
+        className={cn(
+          "flex min-w-0 flex-col",
+          horizontal && "md:flex-1"
+        )}
+      >
       <CardContent className="space-y-3 p-4">
         {/* Price and cost per sqft. */}
         <div className="flex items-end justify-between gap-2">
@@ -192,9 +223,17 @@ export function PropertyCard({
           </div>
         )}
 
-        {/* Recommendation score (backend hybrid score). */}
+        {/* Recommendation score (backend hybrid score). Slightly deeper green
+            while staged so it reads with the selected card. */}
         {property.search_score !== undefined && (
-          <Badge variant="success" title="Recommendation score">
+          <Badge
+            variant="success"
+            title="Recommendation score"
+            className={cn(
+              "w-fit",
+              staged && "border-primary/40 bg-primary/20 text-primary"
+            )}
+          >
             <TrendingUp /> Recommendation {property.search_score.toFixed(2)}
           </Badge>
         )}
@@ -246,6 +285,7 @@ export function PropertyCard({
           </label>
         )}
       </CardFooter>
+      </div>
     </Card>
   );
 }

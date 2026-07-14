@@ -132,8 +132,14 @@ export function ConversationSidebar({
         </p>
         <div className="grid grid-cols-2 gap-1">
           {navItems.map((item) => {
+            // Dashboard is the single Copilot Workspace entry point, so it stays
+            // highlighted anywhere inside the workspace — including the retained
+            // /chat compatibility route which renders the same shell.
             const active =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
+              item.href === "/dashboard"
+                ? pathname === "/dashboard" || pathname === "/chat"
+                : pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.href}

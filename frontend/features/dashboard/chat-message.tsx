@@ -17,37 +17,22 @@ import { SuggestedActions } from "./suggested-actions";
 
 function ResponsePayload({
   response,
-  isLatestSearch,
 }: {
   response: NonNullable<ChatMessageType["response"]>;
-  // True only for the newest search-results message. The accumulated Property
-  // Results panel renders once, under that message; earlier search messages show
-  // just their explanation + how many properties that search added.
-  isLatestSearch: boolean;
 }) {
   switch (response.type) {
     case "search_results":
-      // Claude's explanation (Phase 15.3) sits above the property cards. It only
-      // explains the backend results; the results render unchanged and the card
-      // degrades gracefully when no explanation is available. The cards
-      // themselves come from the conversation's ACCUMULATED collection so they
-      // grow across searches (Phase 15.13) — shown under the latest search only.
+      // Claude's explanation (Phase 15.3) sits above the property cards. Each
+      // assistant search response PERMANENTLY owns and renders ITS OWN results
+      // (response.content) — the cards are never moved to another message or
+      // replaced by a later search. The conversation-level accumulated collection
+      // (conversation.properties) is used only by the Property Map (MapPanel).
       return (
         <div className="space-y-3">
           {response.content.length > 0 && (
             <SearchExplanation explanation={response.ai_explanation} />
           )}
-          {isLatestSearch ? (
-            <PropertyResultsPanel />
-          ) : (
-            response.content.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Added {response.content.length}{" "}
-                {response.content.length === 1 ? "property" : "properties"} to
-                this conversation.
-              </p>
-            )
-          )}
+          <PropertyResultsPanel results={response.content} />
         </div>
       );
     case "comparison":
@@ -68,15 +53,11 @@ function ResponsePayload({
 export function ChatMessage({
   message,
   showSuggestions = false,
-  isLatestSearch = false,
 }: {
   message: ChatMessageType;
   // Only the latest assistant message shows follow-up suggestions (Phase 15.11),
   // keeping earlier turns clean and avoiding repeated chips.
   showSuggestions?: boolean;
-  // Marks the newest search-results message so the accumulated Property Results
-  // panel renders once, under it (Phase 15.13).
-  isLatestSearch?: boolean;
 }) {
   const isUser = message.role === "user";
   // While Claude's text is still arriving (Phase 15.9), show a blinking cursor.
@@ -116,12 +97,7 @@ export function ChatMessage({
           </div>
         )}
 
-        {message.response && (
-          <ResponsePayload
-            response={message.response}
-            isLatestSearch={isLatestSearch}
-          />
-        )}
+        {message.response && <ResponsePayload response={message.response} />}
 
         {/* Follow-up suggestions (Phase 15.11): only on the latest assistant
             message and once its text has finished streaming. */}

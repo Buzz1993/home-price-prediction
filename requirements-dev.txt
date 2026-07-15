@@ -66,7 +66,10 @@ psycopg2-binary
 orjson
 
 
-reportlab
+# Headless Chromium PDF rendering (Phase 16.2 — single report PDF pipeline).
+# After installing, download the browser once:
+#   .venv2\Scripts\python.exe -m playwright install chromium
+playwright
 ddgs
 
 mcp

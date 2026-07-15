@@ -2,17 +2,21 @@
 
 // Report preview + PDF export (Phase 15.17). Renders the structured report
 // text returned by the backend as a premium document (report-parser.ts +
-// report-document.tsx) and exports it as a PDF through the browser's
-// print-to-PDF flow. All report content is produced by the backend — this
-// component only presents it. When the text does not match the structured
-// report layout (e.g. the non-enhanced fallback report) the raw text is shown
-// instead, so the preview never breaks.
+// report-document.tsx). Export PDF (Phase 16.2) downloads the PDF from the
+// application's single Chromium-based generator (POST /report/pdf), which
+// prints this same document — so the exported file is identical to the
+// WhatsApp PDF. If the backend renderer is unavailable, it falls back to the
+// browser's print-to-PDF flow, which produces the same design. All report
+// content is produced by the backend — this component only presents it. When
+// the text does not match the structured report layout (e.g. the non-enhanced
+// fallback report) the raw text is shown instead, so the preview never breaks.
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { FileDown, Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { downloadReportPdf } from "@/services/report-service";
 import { ReportDocument } from "./report-document";
 import { parseReport } from "./report-parser";
 
@@ -30,7 +34,26 @@ export function ReportPreview({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const handleExportPdf = () => window.print();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    try {
+      const blob = await downloadReportPdf(report);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "EstateMind Investment Report.pdf";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Renderer unavailable (backend down, Playwright not installed) — the
+      // browser's print-to-PDF produces the same document.
+      window.print();
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const document_ = model ? (
     <ReportDocument model={model} />
@@ -46,8 +69,13 @@ export function ReportPreview({
         <h2 className="text-sm font-semibold text-muted-foreground">
           Report Preview
         </h2>
-        <Button variant="outline" size="sm" onClick={handleExportPdf}>
-          <FileDown /> Export PDF
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportPdf}
+          disabled={exporting}
+        >
+          <FileDown /> {exporting ? "Exporting…" : "Export PDF"}
         </Button>
       </div>
 

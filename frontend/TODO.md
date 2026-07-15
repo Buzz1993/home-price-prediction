@@ -1478,12 +1478,126 @@ Examples:
 
 ---
 
+## Phase 16.2 — Pixel-Identical PDF Pipeline (Chromium)
+
+> ONE PDF generator for the whole application. The ReportLab renderer is
+> gone; src/services/pdf_service.py now renders the EXISTING Next.js report
+> document with headless Chromium (Playwright for Python — the backend is
+> Python, so no Node sidecar) and exports it as an A4 PDF. New print-only
+> route frontend/app/print/report/page.tsx reuses the approved
+> ReportDocument + report-parser + the existing .report-print-root print CSS
+> untouched (portaled to <body> exactly like the Reports page print copy),
+> so the PDF preserves the EstateMind header, green property banners,
+> two-column card grid, comparison tables, badges, stars, rounded corners,
+> shadows, page-break rules and the repeating footer — pixel-identical to
+> the browser's Export PDF / Chrome print output. The renderer injects the
+> previewed report text as window.__ESTATEMIND_REPORT__ (nothing is
+> regenerated), waits for network idle + fonts + the data-report-ready flag,
+> then prints (A4 portrait, printBackground, preferCSSPageSize; margins from
+> the existing @page rule). Results cached by content hash. WhatsApp
+> delivery (whatsapp_service.py) keeps the same Cloud API upload/send code
+> but ships this PDF; new thin POST /report/pdf endpoint serves the same
+> file, and the Export PDF button downloads it (falling back to browser
+> print if the renderer is unavailable) — so Export PDF, Download and
+> WhatsApp always deliver the identical document. Requires Playwright
+> Chromium (playwright install chromium) and the Next.js frontend running
+> (FRONTEND_BASE_URL, default http://localhost:3000 — documented in
+> .env.example). Report content, workflows and all report UI unchanged.
+> Verified end-to-end: Chromium render of the print route, PDF content
+> probes (header/cards/badges/footer), POST /report/pdf (200 +
+> application/pdf, 400 on empty report), FastAPI import without reportlab,
+> and the production build with the new /print/report route.
+
+- [x] frontend/app/print/report/page.tsx (print-only route, reuses ReportDocument — no duplicate layout)
+- [x] src/services/pdf_service.py (single Chromium PDF generator, content-hash cache)
+- [x] whatsapp_service.py delivers the Chromium PDF (ReportLab removed; Cloud API untouched)
+- [x] POST /report/pdf (thin endpoint, same generator)
+- [x] Export PDF button downloads the same PDF (window.print fallback only)
+- [x] requirements: reportlab → playwright; FRONTEND_BASE_URL in .env.example
+
+---
+
+## Phase 17.0 — Advanced Property Comparison Workspace
+
+> New dedicated /compare page (left navigation: "Property Comparison") for
+> professional side-by-side comparison of 2–3 properties staged in the shared
+> Evaluation Tray. 100% frontend presentation and orchestration: one flow
+> fetches the EXISTING backend results — POST /analysis/comparison first (it
+> warms the backend's per-property enrichment cache and provides the winner +
+> rankings), then the raw analysis rows (predict / rental / valuation /
+> advisor / negotiation, called without `explain` so no unused AI text is
+> generated) and GET /property/{id} in parallel. Page flow: property selector
+> (three dropdown slots, min 2 / max 3, Show Comparison enables at 2) →
+> Executive Winner Summary (the verbatim backend comparison winner + runner-up
+> + Claude's optional explanation) → Comparison Matrix (every backend property
+> field row-wise, unknown fields under Additional Information — never dropped)
+> → seven AI analysis comparison sections with Section Winner strips → Final
+> Scoreboard → Final Recommendation (backend winner; the closing action is the
+> winner's verbatim backend negotiation strategy). Smart highlighting only
+> compares existing backend values (soft emerald best / soft rose worst, via
+> the shared toneRank for status wording — the Phase 15.21 rule); trophy
+> badges mark winning cells; metric labels carry ⓘ tooltips (new shared
+> radix-ui Tooltip). Sticky attribute column + sticky property headers, zebra
+> rows, entrance animation when switching compared properties. No backend
+> changes; the AI Analysis compare card remains.
+
+- [x] Navigation entry + /compare route (standard chrome)
+- [x] Property selector fed by the Evaluation Tray (min 2 / max 3)
+- [x] use-compare-data orchestration over existing endpoints only
+- [x] Executive Winner Summary + Runner Up + AI explanation
+- [x] Side-by-side Comparison Matrix (all backend fields, smart highlighting)
+- [x] AI analysis comparison sections (prediction / rental / risk / growth / valuation / advisor / negotiation) + section winners
+- [x] Final Scoreboard + Final Recommendation
+- [x] Shared Tooltip component (components/ui/tooltip.tsx)
+
+---
+
+## Phase 17.1 — Premium Comparison Experience & Decision Dashboard
+
+> Frontend-only polish of the /compare page into a premium investor decision
+> dashboard — no backend, API, prompt or business-logic changes; every number
+> shown is an existing backend value. Overall Winner Scoreboard right after
+> the Executive Summary (win-tally counts the EXISTING Phase 17.0 category
+> winners per property — medals, animated proportional win bars, category
+> chips; pure counting, no new scoring). Numeric matrix rows gain proportional
+> value bars (best value = fullest green bar) and relative-difference helper
+> lines ("₹1.05 Cr cheaper than …", "+4.04% higher yield than …" — display
+> arithmetic on backend values). Property Overview columns are headed by
+> premium mini cards (image, name, id, price, configuration, area, location,
+> advisor verdict pill + stars, "🏆 Overall Winner" badge; winner column gets
+> a subtle green tint). Basic Information + all seven analysis sections become
+> one accordion (new shared radix-ui Accordion, tw-animate-css expand/collapse,
+> open sections persisted to localStorage). Section winner strips became "Why
+> this property won" cards with an explicit Why? ✓ checklist (richer
+> backend-derived points from compare-winners — no AI call). Export Comparison
+> PDF + Share on WhatsApp reuse the EXISTING report pipeline verbatim
+> (POST /report → /report/pdf → /report/share; report generated once and
+> reused for both). Final Recommendation upgraded into the Final Decision
+> Card: backend overall score + "Won X of Y categories" stat (counted, never
+> invented — no fabricated confidence %), Why checklist, verbatim backend
+> negotiation strategy as the recommended action. Hover elevation and smooth
+> transitions throughout; sticky headers/attribute column and mobile
+> horizontal scroll retained.
+
+- [x] Shared Accordion component (components/ui/accordion.tsx)
+- [x] Overall Winner Scoreboard + win-tally (counting existing category winners only)
+- [x] Proportional value bars on numeric comparison rows
+- [x] Relative-difference helper lines (frontend display arithmetic only)
+- [x] Premium property header cards + overall-winner column tint
+- [x] Collapsible comparison sections with persisted open state
+- [x] "Why this property won" cards after every section
+- [x] Export Comparison PDF + Share on WhatsApp via the existing report pipeline
+- [x] Final Decision Card (backend score + category-wins stat, no invented confidence)
+- [x] Micro-interactions (hover elevation, animated bars, smooth accordion)
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be
 > implemented after the core application is complete.
 
-- [x] Export reports as PDF (Phase 15.17 — premium report preview + browser print-to-PDF)
+- [x] Export reports as PDF (Phase 15.17 preview + Phase 16.2 single Chromium PDF pipeline)
 - [ ] Export reports as DOCX
 - [ ] Authentication with JWT
 - [ ] Persistent database for saved properties

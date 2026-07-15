@@ -5,10 +5,12 @@
 import logging
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from src.mcp.tools.property_tools import create_property_report
 from src.llm.report_enhancement import enhance_report
+from src.services.pdf_service import PdfRenderError, generate_report_pdf
 from src.services.whatsapp_service import WhatsAppError, send_report
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,12 @@ router = APIRouter(
 
 class ReportRequest(BaseModel):
     property_ids: list[str]
+
+
+class ReportPdfRequest(BaseModel):
+    # The already-generated report text from the frontend preview. The PDF is
+    # always rendered from exactly this text — nothing is regenerated.
+    report: str
 
 
 class ShareReportRequest(BaseModel):
@@ -120,6 +128,37 @@ def generate_report(request: ReportRequest, enhance: bool = False):
     )
 
     return attach_report_enhancement(report, enhance, request.property_ids)
+
+
+# =====================================================
+# REPORT PDF (Phase 16.2 — single Chromium PDF pipeline)
+# =====================================================
+
+@router.post("/report/pdf")
+def report_pdf(request: ReportPdfRequest):
+    """
+    Render the previewed report to a PDF and return it for download.
+
+    This is the SAME generator WhatsApp delivery uses
+    (src/services/pdf_service.py): headless Chromium prints the existing
+    Next.js report page, so Export PDF, Download PDF and the WhatsApp
+    document are always pixel-identical. No report content is generated or
+    modified here.
+    """
+
+    try:
+        pdf_bytes = generate_report_pdf(request.report)
+    except PdfRenderError as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e))
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition":
+                'attachment; filename="EstateMind Investment Report.pdf"'
+        },
+    )
 
 
 # =====================================================

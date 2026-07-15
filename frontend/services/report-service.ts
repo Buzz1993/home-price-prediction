@@ -6,7 +6,7 @@
 // (src/services/whatsapp_service.py). The frontend only sends the request and
 // renders the response.
 
-import { apiRequest } from "@/lib/api-client";
+import { API_BASE_URL, ApiError, apiRequest } from "@/lib/api-client";
 import type { EnhancedReport, ShareResult } from "@/types/dashboard";
 
 // POST /report?enhance=true — generate an AI property report for the selected
@@ -38,4 +38,30 @@ export function shareReport(payload: {
     method: "POST",
     body: payload,
   });
+}
+
+// POST /report/pdf — download the previewed report as a PDF (Phase 16.2).
+// The backend's single Chromium-based generator (src/services/pdf_service.py)
+// prints the existing report page, so this PDF is pixel-identical to the
+// WhatsApp document and the browser's print output. Returned as a Blob
+// because the response is a binary file, not JSON.
+export async function downloadReportPdf(report: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}/report/pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ report }),
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText || "Request failed";
+    try {
+      const data = await response.json();
+      if (typeof data?.detail === "string") detail = data.detail;
+    } catch {
+      // Non-JSON error body — keep the status text.
+    }
+    throw new ApiError(detail, response.status);
+  }
+
+  return response.blob();
 }

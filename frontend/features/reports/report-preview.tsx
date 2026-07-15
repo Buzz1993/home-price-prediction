@@ -1,17 +1,20 @@
 "use client";
 
-// Report preview + download. Renders the AI report returned by the backend and
-// lets the user download it as a plain-text file (client-side Blob — no business
-// logic, the report content is produced entirely by the backend).
-//
-// Phase 15.10: the displayed narrative is Claude's more readable re-presentation
-// of the SAME backend report when available; when the AI enhancement is
-// unavailable the original backend report is shown instead, with a friendly
-// notice. Download always saves the displayed report.
+// Report preview + PDF export (Phase 15.17). Renders the structured report
+// text returned by the backend as a premium document (report-parser.ts +
+// report-document.tsx) and exports it as a PDF through the browser's
+// print-to-PDF flow. All report content is produced by the backend — this
+// component only presents it. When the text does not match the structured
+// report layout (e.g. the non-enhanced fallback report) the raw text is shown
+// instead, so the preview never breaks.
 
-import { Download, Info } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { FileDown, Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ReportDocument } from "./report-document";
+import { parseReport } from "./report-parser";
 
 export function ReportPreview({
   report,
@@ -20,15 +23,22 @@ export function ReportPreview({
   report: string;
   notice?: string | null;
 }) {
-  const handleDownload = () => {
-    const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "estatemind-report.txt";
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+  const model = useMemo(() => parseReport(report), [report]);
+
+  // The print copy is portaled to <body> so the app shell (sidebar, scroll
+  // containers) can be hidden during printing without touching the layout.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const handleExportPdf = () => window.print();
+
+  const document_ = model ? (
+    <ReportDocument model={model} />
+  ) : (
+    <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground sm:text-sm">
+      {report}
+    </pre>
+  );
 
   return (
     <div className="space-y-3">
@@ -36,8 +46,8 @@ export function ReportPreview({
         <h2 className="text-sm font-semibold text-muted-foreground">
           Report Preview
         </h2>
-        <Button variant="outline" size="sm" onClick={handleDownload}>
-          <Download /> Download
+        <Button variant="outline" size="sm" onClick={handleExportPdf}>
+          <FileDown /> Export PDF
         </Button>
       </div>
 
@@ -48,11 +58,21 @@ export function ReportPreview({
         </div>
       )}
 
-      <div className="max-h-[24rem] overflow-y-auto rounded-lg border bg-muted/30 p-4">
-        <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground sm:text-sm">
-          {report}
-        </pre>
+      <div className="rounded-xl border bg-muted/40 p-3 sm:p-6">
+        {document_}
       </div>
+
+      {mounted &&
+        createPortal(
+          <div className="report-print-root" aria-hidden>
+            {document_}
+            <div className="report-print-footer justify-between border-t px-1 pt-2 text-[10px] text-muted-foreground">
+              <span>EstateMind · Property Investment Report</span>
+              <span>Confidential — prepared for the client</span>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-// AI Analysis page body (Phase 8). Reuses the shared evaluation tray (staged
-// from AI Chat search results) to pick which properties to analyze, then runs
-// the documented per-property analysis endpoints and renders each result with
-// the existing reusable renderers (AnalysisTable / AdvisorCards /
-// NegotiationCards). No analysis logic lives here — the backend owns it; this
-// only triggers a request and displays the response, mirroring the Streamlit
-// copilot where each analysis is a single tool call against the staged tray.
+// AI Analysis page body (Phase 8, premium presentation Phase 15.18). Reuses the
+// shared evaluation tray (staged from AI Chat search results) to pick which
+// properties to analyze, then runs the documented per-property analysis
+// endpoints and renders each result with the premium renderers
+// (PredictionResults / ValuationResults / RentalResults / RiskCards /
+// FutureGrowthCards / AdvisorCards / NegotiationCards). No analysis logic lives
+// here — the backend owns it; this only triggers a request and displays the
+// response, mirroring the Streamlit copilot where each analysis is a single
+// tool call against the staged tray.
 //
 // The former Property Comparison page now lives here as the FIRST card: it
 // reuses the existing useComparison hook (POST /analysis/comparison via
@@ -32,9 +34,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { Spinner } from "@/components/ui/spinner";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
-import { AnalysisTable } from "@/features/dashboard/analysis-table";
 import { AdvisorCards, NegotiationCards } from "@/features/dashboard/analysis-cards";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
 import type {
@@ -46,8 +46,12 @@ import { cn } from "@/lib/utils";
 import { ComparisonView } from "@/features/comparison/comparison-view";
 import { useComparison } from "@/features/comparison/use-comparison";
 import { AnalysisExplanation } from "./analysis-explanation";
+import { PredictionResults } from "./prediction-results";
+import { RentalResults } from "./rental-results";
+import { ValuationResults } from "./valuation-results";
 import { RiskCards } from "./risk-cards";
 import { FutureGrowthCards } from "./future-growth-cards";
+import { AnalysisSkeleton, SectionLabel } from "./ui/analysis-ui";
 import { useAnalysis, type AnalysisKey, type AnalysisRows } from "./use-analysis";
 
 // Cards offered by the workspace: the comparison card plus the per-property
@@ -140,9 +144,11 @@ function AnalysisResultView({
 
   switch (active) {
     case "prediction":
+      return <PredictionResults rows={data as AnalysisRow[]} />;
     case "rental":
+      return <RentalResults rows={data as AnalysisRow[]} />;
     case "valuation":
-      return <AnalysisTable rows={data as AnalysisRow[]} />;
+      return <ValuationResults rows={data as AnalysisRow[]} />;
     case "risk":
       return <RiskCards rows={data as AdvisorRow[]} />;
     case "growth":
@@ -171,15 +177,6 @@ export function AnalysisWorkspace() {
   const canCompare = targetIds.length >= 2;
 
   const activeMeta = ANALYSES.find((a) => a.key === active);
-
-  // Debug logging: run outside the JSX so React executes it instead of
-  // rendering the statements as text.
-  useEffect(() => {
-    if (!mutation.data) return;
-
-    console.log("ACTIVE ANALYSIS:", active);
-    console.log("BACKEND RESPONSE:", mutation.data.content);
-  }, [active, mutation.data]);
 
   // Retry re-runs the last analysis request with the same key and property ids.
   const lastRun = mutation.variables;
@@ -259,7 +256,7 @@ export function AnalysisWorkspace() {
         </div>
 
         {/* Result panel */}
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
           {canRun ? (
             <p className="text-xs text-muted-foreground">
               Analyzing {targetIds.length}{" "}
@@ -277,9 +274,11 @@ export function AnalysisWorkspace() {
           {/* Comparison result (Compare Properties card) — reuses the
               existing comparison mutation and the extracted ComparisonView. */}
           {showCompare && comparison.isPending && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Spinner className="size-4" />
-              <span>Comparing selected properties…</span>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Comparing selected properties…
+              </p>
+              <AnalysisSkeleton />
             </div>
           )}
 
@@ -294,9 +293,7 @@ export function AnalysisWorkspace() {
 
           {showCompare && compareResult && !comparison.isPending && (
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                {COMPARE_CARD.label}
-              </h2>
+              <SectionLabel>{COMPARE_CARD.label}</SectionLabel>
               <ComparisonView
                 content={compareResult}
                 explanation={comparison.data?.ai_explanation}
@@ -305,9 +302,11 @@ export function AnalysisWorkspace() {
           )}
 
           {!showCompare && mutation.isPending && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Spinner className="size-4" />
-              <span>Running {activeMeta?.label ?? "analysis"}…</span>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Running {activeMeta?.label ?? "analysis"}…
+              </p>
+              <AnalysisSkeleton />
             </div>
           )}
 
@@ -325,9 +324,7 @@ export function AnalysisWorkspace() {
             mutation.isSuccess &&
             mutation.data && (
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground">
-                  {activeMeta?.label}
-                </h2>
+                <SectionLabel>{activeMeta?.label}</SectionLabel>
                 {/* Claude explains the backend analysis; the cards below still
                     render the unchanged backend result even if it is absent.
                     The Investment Advisor (Phase 15.6) shows a combined

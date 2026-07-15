@@ -168,3 +168,43 @@
 .em-map-popup .leaflet-popup-tip {
   @apply border bg-popover shadow-lg;
 }
+
+/* Report PDF export (Phase 15.17) — the report preview portals a print-only
+   copy of the document to <body>. On screen it stays hidden; when printing,
+   the app shell is hidden and only the report document is laid out on A4
+   pages, so the browser's "Save as PDF" produces a clean client-ready file.
+   (Page numbers come from the print dialog's header/footer option.) */
+.report-print-root {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm 20mm;
+  }
+
+  body:has(.report-print-root) > *:not(.report-print-root) {
+    display: none !important;
+  }
+
+  .report-print-root {
+    display: block !important;
+    padding-bottom: 8mm; /* room for the repeating footer */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Keep cards, tables and property banners whole across page breaks. */
+  .report-print-root .report-avoid-break,
+  .report-print-root table {
+    break-inside: avoid;
+  }
+
+  /* Brand footer repeated on every printed page. */
+  .report-print-footer {
+    position: fixed;
+    inset: auto 0 0 0;
+    display: flex;
+  }
+}

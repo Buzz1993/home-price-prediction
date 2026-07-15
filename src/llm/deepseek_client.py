@@ -6,9 +6,9 @@ import requests
 import json
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "ministral-3:3b-cloud"
-#deepseek-v3.1:671b-cloud
-#ministral-3:3b-cloud
+MODEL_NAME = "gpt-oss:120b-cloud"
+# gpt-oss:120b-cloud
+# gemma4:31b-cloud
 
 def ask_deepseek(prompt):
 

@@ -7,11 +7,9 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from src.mcp.tools.property_tools import (
-    create_property_report,
-    send_property_report,
-)
+from src.mcp.tools.property_tools import create_property_report
 from src.llm.report_enhancement import enhance_report
+from src.services.whatsapp_service import WhatsAppError, send_report
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +29,11 @@ class ReportRequest(BaseModel):
 class ShareReportRequest(BaseModel):
     property_ids: list[str]
     phone_number: str
+    # The already-generated report text from the frontend preview (Phase 16.1).
+    # When provided, the SAME report the user is looking at is delivered and
+    # nothing is regenerated; when omitted, the report is generated once here
+    # (the pre-16.1 behavior), so existing callers keep working.
+    report: str | None = None
 
 
 # =====================================================
@@ -126,34 +129,36 @@ def generate_report(request: ReportRequest, enhance: bool = False):
 @router.post("/report/share")
 def share_report(request: ShareReportRequest, enhance: bool = False):
     """
-    Generate and share a property report
-    through WhatsApp/SMS.
+    Share a property report to a WhatsApp number through the official Meta
+    WhatsApp Cloud API (Phase 16.1): the report is rendered to a PDF once,
+    uploaded to the Cloud API media endpoint and sent as a document message.
 
-    Reuses the existing sharing workflow (MCP tool send_property_report + n8n)
-    unchanged. When `enhance=true` (Phase 15.10), the SAME backend report is
-    first passed through Claude for readability so the shared report matches the
-    enhanced preview; if the enhancement is unavailable the backend report is
-    shared as-is, so sharing never breaks.
+    The report text is NEVER regenerated when the frontend passes the
+    previewed report in `request.report`. Only when it is absent is the
+    report generated here (with the Phase 15.10 Claude readability pass when
+    `enhance=true`), preserving the pre-16.1 contract for existing callers.
     """
 
-    report = execute(
-        create_property_report,
-        request.property_ids
-    )
+    report = (request.report or "").strip()
 
-    if enhance:
-        try:
-            enhanced = enhance_report(report, request.property_ids)
-        except Exception:
-            logger.exception(
-                "Report enhancement step failed; sharing backend report without it."
-            )
-            enhanced = None
-        if enhanced:
-            report = enhanced
+    if not report:
+        report = execute(
+            create_property_report,
+            request.property_ids
+        )
 
-    return execute(
-        send_property_report,
-        request.phone_number,
-        report
-    )
+        if enhance:
+            try:
+                enhanced = enhance_report(report, request.property_ids)
+            except Exception:
+                logger.exception(
+                    "Report enhancement step failed; sharing backend report without it."
+                )
+                enhanced = None
+            if enhanced:
+                report = enhanced
+
+    try:
+        return send_report(request.phone_number, report)
+    except WhatsAppError as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e))

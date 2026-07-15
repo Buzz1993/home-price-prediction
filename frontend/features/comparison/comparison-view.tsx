@@ -8,6 +8,7 @@
 // ranks via POST /analysis/comparison.
 
 import { AnalysisExplanation } from "@/features/analysis/analysis-explanation";
+import { SectionLabel } from "@/features/analysis/ui/analysis-ui";
 import { ComparisonResult } from "@/features/dashboard/comparison-result";
 import { PropertyScoreCards } from "./property-score-cards";
 import type { ComparisonResult as ComparisonResultData } from "@/types/dashboard";
@@ -20,7 +21,7 @@ export function ComparisonView({
   explanation?: string | null;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Claude explains the backend comparison; the Score Cards and
           Comparison Table below still render the unchanged backend result
           even if the explanation is absent. */}
@@ -30,9 +31,7 @@ export function ComparisonView({
       />
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          Property Score Cards
-        </h2>
+        <SectionLabel>Property Score Cards</SectionLabel>
         <PropertyScoreCards
           rankings={content.rankings}
           winnerId={content.winner.id}
@@ -40,9 +39,7 @@ export function ComparisonView({
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          AI Recommendation &amp; Ranking
-        </h2>
+        <SectionLabel>AI Recommendation &amp; Ranking</SectionLabel>
         <ComparisonResult data={content} />
       </div>
     </div>

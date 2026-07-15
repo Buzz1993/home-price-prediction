@@ -6,8 +6,9 @@ st.title("Ollama Stream Test")
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
-MODEL_NAME = "ministral-3:3b-cloud"
-#ministral-3:3b-cloud
+MODEL_NAME = "gpt-oss:120b-cloud"
+# gpt-oss:120b-cloud
+# gemma4:31b-cloud
 
 prompt = st.text_input("Prompt", "Hello Mumbai")
 

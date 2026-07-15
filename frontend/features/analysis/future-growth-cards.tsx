@@ -1,52 +1,108 @@
 "use client";
 
-// Future Growth view (Phase 15.15). The backend has no dedicated future-growth
-// endpoint — run_future_agent computes the growth fields during enrichment and
-// they are exposed on the investment advice rows (get_investment_advice /
-// /analysis/advisor: growth_label, growth_reason, and — when the backend selects
-// them — future_signals, infra_detected, growth_score). So Future Growth is
-// surfaced from those advisor rows here, focused on the growth dimension.
-// Presentational only: every value shown is produced by the backend.
+// Decision-first Future Growth view (Phase 15.20). The backend has no dedicated
+// future-growth endpoint — run_future_agent computes the growth fields during
+// enrichment and exposes them on the investment advice rows (growth_label,
+// growth_reason, and when selected future_signals, infra_detected,
+// growth_score). Executive-report hierarchy: Decision Summary (the verbatim
+// backend growth_label) → Why checklist built from the verbatim infrastructure
+// and future-signal lists → growth-score gauge → the verbatim growth_reason as
+// the outlook. The label is shown ONCE (in the summary), not repeated across
+// header pill and "Growth potential" pills as before.
 
-import { LineChart, Sparkles } from "lucide-react";
+import { LineChart, Sparkles, TrendingUp } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { AdvisorRow } from "@/types/dashboard";
+import { toneKey, toneRank } from "@/lib/value-tone";
+import { splitList } from "@/features/dashboard/format";
+import { CompactPropertyHeader } from "./property-header";
+import {
+  MetricExplainer,
+  RadialGauge,
+  SectionLabel,
+  hasValue,
+} from "./ui/analysis-ui";
+import {
+  DecisionSummary,
+  RecommendationBar,
+  WhyCard,
+} from "./ui/decision-summary";
+import { ExecutiveSummary, usePropertyName } from "./ui/executive-summary";
 
-// Map the backend growth label to a badge tone. The backend labels are e.g.
-// "🚀 High Growth", "📍 Mature Area", "➖ No Growth Signal"; we only pick a colour
-// from the wording and never alter the text the backend produced.
-function growthTone(label: string): "success" | "warning" | "outline" {
-  const text = label.toLowerCase();
-  if (text.includes("high")) return "success";
-  if (text.includes("mature")) return "warning";
-  return "outline";
-}
-
-// A backend growth field is "present" only when it is a non-empty value. The
-// advisor rows return null/empty for fields the backend did not populate, so we
-// render each detail row only when there is something to show.
-function hasValue(value: unknown): value is string | number {
-  if (value === null || value === undefined) return false;
-  if (typeof value === "string") return value.trim().length > 0;
-  return true;
-}
-
-function GrowthDetail({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium">{value}</span>
-    </div>
-  );
+function toNumber(value: unknown): number | null {
+  const n = typeof value === "string" ? Number(value) : (value as number);
+  return typeof n === "number" && !Number.isNaN(n) ? n : null;
 }
 
 export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
+  const resolveName = usePropertyName();
+
+  // Executive comparison (Phase 15.21): with several properties analyzed, lead
+  // with the one whose backend growth signals read strongest — the highest
+  // backend growth_score when scores are present, otherwise the growth_label
+  // whose wording reads best (toneRank). Presentation only.
+  const contenders = rows
+    .filter((item) => hasValue(item.growth_label))
+    .map((item) => ({
+      item,
+      label: String(item.growth_label),
+      score: toNumber(item.growth_score),
+    }));
+  const useScores =
+    contenders.filter((c) => c.score !== null).length >= 2;
+  const winner =
+    rows.length >= 2 && contenders.length >= 2
+      ? contenders.reduce((best, c) =>
+          (useScores
+            ? (c.score ?? -1) > (best.score ?? -1)
+            : toneRank(c.label) > toneRank(best.label))
+            ? c
+            : best
+        )
+      : null;
+
   return (
-    <div className="space-y-3">
-      {rows.map((item) => {
+    <div className="space-y-4">
+      {winner && (
+        <>
+          <ExecutiveSummary
+            eyebrow="Better growth potential"
+            id={winner.item.id}
+            name={resolveName(winner.item.id)}
+            badge={winner.label}
+            statement={
+              hasValue(winner.item.growth_reason)
+                ? String(winner.item.growth_reason)
+                : undefined
+            }
+            stat={
+              hasValue(winner.item.growth_score)
+                ? {
+                    label: "Growth score",
+                    value: String(winner.item.growth_score),
+                    sub: "Out of 5",
+                  }
+                : undefined
+            }
+            reasons={[
+              ...splitList(winner.item.infra_detected as string | null),
+              ...splitList(winner.item.future_signals as string | null),
+            ].slice(0, 5)}
+            contenders={contenders.map((c) => ({
+              id: c.item.id,
+              name: resolveName(c.item.id),
+              status: c.label,
+              display:
+                c.score !== null ? `Score ${c.score}` : undefined,
+              isWinner: c === winner,
+            }))}
+          />
+          <SectionLabel>Property breakdown</SectionLabel>
+        </>
+      )}
+
+      {rows.map((item, index) => {
         // Growth data present for this property? growth_label is the primary
         // signal produced by the backend future agent.
         const hasGrowth =
@@ -56,68 +112,113 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
           hasValue(item.infra_detected) ||
           hasValue(item.growth_score);
 
+        // Infrastructure / signal strings are comma-separated backend
+        // summaries; splitting them into checklist lines is formatting only.
+        const infraReasons = splitList(item.infra_detected as string | null);
+        const signalReasons = splitList(item.future_signals as string | null);
+        const growthScore = toNumber(item.growth_score);
+        const label = hasValue(item.growth_label)
+          ? String(item.growth_label)
+          : null;
+
         return (
-          <Card key={item.id} className="gap-3 py-4">
-            <CardHeader className="px-4">
-              <CardTitle className="flex flex-wrap items-center gap-2 text-sm">
-                <LineChart className="size-4 text-primary" />
-                <span className="font-mono">{item.id}</span>
-                {hasValue(item.growth_label) && (
-                  <Badge variant={growthTone(item.growth_label as string)}>
-                    {item.growth_label}
-                  </Badge>
+          <section key={item.id} className="space-y-2">
+            <CompactPropertyHeader
+              id={item.id}
+              index={index}
+              analysisLabel="Future Growth"
+              icon={LineChart}
+            />
+
+            {hasGrowth ? (
+              <>
+                {/* 1 — the answer first: the backend's own growth label */}
+                {label && (
+                  <DecisionSummary
+                    eyebrow="Growth potential"
+                    headline={label}
+                    icon={TrendingUp}
+                    tone={toneKey(label)}
+                    tagline="Long-term appreciation outlook"
+                    stat={
+                      hasValue(item.growth_score)
+                        ? {
+                            label: "Growth score",
+                            value: String(item.growth_score),
+                            sub: "Out of 5",
+                          }
+                        : undefined
+                    }
+                  />
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 px-4 text-sm">
-              {hasGrowth ? (
-                <>
-                  {hasValue(item.growth_reason) && (
-                    <div className="rounded-md bg-emerald-500/5 p-3">
-                      <p className="mb-1 font-medium text-emerald-600 dark:text-emerald-400">
-                        Growth outlook
-                      </p>
-                      <p className="text-muted-foreground">
-                        {item.growth_reason}
-                      </p>
-                    </div>
-                  )}
-                  {(hasValue(item.future_signals) ||
-                    hasValue(item.infra_detected) ||
-                    hasValue(item.growth_score)) && (
-                    <div className="space-y-2 rounded-md bg-muted p-3">
-                      {hasValue(item.future_signals) && (
-                        <GrowthDetail
-                          label="Future signals"
-                          value={item.future_signals as string}
-                        />
-                      )}
-                      {hasValue(item.infra_detected) && (
-                        <GrowthDetail
-                          label="Infrastructure detected"
-                          value={item.infra_detected as string}
-                        />
-                      )}
-                      {hasValue(item.growth_score) && (
-                        <GrowthDetail
-                          label="Growth score"
-                          value={item.growth_score as number}
-                        />
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
+
+                {/* 2 — why: the backend's detected infrastructure & signals */}
+                {label && (
+                  <WhyCard
+                    title={`Why ${label}?`}
+                    reasons={[...infraReasons, ...signalReasons]}
+                  />
+                )}
+
+                {/* 3 — metrics: growth-score gauge (arc scaled against the
+                    backend's range — comparison_agent treats >= 3 as high
+                    growth; 5 caps the visual; the verbatim score shows). */}
+                {growthScore !== null && (
+                  <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2 shadow-sm">
+                    <RadialGauge
+                      value={growthScore}
+                      max={5}
+                      display={String(item.growth_score)}
+                    />
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Growth score
+                    </p>
+                  </div>
+                )}
+
+                {/* 4 — the backend's own outlook for the area */}
+                {hasValue(item.growth_reason) && (
+                  <RecommendationBar
+                    tone={label ? toneKey(label) : "positive"}
+                    icon={LineChart}
+                    title="Growth outlook"
+                  >
+                    {item.growth_reason}
+                  </RecommendationBar>
+                )}
+              </>
+            ) : (
+              <div className="rounded-xl border bg-card px-3 py-2 shadow-sm">
                 <EmptyState
                   icon={Sparkles}
                   description="No future growth information is available for this property."
-                  className="py-6"
+                  className="py-4"
                 />
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </section>
         );
       })}
+
+      <MetricExplainer
+        items={[
+          {
+            term: "Growth potential",
+            meaning:
+              "The backend's long-term appreciation outlook for the area, derived from detected infrastructure projects and development signals.",
+          },
+          {
+            term: "Infrastructure & signals",
+            meaning:
+              "Concrete development drivers — metro lines, highways, IT corridors and similar projects — that historically lift property values nearby.",
+          },
+          {
+            term: "How to use it",
+            meaning:
+              "Growth signals matter most for longer investment horizons. A high-growth area can justify a fair (or slightly high) price today.",
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -1294,12 +1294,196 @@ Examples:
 
 ---
 
+## Phase 15.18 — Premium Analysis Workspace UI
+
+> Frontend-only UI enhancement. The AI Analysis page now renders every analysis
+> result in the premium report-document design language (Phase 15.17) instead of
+> plain tables/cards: solid green hero banners with verbatim chips per property,
+> uppercase micro-label metric cards, tone-tinted status pills (shared
+> lib/value-tone.ts, extracted verbatim from the report document), dashed
+> key-value rows for any extra backend fields (nothing is ever dropped), score
+> bars, callout cards (green/red/amber/blue), collapsible static metric
+> explainers, and skeleton-card loading states. Dedicated premium renderers for
+> Price Prediction (gain/loss difference, current-vs-predicted bars), Valuation
+> (three-stop color-coded scale highlighting the backend flag), Rental (rent /
+> yield metric grid + strategy callout), Risk, Future Growth (infrastructure &
+> signal chips), Advisor (strengths/weaknesses + verdict callout) and
+> Negotiation (target price / discount metrics + talking-point checklist). The
+> comparison view gets a green winner hero, report-style zebra ranking table and
+> score-bar property cards. Shared components (AdvisorCards, NegotiationCards,
+> ComparisonResult) keep their signatures, so chat payloads upgrade too. No
+> backend, API, response format or analysis logic changed — every displayed
+> value comes verbatim from the existing responses. Debug console.log removed
+> from the workspace. Production build passes.
+
+- [x] Shared premium primitives (features/analysis/ui/analysis-ui.tsx)
+- [x] Premium Price Prediction / Valuation / Rental renderers
+- [x] Premium Risk / Future Growth / Advisor / Negotiation renderers
+- [x] Premium comparison view (winner hero, score bars, report-style table)
+- [x] AI explanation card restyled with the report accent bar
+- [x] Skeleton-card loading + elegant empty states
+
+### Density pass — compact investment dashboard
+
+> Frontend-only follow-up. The Analysis page is redesigned for information
+> density (~30–40% less scrolling) so it reads like a premium investment
+> dashboard rather than a stack of large cards. The tall green hero banner is
+> replaced by a compact (~72px) property header (features/analysis/
+> property-header.tsx) with a thumbnail from the backend image_urls (elegant
+> placeholder otherwise), the property name / location / configuration looked
+> up from the workspace's already-loaded search rows (card ids demoted to small
+> metadata), a per-analysis eyebrow and a verbatim status pill. Metric cards
+> are ~35% shorter (tighter padding, icon + micro-label typography) and laid
+> out in dense 2-up / 4-up grids; the long full-width bars are replaced by
+> mini comparison bars (prediction), a radial yield/score gauge (rental,
+> growth), a compact segmented indicator (valuation) and a difference badge
+> with direction arrow (prediction). Risk/Advisor/Negotiation callouts pair up
+> in 2-column grids; the comparison winner banner and score cards are
+> flattened to slim strips. The AI insight card ("EstateMind Insight") is
+> compact, and a missing explanation renders as a small dashed empty state
+> instead of a large banner. All KeyValueList extra-field rendering is kept so
+> no backend field is ever dropped; no backend, API, response format or
+> analysis logic changed. Production build passes.
+
+- [x] Compact property header (name/location/config + thumbnail, id as metadata)
+- [x] Compact metric cards (-35% height) in dense 2x2 / 4-up grids
+- [x] Mini comparison bars + difference badge (prediction)
+- [x] Radial gauges (rental yield, growth score) + segmented valuation indicator
+- [x] Paired callout grids (risk, advisor, negotiation)
+- [x] Slim comparison winner strip + compact score cards
+- [x] Compact EstateMind Insight card + elegant unavailable state
+
+---
+
+## Phase 15.20 — Analysis Result Clarity & Decision-Oriented UX
+
+> Frontend-only presentation change. Every analysis now reads decision-first,
+> in the same executive-report hierarchy: Decision Summary → Why this result?
+> → Metrics → Recommendation → collapsed Technical details. New shared
+> primitives (features/analysis/ui/decision-summary.tsx): DecisionSummary (a
+> large tone-tinted headline card with an action tagline and an optional
+> prominent stat), WhyCard (✓ checklist assembled from backend fields),
+> RecommendationBar (reuses CalloutCard) and TechnicalDetails (collapsible
+> KeyValueList container); lib/value-tone.ts gains toneKey() so the summary
+> cards and status pills share one wording→tone rule. Per analysis: Price
+> Prediction derives Overpriced / Undervalued / Fairly Priced from the SIGN of
+> the backend margin_diff (the same reading the old difference badge colored)
+> with the predicted value as the headline stat; Rental leads with the verbatim
+> investment_rating (restated as stars) and the verbatim yield, closing with
+> the backend rental_strategy; Valuation leads with the verbatim analysis_flag
+> and closes with the verbatim analysis_msg; Risk leads with the verbatim
+> verdict plus a concern count from the backend risks list; Future Growth leads
+> with the verbatim growth_label and uses the infrastructure/signal lists as
+> the Why checklist; Advisor leads with the verbatim verdict and closes with
+> the verbatim suitable_for fit; Negotiation leads with the verbatim
+> negotiation_power and the backend target price as the headline stat. The
+> comparison winner strip shows the project name (workspace lookup, id demoted
+> to metadata). Duplicate status displays removed: the property-header status
+> pill, the rating/verdict/growth/power pill cards and the valuation segmented
+> indicator that repeated the summary are gone — each major status appears
+> exactly once. Extra backend fields stay reachable via the collapsed
+> Technical details (KeyValueList unchanged, nothing dropped). No backend,
+> API, response format or analysis logic changed; every headline, reason and
+> action is derived only from existing response fields. Shared components
+> (AdvisorCards, NegotiationCards, ComparisonResult) keep their signatures, so
+> chat payloads upgrade too. tsc, ESLint and the production build pass.
+
+- [x] Shared decision-first primitives (DecisionSummary / WhyCard / RecommendationBar / TechnicalDetails)
+- [x] toneKey() shared wording→tone rule (lib/value-tone.ts)
+- [x] Decision-first Price Prediction / Rental / Valuation renderers
+- [x] Decision-first Risk / Future Growth / Advisor / Negotiation renderers
+- [x] Comparison winner strip shows the project name
+- [x] Duplicate status displays removed (status shown exactly once per analysis)
+- [x] Extra backend fields collapsed into Technical details (nothing dropped)
+
+---
+
+## Phase 15.21 — Cross-Property Executive Comparison UX
+
+> Frontend-only presentation change. When several properties are analyzed
+> together, every analysis now opens with an Executive Comparison Summary —
+> "which property performs better in this category?" — before the unchanged
+> Phase 15.20 per-property sections. New reusable component
+> (features/analysis/ui/executive-summary.tsx): a Premium Report green winner
+> banner (trophy eyebrow, large property name resolved from the workspace's
+> loaded search rows, verbatim status badge, star restatement, one-line
+> explanation, key stat, ✓ reasons) over a side-by-side contender strip
+> showing every compared property with its verbatim status and value; a
+> "Property breakdown" section label separates it from the individual
+> sections. The winner is never computed — each renderer picks it by comparing
+> EXISTING backend values only: Price Prediction takes the largest backend
+> margin_diff (asking furthest below prediction, or closest to it when all are
+> overpriced); Rental the highest backend rental_yield_percent; Valuation the
+> best backend analysis_flag on the backend's own scale (undervalued > fair >
+> overpriced); Risk the best verdict wording (shared toneRank in
+> lib/value-tone.ts), ties to the fewest backend-listed concerns; Future
+> Growth the highest backend growth_score (falling back to the growth_label
+> wording); Advisor the best-graded verdict (star restatement, tone as
+> tie-break); Negotiation the largest backend suggested discount (power
+> wording as tie-break). Summaries render only when 2+ properties carry the
+> needed backend values, so single-property analyses are unchanged. The
+> comparison view is polished into winner + runner-up cards: a larger green
+> winner card whose comparison_reason splits into ✓ advantages, and a
+> runner-up card (next backend-ranked property) with score, verdict pill and
+> reason. No backend, API, response format or analysis logic changed; shared
+> component signatures unchanged, so chat payloads upgrade too. tsc, ESLint
+> and the production build pass.
+
+- [x] Reusable ExecutiveSummary (winner banner + contender strip + usePropertyName)
+- [x] toneRank() ordinal wording comparison + StarRow onDark variant
+- [x] Executive comparison on all seven analyses (backend-value picks only)
+- [x] Single-property analyses unchanged (summary gated on 2+ contenders)
+- [x] Comparison polish: large winner card with ✓ advantages + runner-up card
+- [x] Phase 15.20 per-property hierarchy fully preserved below the summary
+
+---
+
+## Phase 16.1 — WhatsApp Cloud API Report Delivery
+
+> End-to-end WhatsApp report delivery through the official Meta WhatsApp
+> Cloud API — no n8n, Twilio, pywhatkit or Selenium. New reusable backend
+> service (src/services/whatsapp_service.py): validate_phone_number()
+> (normalize to digits-only international format, reject invalid input),
+> generate_report_pdf() (renders the EXISTING Markdown report text verbatim
+> to a branded A4 PDF with reportlab — headings, bullets, emphasis — cached
+> by content hash so each report is rendered once), upload_pdf() (POST
+> /{PHONE_NUMBER_ID}/media multipart → media_id), send_document() (POST
+> /{PHONE_NUMBER_ID}/messages document message) and send_report() (the
+> orchestration, returning the frontend-compatible ShareResult {status,
+> status_code, message_id}). Credentials come only from environment
+> variables (WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID,
+> WHATSAPP_API_VERSION=v25.0 — documented in .env.example, loaded via
+> python-dotenv, read at call time). Meaningful errors: invalid phone → 400,
+> missing config → 503, expired/invalid token (OAuthException) → 502 with a
+> clear message, upload/send failures → 502 with Meta's own error, network
+> timeout → 504, missing/empty report or PDF → 400/500. POST /report/share
+> now delivers via this service and accepts an optional `report` field: the
+> frontend passes the previewed report text so the exact on-screen report is
+> sent WITHOUT regenerating it (when absent, the report is generated once —
+> the pre-16.1 contract). Frontend keeps the existing UI: same phone textbox
+> and Share Report button, "Sending report…" pending state, "Report sent
+> successfully" confirmation and an "Unable to send report" error state that
+> surfaces the backend's meaningful error detail. Report generation, prompts,
+> analysis and layout untouched. Verified with mocked Cloud API end-to-end
+> tests (upload → send payloads, token expiry, timeout), real PDF generation,
+> FastAPI app import, tsc/ESLint and the production build.
+
+- [x] src/services/whatsapp_service.py (upload_pdf / send_document / send_report)
+- [x] Branded PDF from the existing report text (reportlab, content-hash cache)
+- [x] Env-only credentials (.env.example updated, no hardcoding)
+- [x] POST /report/share switched to WhatsApp Cloud API + optional report passthrough
+- [x] Frontend sends the previewed report text (never regenerated)
+- [x] Meaningful error handling (invalid phone / expired token / upload / timeout / missing PDF)
+- [x] Existing Share Report UI preserved (wording aligned: sending / success / failure)
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be
 > implemented after the core application is complete.
 
-- [ ] Export reports as PDF
+- [x] Export reports as PDF (Phase 15.17 — premium report preview + browser print-to-PDF)
 - [ ] Export reports as DOCX
 - [ ] Authentication with JWT
 - [ ] Persistent database for saved properties

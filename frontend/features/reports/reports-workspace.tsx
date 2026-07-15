@@ -97,7 +97,13 @@ export function ReportsWorkspace() {
           {report && !generate.isPending && (
             <div className="space-y-4">
               <ReportPreview report={displayReport!} notice={enhancementNotice} />
-              <ShareReportForm propertyIds={reportedIds} />
+              {/* The previewed report text travels with the share request so
+                  the backend sends exactly this report as a WhatsApp PDF
+                  without regenerating it (Phase 16.1). */}
+              <ShareReportForm
+                propertyIds={reportedIds}
+                report={displayReport ?? undefined}
+              />
             </div>
           )}
 

@@ -145,10 +145,12 @@ export type AdvisorRow = {
 };
 
 // Delivery status returned by POST /report/share. Mirrors the backend
-// send_property_report return shape ({ status, status_code }).
+// whatsapp_service.send_report return shape (Phase 16.1):
+// { status, status_code, message_id } — message_id is the WhatsApp message id.
 export type ShareResult = {
   status: string;
   status_code?: number;
+  message_id?: string | null;
 };
 
 // POST /report?enhance=true response (Phase 15.10). The backend report is

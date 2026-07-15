@@ -7,12 +7,12 @@
 // `unavailableMessage` tailors the graceful fallback wording per feature.
 //
 // Claude is optional: when the backend omits the explanation (Claude
-// unavailable / failed), a graceful message is shown and the backend result
-// still renders normally.
+// unavailable / failed), an elegant compact empty state is shown and the
+// backend result still renders normally. Premium presentation (Phase 15.18):
+// the card carries the report document's brand accent bar and uppercase
+// eyebrow title, with compact padding.
 
 import { Sparkles } from "lucide-react";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function AnalysisExplanation({
   explanation,
@@ -23,23 +23,28 @@ export function AnalysisExplanation({
 }) {
   const text = explanation?.trim();
 
+  // Elegant compact empty state instead of a large notification banner.
+  if (!text) {
+    return (
+      <p className="flex items-center gap-1.5 rounded-lg border border-dashed px-3 py-1.5 text-xs text-muted-foreground">
+        <Sparkles className="size-3.5 shrink-0 text-primary/50" />
+        {unavailableMessage}
+      </p>
+    );
+  }
+
   return (
-    <Card className="gap-3 border-primary/20 bg-primary/5 py-4">
-      <CardHeader className="px-4">
-        <CardTitle className="flex items-center gap-2 text-sm text-primary">
-          <Sparkles className="size-4" />
-          AI explanation
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 text-sm">
-        {text ? (
-          <p className="whitespace-pre-wrap break-words leading-relaxed text-foreground">
-            {text}
-          </p>
-        ) : (
-          <p className="text-muted-foreground">{unavailableMessage}</p>
-        )}
-      </CardContent>
-    </Card>
+    <div className="overflow-hidden rounded-xl border border-primary/20 bg-primary/5 shadow-sm">
+      <div className="h-1 bg-primary" />
+      <div className="space-y-1.5 p-3">
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
+          <Sparkles className="size-3.5" />
+          EstateMind Insight
+        </p>
+        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
+          {text}
+        </p>
+      </div>
+    </div>
   );
 }

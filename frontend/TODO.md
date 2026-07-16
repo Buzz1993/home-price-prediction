@@ -1716,6 +1716,76 @@ Examples:
 - [x] Duplicate-click protection (send button, phone input, share toggle disabled while sending)
 - [x] Sending helper text, improved success (delivered-to number) and error (reason + Try Again) feedback
 
+## Phase 18.1 — Premium SaaS UI Redesign
+
+> Visual-only redesign to production-quality SaaS standards (Stripe / Linear /
+> Vercel-inspired, emerald-green identity). No feature, routing, API or
+> business-logic changes — every page keeps its exact workflow. Design tokens
+> refreshed in globals.css: soft slate canvas (#F8FAFC), pure-white floating
+> cards, brand palette #15803D / #22C55E / #4ADE80, thin #E5E7EB borders,
+> #F0FDF4 hover wash, larger radius scale, layered soft shadows (shadow-float /
+> shadow-float-lg), glass utility, brand gradient utility, gradient top-accent
+> utility, shimmer skeletons and a global prefers-reduced-motion fallback.
+> Chrome floats: detached rounded glass sidebar + sticky glass top bar (rounded
+> global search with ⌘K hint, notifications, real user-initials avatar linking
+> to Profile). The Copilot workspace columns (conversations / chat / map /
+> tray) render as floating panels with transparent gutter drag handles —
+> resize + streaming logic untouched. Chat got gradient/glassy avatars,
+> premium bubbles and a floating rounded composer. The evaluation tray rows
+> now show the property thumbnail, name, price and AI recommendation score
+> (looked up from the conversation's already-accumulated backend results —
+> nothing fetched or computed) plus a selection progress bar. Property cards
+> lift on hover with a slow image zoom, gradient BHK badge and refined price
+> typography. Buttons: brand-gradient primary with hover lift + soft green
+> shadow. Badges are pills; empty states get a soft gradient icon ring; auth
+> pages get a soft emerald glow canvas; page headers upgraded to a larger
+> heading scale. Print/PDF report documents intentionally untouched.
+
+- [x] Design tokens + premium utilities (glass, shadow-float, brand gradient, shimmer, reduced motion)
+- [x] Floating glass sidebar + sticky glass top bar with rounded search and avatar
+- [x] Copilot workspace as floating panels (conversations / chat / map / tray)
+- [x] Premium chat bubbles, avatars and floating composer
+- [x] Evaluation tray: thumbnails, name, price, AI score, progress section
+- [x] Premium property card (hover lift, image zoom, gradient badge, pill amenities)
+- [x] Gradient buttons, pill badges, shimmer skeletons, premium empty states
+- [x] Auth pages glow canvas + larger page-header typography
+- [x] Production build verified (next build passes)
+
+---
+
+## Phase 18.2 — Premium Visual Theme Upgrade (Purple, Reference-Based)
+
+> Visual-only retheme of the entire application to the premium purple-and-white
+> design language of the provided reference (Linear / Stripe / Perplexity
+> feel). No feature, routing, API or business-logic changes. Design tokens
+> swapped in globals.css: soft lavender canvas (#F6F5FD), brand purple
+> #6D4AFF / #8C6DFF, #ECE9F8 borders, #F3F0FF hover wash, #F5F2FF lavender
+> chip surfaces, purple chart scale, purple-tinted float shadows and new
+> bg-sidebar-gradient + shadow-brand-glow utilities. Both sidebars (global
+> rail and Copilot conversation rail) are now dark purple gradient floating
+> panels (#221A44 → #18132F) with light text, purple-gradient active pill with
+> soft glow, translucent hover states, dark search input and a bottom user
+> profile card with Pro badge and settings glyph (still one link to
+> /profile). Evaluation tray rows redesigned per spec: thumbnails removed
+> entirely (no placeholder / broken-image icon) — each row shows the cardid in
+> 11px gray monospace above the bold name, bold price, green AI score and a
+> right-aligned delete icon; selected rows get a purple border and lavender
+> wash. Compare/clear/selection behavior untouched. Property cards: bold
+> purple project name, purple AI Recommendation badge, lavender amenity
+> pills. Comparison matrix headers use the lavender accent (winner columns
+> keep their soft green highlight); success/warning/danger semantics remain
+> green/amber/red throughout. Map price markers and cluster bubbles inherit
+> the purple tokens. Print/PDF report documents intentionally untouched.
+
+- [x] Purple design tokens (canvas, brand, borders, hover, charts, dark mode)
+- [x] Dark purple gradient sidebars (global + conversation rail, mobile sheets)
+- [x] Sidebar user profile card with Pro badge + settings glyph
+- [x] Evaluation tray rows: cardid + name + price + green AI score, no thumbnails
+- [x] Purple gradient buttons / glow shadows (button, brand, chat avatar, auth)
+- [x] Property card: purple name, purple AI badge, lavender amenity pills
+- [x] Comparison matrix: lavender accent headers (green winner highlights kept)
+- [x] Production build verified (next build passes)
+
 ---
 
 ## Future Enhancements

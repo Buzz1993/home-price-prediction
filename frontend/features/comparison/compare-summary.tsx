@@ -111,7 +111,7 @@ export function FinalScoreboard({
   if (entries.length === 0) return null;
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <section className="overflow-hidden rounded-xl border bg-card shadow-float">
       <div className="h-1 bg-primary" />
       <div className="border-b p-3">
         <h3 className="flex items-center gap-2 font-heading text-sm font-semibold">

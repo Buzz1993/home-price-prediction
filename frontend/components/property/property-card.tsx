@@ -95,14 +95,16 @@ export function PropertyCard({
   return (
     <Card
       className={cn(
-        "gap-0 overflow-hidden py-0 transition-all duration-[250ms] hover:shadow-md",
+        // Premium floating card (Phase 18.1): slight lift + deeper soft shadow
+        // on hover; `group` drives the image hover-zoom below.
+        "group gap-0 overflow-hidden py-0 transition-all duration-[250ms] hover:-translate-y-0.5 hover:shadow-float-lg",
         // Horizontal layout (md+): image on the left, details on the right.
         horizontal && "md:flex-row",
-        // Staged: the ENTIRE card switches to a rich (but still elegant) premium
-        // light-green appearance — a clear green gradient wash, a darker green
-        // border, a green ring and a soft green glow — so staged properties are
-        // immediately recognizable. Kept light enough that all text stays fully
-        // readable. Reverts smoothly (250ms) when unstaged.
+        // Staged: the ENTIRE card switches to a rich (but still elegant)
+        // premium light-purple appearance — a clear purple gradient wash, a
+        // deeper purple border, a purple ring and a soft glow — so staged
+        // properties are immediately recognizable. Kept light enough that all
+        // text stays fully readable. Reverts smoothly (250ms) when unstaged.
         staged &&
           "border-primary/60 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 shadow-lg shadow-primary/25 ring-2 ring-primary/40"
       )}
@@ -127,7 +129,7 @@ export function PropertyCard({
             loading="lazy"
             decoding="async"
             onError={() => setImageError(true)}
-            className="size-full object-cover"
+            className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex size-full items-center justify-center text-muted-foreground">
@@ -136,7 +138,7 @@ export function PropertyCard({
         )}
 
         {/* BHK badge overlaid on the image. */}
-        <Badge className="absolute left-2 top-2 bg-primary text-primary-foreground shadow-sm">
+        <Badge className="bg-brand-gradient absolute left-2 top-2 border-transparent text-primary-foreground shadow-sm">
           <BedDouble /> {property.bhk_type}
         </Badge>
 
@@ -171,7 +173,7 @@ export function PropertyCard({
       <CardContent className="space-y-3 p-4">
         {/* Price and cost per sqft. */}
         <div className="flex items-end justify-between gap-2">
-          <p className="text-lg font-semibold leading-none">
+          <p className="font-heading text-xl font-semibold leading-none tracking-tight">
             {formatCr(property.price)}
           </p>
           {hasValue(property.costpersqft) && (
@@ -181,9 +183,9 @@ export function PropertyCard({
           )}
         </div>
 
-        {/* Project name. */}
+        {/* Project name — bold purple (Phase 18.2). */}
         {property.project_name && (
-          <p className="truncate font-medium leading-tight">
+          <p className="truncate font-semibold leading-tight text-primary">
             {property.project_name}
           </p>
         )}
@@ -224,11 +226,11 @@ export function PropertyCard({
           </div>
         )}
 
-        {/* Recommendation score (backend hybrid score). Slightly deeper green
-            while staged so it reads with the selected card. */}
+        {/* Recommendation score (backend hybrid score) — purple AI badge
+            (Phase 18.2); slightly deeper while staged so it reads with the
+            selected card. */}
         {property.search_score !== undefined && (
           <Badge
-            variant="success"
             title="Recommendation score"
             className={cn(
               "w-fit",
@@ -240,14 +242,14 @@ export function PropertyCard({
         )}
 
         {amenities.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {amenities.slice(0, 4).map((a) => (
-              <Badge key={a} variant="outline">
+              <Badge key={a} variant="secondary">
                 {a}
               </Badge>
             ))}
             {amenities.length > 4 && (
-              <Badge variant="outline">+{amenities.length - 4}</Badge>
+              <Badge variant="secondary">+{amenities.length - 4}</Badge>
             )}
           </div>
         )}

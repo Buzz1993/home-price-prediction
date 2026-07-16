@@ -40,7 +40,7 @@ export function PropertyScoreCards({
           <div
             key={row.id}
             className={cn(
-              "overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md",
+              "overflow-hidden rounded-xl border bg-card shadow-float transition-shadow hover:shadow-float-lg",
               isWinner && "border-primary/50 ring-1 ring-primary/30"
             )}
           >

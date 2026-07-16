@@ -127,10 +127,11 @@ export function WorkspaceRightPanel({ className }: { className?: string }) {
       className={cn("flex h-full min-h-0 flex-col", className)}
     >
       {/* Map — fixed to the chosen height. Transition only when NOT dragging so
-          the live drag is instant (60fps) but the release settles smoothly. */}
+          the live drag is instant (60fps) but the release settles smoothly.
+          Floating rounded card (Phase 18.1). */}
       <div
         className={cn(
-          "min-h-0 shrink-0 overflow-hidden",
+          "min-h-0 shrink-0 overflow-hidden rounded-2xl border bg-card shadow-float",
           !dragging && "transition-[height] duration-200 ease-out"
         )}
         style={mapHeight !== null ? { height: mapHeight } : undefined}
@@ -138,16 +139,14 @@ export function WorkspaceRightPanel({ className }: { className?: string }) {
         <MapPanel />
       </div>
 
-      {/* Drag handle — row-resize cursor, highlights while hovering/dragging. */}
+      {/* Drag handle — row-resize cursor, highlights while hovering/dragging.
+          A slim transparent gutter between the two floating cards. */}
       <div
         role="separator"
         aria-orientation="horizontal"
         aria-label="Resize property map"
         onPointerDown={startDrag}
-        className={cn(
-          "group relative flex h-2.5 shrink-0 cursor-row-resize items-center justify-center border-y bg-muted/40 transition-colors hover:bg-primary/10",
-          dragging && "bg-primary/15"
-        )}
+        className="group relative flex h-3 shrink-0 cursor-row-resize items-center justify-center"
       >
         <span
           className={cn(
@@ -157,8 +156,9 @@ export function WorkspaceRightPanel({ className }: { className?: string }) {
         />
       </div>
 
-      {/* Evaluation Tray — fills the remaining height; scrolls internally. */}
-      <div className="min-h-0 flex-1">
+      {/* Evaluation Tray — fills the remaining height; scrolls internally.
+          Floating rounded card (Phase 18.1). */}
+      <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border bg-card shadow-float">
         <EvaluationTray />
       </div>
     </div>

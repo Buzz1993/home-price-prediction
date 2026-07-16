@@ -140,7 +140,7 @@ export function ConversationItem({
             setRenaming(false);
           }
         }}
-        className="w-full rounded-lg border border-primary bg-background px-2.5 py-2 text-sm outline-none ring-2 ring-primary/30"
+        className="w-full rounded-lg border border-primary bg-white/10 px-2.5 py-2 text-sm text-sidebar-foreground outline-none ring-2 ring-primary/40"
       />
     );
   }
@@ -150,15 +150,15 @@ export function ConversationItem({
       className={cn(
         "group/item relative flex items-center gap-1 rounded-lg pr-1 transition-all duration-150",
         active
-          ? "bg-primary/10 text-foreground"
-          : "hover:bg-muted hover:translate-x-0.5"
+          ? "bg-sidebar-accent text-sidebar-foreground"
+          : "hover:bg-white/5 hover:translate-x-0.5"
       )}
     >
       {/* Active accent bar on the left edge (premium ChatGPT-style cue). */}
       {active && (
         <span
           aria-hidden
-          className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+          className="bg-brand-secondary absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full"
         />
       )}
       <button
@@ -169,20 +169,22 @@ export function ConversationItem({
         <RowIcon
           className={cn(
             "mt-0.5 size-3.5 shrink-0",
-            active ? "text-primary" : "text-muted-foreground"
+            active ? "text-brand-accent" : "text-sidebar-foreground/50"
           )}
         />
         <span className="min-w-0 flex-1">
           <span
             className={cn(
               "block truncate",
-              active ? "font-medium" : "text-foreground/80"
+              active
+                ? "font-medium text-sidebar-foreground"
+                : "text-sidebar-foreground/75"
             )}
           >
             {conversation.title}
           </span>
           {updatedLabel && (
-            <span className="block truncate text-[0.7rem] text-muted-foreground">
+            <span className="block truncate text-[0.7rem] text-sidebar-foreground/45">
               {updatedLabel}
             </span>
           )}
@@ -196,7 +198,7 @@ export function ConversationItem({
             size="icon-sm"
             aria-label="Conversation actions"
             className={cn(
-              "shrink-0 opacity-0 transition-opacity group-hover/item:opacity-100 focus-visible:opacity-100 aria-expanded:opacity-100",
+              "shrink-0 text-sidebar-foreground/60 opacity-0 transition-opacity hover:bg-white/10 hover:text-sidebar-foreground group-hover/item:opacity-100 focus-visible:opacity-100 aria-expanded:bg-white/10 aria-expanded:text-sidebar-foreground aria-expanded:opacity-100",
               active && "opacity-100"
             )}
             onClick={(e) => e.stopPropagation()}

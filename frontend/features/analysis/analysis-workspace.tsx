@@ -209,9 +209,11 @@ export function AnalysisWorkspace() {
 
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="border-b p-4">
-          <h1 className="font-heading text-lg font-semibold">AI Analysis</h1>
+      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-float">
+        <div className="border-b p-5">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+            AI Analysis
+          </h1>
           <p className="text-sm text-muted-foreground">
             Stage properties in the tray, then compare and analyze them here.
           </p>
@@ -356,7 +358,7 @@ export function AnalysisWorkspace() {
         </div>
       </section>
 
-      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-sm">
+      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-float">
         {/* The tray's Compare button reuses the same comparison mutation, so
             comparing from the tray or the card is identical and selections
             are never cleared. */}

@@ -128,8 +128,8 @@ export function CompareWorkspace() {
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        <header className="rounded-xl border bg-card p-4 shadow-sm">
-          <h1 className="font-heading text-lg font-semibold">
+        <header className="card-accent-top rounded-xl border bg-card p-5 shadow-float">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">
             Property Comparison
           </h1>
           <p className="text-sm text-muted-foreground">

@@ -28,7 +28,9 @@ export function SavedWorkspace() {
   return (
     <div className="space-y-4">
       <header className="space-y-1">
-        <h1 className="font-heading text-lg font-semibold">Saved Properties</h1>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">
+          Saved Properties
+        </h1>
         <p className="text-sm text-muted-foreground">
           Properties you have saved. Remove one with the bookmark, or stage it in
           the tray to compare, analyze or report on it.

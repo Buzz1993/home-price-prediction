@@ -77,7 +77,10 @@ export function ConversationSidebar({
   return (
     <aside
       className={cn(
-        "flex h-full min-h-0 w-full flex-col bg-sidebar text-sidebar-foreground",
+        // Carries the dark purple rail gradient itself (Phase 18.2) so both
+        // hosts — the workspace shell's floating panel and the mobile sheet —
+        // render the same premium surface.
+        "bg-sidebar-gradient flex h-full min-h-0 w-full flex-col text-sidebar-foreground",
         className
       )}
     >
@@ -99,13 +102,13 @@ export function ConversationSidebar({
           <Plus /> New Chat
         </Button>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-sidebar-foreground/50" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search chats..."
             aria-label="Search chats"
-            className="h-9 rounded-xl border-border/70 bg-background/60 pl-9 text-sm"
+            className="h-9 rounded-xl border-white/10 bg-white/5 pl-9 text-sm text-sidebar-foreground placeholder:text-sidebar-foreground/40"
           />
         </div>
       </div>
@@ -122,7 +125,7 @@ export function ConversationSidebar({
               {recent.map((c) => renderItem(c.id))}
             </div>
           ) : (
-            <p className="px-2.5 py-2 text-xs text-muted-foreground">
+            <p className="px-2.5 py-2 text-xs text-sidebar-foreground/50">
               {q ? "No chats match your search." : "No recent conversations."}
             </p>
           )}
@@ -144,7 +147,7 @@ function Section({
 }) {
   return (
     <div className="space-y-1">
-      <p className="px-2.5 text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="px-2.5 text-[0.7rem] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
         {title}
       </p>
       <div className="space-y-0.5">{children}</div>

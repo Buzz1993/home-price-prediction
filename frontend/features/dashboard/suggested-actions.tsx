@@ -8,7 +8,7 @@
 //
 // Suggestions are optional: when the backend omits them (Claude unavailable /
 // failed) nothing renders. Chips wrap gracefully, are keyboard-navigable and
-// stay within the green-and-white design system via the shared Button.
+// stay within the purple-and-white design system via the shared Button.
 
 import { Sparkles } from "lucide-react";
 

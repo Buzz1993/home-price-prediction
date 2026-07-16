@@ -30,12 +30,15 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2 text-center",
+        "flex flex-col items-center justify-center gap-3 text-center",
         className
       )}
     >
-      <Icon className="size-8 text-muted-foreground" />
-      {title && <p className="text-sm font-medium">{title}</p>}
+      {/* Icon in a soft green gradient ring — friendly, premium focal point. */}
+      <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 via-accent to-transparent ring-1 ring-primary/10">
+        <Icon className="size-6 text-primary/70" />
+      </span>
+      {title && <p className="text-sm font-semibold">{title}</p>}
       <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
       {action && <div className="pt-1">{action}</div>}
     </div>

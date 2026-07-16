@@ -12,7 +12,7 @@ export function Brand({ className }: { className?: string }) {
         className
       )}
     >
-      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      <span className="bg-brand-gradient shadow-brand-glow flex size-8 items-center justify-center rounded-lg text-primary-foreground">
         <Building2 className="size-5" />
       </span>
       EstateMind

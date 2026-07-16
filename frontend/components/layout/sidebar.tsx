@@ -24,7 +24,10 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex w-[280px] flex-col border-r bg-sidebar text-sidebar-foreground",
+        // Deep purple floating rail (Phase 18.2): detached rounded panel with
+        // the dark sidebar gradient, a faint inner border and a soft shadow —
+        // matching the premium reference design.
+        "bg-sidebar-gradient flex w-[280px] flex-col rounded-2xl border border-sidebar-border text-sidebar-foreground shadow-float",
         className
       )}
     >

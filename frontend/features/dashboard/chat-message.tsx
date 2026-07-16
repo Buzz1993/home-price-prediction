@@ -71,7 +71,9 @@ export function ChatMessage({
       <div
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-full",
-          isUser ? "bg-primary text-primary-foreground" : "bg-muted"
+          isUser
+            ? "bg-brand-gradient shadow-brand-glow text-primary-foreground"
+            : "bg-gradient-to-br from-primary/15 to-accent text-primary ring-1 ring-primary/10"
         )}
       >
         {isUser ? <User className="size-4" /> : <Bot className="size-4" />}
@@ -81,10 +83,10 @@ export function ChatMessage({
         {showBubble && message.text && (
           <div
             className={cn(
-              "inline-block max-w-full whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-sm",
+              "inline-block max-w-full whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm shadow-float",
               isUser
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground"
+                ? "bg-brand-gradient rounded-tr-md text-primary-foreground"
+                : "rounded-tl-md border bg-card text-foreground"
             )}
           >
             {message.text}

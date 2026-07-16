@@ -72,8 +72,8 @@ export function ChatWorkspace() {
             streamed token replaces it with the live assistant message. */}
         {phase === "thinking" && (
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <div className="flex size-8 items-center justify-center rounded-full bg-muted">
-              <Bot className="size-4" />
+            <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-accent ring-1 ring-primary/10">
+              <Bot className="size-4 text-primary" />
             </div>
             <span className="animate-pulse">Analyzing your request…</span>
           </div>
@@ -91,8 +91,9 @@ export function ChatWorkspace() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Composer pinned to the bottom — shrink-0 so it never scrolls away. */}
-      <div className="shrink-0 border-t bg-background/80 px-4 py-3 backdrop-blur">
+      {/* Composer pinned to the bottom — shrink-0 so it never scrolls away.
+          The composer carries its own floating card styling (Phase 18.1). */}
+      <div className="shrink-0 px-4 pb-4 pt-2">
         <ChatInput />
       </div>
     </div>

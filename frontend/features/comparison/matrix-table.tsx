@@ -143,7 +143,7 @@ export function MatrixTable({
   return (
     <section
       className={cn(
-        !bare && "overflow-hidden rounded-xl border bg-card shadow-sm"
+        !bare && "overflow-hidden rounded-xl border bg-card shadow-float"
       )}
     >
       {title && (
@@ -165,14 +165,16 @@ export function MatrixTable({
           <thead className="sticky top-0 z-20">
             <tr className="border-b">
               {/* Sticky corner cell — above both scroll directions. */}
-              <th className="sticky left-0 z-10 w-44 min-w-44 border-r bg-emerald-50 px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <th className="sticky left-0 z-10 w-44 min-w-44 border-r bg-secondary px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Attribute
               </th>
               {columns.map((column) => (
                 <th
                   key={column.id}
                   className={cn(
-                    "min-w-40 bg-emerald-50 px-3 py-2 text-left align-bottom",
+                    // Purple accent header (Phase 18.2); the winner column
+                    // keeps its soft green highlight.
+                    "min-w-40 bg-secondary px-3 py-2 text-left align-bottom",
                     column.isWinner && "bg-emerald-100/80"
                   )}
                 >

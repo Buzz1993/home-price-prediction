@@ -46,9 +46,11 @@ export function ReportsWorkspace() {
 
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="border-b p-4">
-          <h1 className="font-heading text-lg font-semibold">Reports</h1>
+      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-float">
+        <div className="border-b p-5">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+            Reports
+          </h1>
           <p className="text-sm text-muted-foreground">
             Stage properties in the tray, generate an AI report, then preview,
             download or share it.
@@ -122,7 +124,7 @@ export function ReportsWorkspace() {
         </div>
       </section>
 
-      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-sm">
+      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-float">
         <EvaluationTray />
       </aside>
     </div>

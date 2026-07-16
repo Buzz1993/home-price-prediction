@@ -32,7 +32,10 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent side="left" className="w-[280px] p-0" showCloseButton={false}>
         <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-        <Sidebar className="h-full w-full border-r-0" onNavigate={() => setOpen(false)} />
+        <Sidebar
+          className="h-full w-full rounded-none border-0 shadow-none"
+          onNavigate={() => setOpen(false)}
+        />
       </SheetContent>
     </Sheet>
   );

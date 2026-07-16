@@ -157,10 +157,13 @@ export function WorkspaceShell() {
     // The workspace is locked to the viewport height. `overflow-hidden` here
     // means the browser window is NEVER the scroll container — each column owns
     // its own scroll (see ChatWorkspace / ConversationSidebar / EvaluationTray).
-    <div className="flex h-dvh w-full overflow-hidden bg-background">
+    // Phase 18.1: columns float as detached rounded panels on the soft slate
+    // canvas (gutter padding + gaps) instead of touching border-separated rails.
+    <div className="flex h-dvh w-full gap-3 overflow-hidden bg-background p-3">
       {/* Column 1 — Conversation Sidebar (inline on xl). Fixed full height;
-          scrolls internally. */}
-      <div className="hidden w-[280px] shrink-0 border-r xl:block">
+          scrolls internally. Floating dark purple panel (the rail paints its
+          own gradient — this wrapper only rounds and clips it). */}
+      <div className="hidden w-[280px] shrink-0 overflow-hidden rounded-2xl border border-sidebar-border shadow-float xl:block">
         <ConversationSidebar />
       </div>
 
@@ -171,10 +174,10 @@ export function WorkspaceShell() {
             flex column: fixed header + scrolling body + fixed input. min-h-0
             lets the inner list shrink so IT scrolls instead of the column
             growing. flex-1 absorbs whatever the right panel does not take. */}
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card shadow-float">
           {/* Fixed chat header — panel toggles on smaller screens, a clean title
               bar on xl where every column is already visible. Never scrolls. */}
-          <div className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
+          <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
             <Button
               variant="ghost"
               size="icon"
@@ -214,15 +217,16 @@ export function WorkspaceShell() {
         </section>
 
         {/* Horizontal drag handle — col-resize cursor, highlights while
-            hovering/dragging. Only shown on xl where both columns are inline. */}
+            hovering/dragging. Only shown on xl where both columns are inline.
+            Rendered as a slim transparent gutter between the floating panels. */}
         <div
           role="separator"
           aria-orientation="vertical"
           aria-label="Resize chat and right panel"
           onPointerDown={startHDrag}
           className={cn(
-            "group relative hidden w-1.5 shrink-0 cursor-col-resize items-center justify-center border-x bg-muted/40 transition-colors hover:bg-primary/10 xl:flex",
-            hDragging && "bg-primary/15"
+            "group relative hidden w-3 shrink-0 cursor-col-resize items-center justify-center transition-colors xl:flex",
+            hDragging && "bg-primary/5"
           )}
         >
           <span
@@ -246,7 +250,7 @@ export function WorkspaceShell() {
           )}
           style={rightWidth !== null ? { width: rightWidth } : undefined}
         >
-          <WorkspaceRightPanel />
+          <WorkspaceRightPanel className="overflow-hidden rounded-2xl" />
         </aside>
       </div>
 

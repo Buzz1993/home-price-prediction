@@ -25,11 +25,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-dvh">
-      <Sidebar className="sticky top-0 hidden h-dvh lg:flex" />
+    // Floating chrome (Phase 18.1): the page sits on the soft slate canvas
+    // with a gutter around the sidebar so it reads as a detached glass panel.
+    <div className="flex min-h-dvh gap-3 p-3 lg:gap-4 lg:p-4">
+      <Sidebar className="sticky top-3 hidden h-[calc(100dvh-1.5rem)] lg:top-4 lg:flex lg:h-[calc(100dvh-2rem)]" />
       <div className="flex min-w-0 flex-1 flex-col">
         <Navbar />
-        <main className="flex-1 p-4 lg:p-6">{children}</main>
+        <main className="flex-1 py-4 lg:py-6">{children}</main>
       </div>
     </div>
   );

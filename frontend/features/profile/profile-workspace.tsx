@@ -28,7 +28,9 @@ export function ProfileWorkspace() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <header className="space-y-1">
-        <h1 className="font-heading text-lg font-semibold">Profile</h1>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">
+          Profile
+        </h1>
         <p className="text-sm text-muted-foreground">
           Your account, generated reports and AI chat history.
         </p>

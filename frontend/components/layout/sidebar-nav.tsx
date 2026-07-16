@@ -6,9 +6,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/lib/navigation";
 
-// Renders the navigation links (ChatGPT / Cursor-style rows: icon + label,
-// rounded, green active state). Shared by the desktop sidebar and the mobile
-// drawer. `onNavigate` lets the mobile menu close on selection.
+// Renders the navigation links (icon + label rows on the dark purple rail,
+// Phase 18.2: purple gradient active pill with a soft glow, translucent
+// lavender hover). Shared by the desktop sidebar and the mobile drawer.
+// `onNavigate` lets the mobile menu close on selection.
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
@@ -30,8 +31,8 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
               active
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                ? "bg-brand-gradient shadow-brand-glow text-primary-foreground"
+                : "text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             )}
           >
             <item.icon className="size-4 shrink-0" />

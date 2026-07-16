@@ -7,6 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-accent: var(--brand-accent);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
@@ -48,86 +50,94 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* EstateMind green-and-white design system (Phase 14.8).
-   White backgrounds, a professional green primary palette, light-gray cards,
-   soft gray borders, black primary text and gray secondary text. Every shadcn
-   component reads these tokens, so the whole application inherits the refreshed
-   theme without per-page styling. */
+/* EstateMind premium SaaS design system (Phase 18.2, evolving Phase 18.1).
+   Purple-and-white design language: a soft lavender page canvas (#F6F5FD) so
+   the pure-white cards float above it, a purple brand palette (#6D4AFF /
+   #8C6DFF), thin lavender borders (#ECE9F8), a faint lavender hover wash
+   (#F3F0FF) and a slightly larger radius scale for the floating-card look.
+   Every shadcn component reads these tokens, so the whole application
+   inherits the refreshed theme without per-page styling. */
 :root {
-  /* White page background, near-black primary text. */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.16 0.006 152);
-  /* Light-gray cards / white popovers so cards read as subtle panels on white. */
-  --card: oklch(0.99 0.003 150);
-  --card-foreground: oklch(0.16 0.006 152);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.006 152);
-  /* Brand green (≈ emerald 700) — AA contrast against white text. */
-  --primary: oklch(0.55 0.132 152);
-  --primary-foreground: oklch(0.985 0.01 150);
-  /* Light-gray secondary surfaces / gray secondary text. */
-  --secondary: oklch(0.967 0.004 150);
-  --secondary-foreground: oklch(0.3 0.02 152);
-  --muted: oklch(0.967 0.004 150);
-  --muted-foreground: oklch(0.552 0.012 152);
-  /* Faint green accent for hover / active surfaces. */
-  --accent: oklch(0.955 0.028 152);
-  --accent-foreground: oklch(0.44 0.11 152);
-  --destructive: oklch(0.577 0.245 27.325);
-  /* Soft gray borders and green focus ring. */
-  --border: oklch(0.925 0.006 150);
-  --input: oklch(0.925 0.006 150);
-  --ring: oklch(0.6 0.128 152);
-  /* Green chart scale. */
-  --chart-1: oklch(0.55 0.132 152);
-  --chart-2: oklch(0.64 0.12 155);
-  --chart-3: oklch(0.72 0.1 158);
-  --chart-4: oklch(0.8 0.08 160);
-  --chart-5: oklch(0.88 0.05 162);
-  --radius: 0.7rem;
-  /* Sidebar: light surface, green active/primary + ring. */
-  --sidebar: oklch(0.988 0.004 150);
-  --sidebar-foreground: oklch(0.16 0.006 152);
-  --sidebar-primary: oklch(0.55 0.132 152);
-  --sidebar-primary-foreground: oklch(0.985 0.01 150);
-  --sidebar-accent: oklch(0.955 0.028 152);
-  --sidebar-accent-foreground: oklch(0.44 0.11 152);
-  --sidebar-border: oklch(0.925 0.006 150);
-  --sidebar-ring: oklch(0.6 0.128 152);
+  /* Soft lavender page background (#F6F5FD), deep-purple-tinted text. */
+  --background: #f6f5fd;
+  --foreground: #1c1633;
+  /* Pure-white floating cards / popovers (#FFFFFF). */
+  --card: #ffffff;
+  --card-foreground: #1c1633;
+  --popover: #ffffff;
+  --popover-foreground: #1c1633;
+  /* Brand purple (#6D4AFF) — AA contrast against white text. */
+  --primary: #6d4aff;
+  --primary-foreground: #ffffff;
+  /* Brand secondary (#8C6DFF) and light accent as chart/gradient stops;
+     secondary SURFACES stay soft lavender for readable chips. */
+  --brand-secondary: #8c6dff;
+  --brand-accent: #b4a0ff;
+  --secondary: #f5f2ff;
+  --secondary-foreground: #43356e;
+  --muted: #f5f2ff;
+  --muted-foreground: #6f6a8f;
+  /* Faint lavender hover / active wash (#F3F0FF). */
+  --accent: #f3f0ff;
+  --accent-foreground: #5b3df5;
+  --destructive: #ef4444;
+  /* Thin lavender borders (#ECE9F8) and purple focus ring. */
+  --border: #ece9f8;
+  --input: #ece9f8;
+  --ring: #8c6dff;
+  /* Purple chart scale. */
+  --chart-1: #6d4aff;
+  --chart-2: #8c6dff;
+  --chart-3: #a98eff;
+  --chart-4: #c4b2ff;
+  --chart-5: #ded3ff;
+  /* Larger radius: rounded-xl cards land at ~20px for the floating look. */
+  --radius: 0.9rem;
+  /* Sidebar: dark purple rail (#17132C), purple active/primary + ring. */
+  --sidebar: #17132c;
+  --sidebar-foreground: #f0edfb;
+  --sidebar-primary: #6d4aff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklch, #8c6dff 16%, transparent);
+  --sidebar-accent-foreground: #eee8ff;
+  --sidebar-border: color-mix(in oklch, #ffffff 9%, transparent);
+  --sidebar-ring: #8c6dff;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.7 0.14 154);
-  --primary-foreground: oklch(0.18 0.03 152);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.32 0.04 152);
-  --accent-foreground: oklch(0.9 0.06 152);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.14 154);
-  --chart-1: oklch(0.7 0.14 154);
-  --chart-2: oklch(0.64 0.12 155);
-  --chart-3: oklch(0.55 0.132 152);
-  --chart-4: oklch(0.48 0.11 152);
-  --chart-5: oklch(0.4 0.09 152);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.7 0.14 154);
-  --sidebar-primary-foreground: oklch(0.18 0.03 152);
-  --sidebar-accent: oklch(0.32 0.04 152);
-  --sidebar-accent-foreground: oklch(0.9 0.06 152);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.7 0.14 154);
+  --background: #12101f;
+  --foreground: #f2f0fa;
+  --card: #1b1730;
+  --card-foreground: #f2f0fa;
+  --popover: #1b1730;
+  --popover-foreground: #f2f0fa;
+  --primary: #8c6dff;
+  --primary-foreground: #17132c;
+  --brand-secondary: #8c6dff;
+  --brand-accent: #b4a0ff;
+  --secondary: #262040;
+  --secondary-foreground: #f2f0fa;
+  --muted: #262040;
+  --muted-foreground: #a49ec4;
+  --accent: #2c2452;
+  --accent-foreground: #d6c9ff;
+  --destructive: #f87171;
+  --border: color-mix(in oklch, #ffffff 10%, transparent);
+  --input: color-mix(in oklch, #ffffff 15%, transparent);
+  --ring: #8c6dff;
+  --chart-1: #8c6dff;
+  --chart-2: #7a58f0;
+  --chart-3: #6d4aff;
+  --chart-4: #5b3dd6;
+  --chart-5: #4a32ad;
+  --sidebar: #17132c;
+  --sidebar-foreground: #f0edfb;
+  --sidebar-primary: #8c6dff;
+  --sidebar-primary-foreground: #17132c;
+  --sidebar-accent: #2c2452;
+  --sidebar-accent-foreground: #d6c9ff;
+  --sidebar-border: color-mix(in oklch, #ffffff 10%, transparent);
+  --sidebar-ring: #8c6dff;
 }
 
 @layer base {
@@ -149,6 +159,105 @@
   }
   p {
     text-wrap: pretty;
+  }
+  /* Honor the user's reduced-motion preference globally: every transition and
+     animation collapses to (near) zero duration, so hover lifts, fades and
+     shimmers become instant state changes instead of movement. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* --- Premium SaaS utilities (Phase 18.1 → 18.2 purple) --------------------- */
+@layer utilities {
+  /* Soft glassmorphism surface for floating chrome (top bar, trays). */
+  .glass {
+    background-color: color-mix(in oklch, var(--card) 78%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  }
+
+  /* Elegant layered card shadow — barely-there at rest… */
+  .shadow-float {
+    box-shadow:
+      0 1px 2px 0 oklch(0.3 0.06 290 / 0.04),
+      0 4px 12px -2px oklch(0.3 0.06 290 / 0.06);
+  }
+  /* …and a deeper, still-soft elevation for hover states. */
+  .shadow-float-lg {
+    box-shadow:
+      0 2px 4px 0 oklch(0.3 0.06 290 / 0.05),
+      0 12px 32px -8px oklch(0.3 0.06 290 / 0.14);
+  }
+
+  /* Brand gradient (primary → secondary) for primary CTAs and accents. */
+  .bg-brand-gradient {
+    background-image: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--brand-secondary) 100%
+    );
+  }
+
+  /* Deep purple sidebar gradient (#221A44 → #18132F) for the dark rail. */
+  .bg-sidebar-gradient {
+    background-image: linear-gradient(180deg, #221a44 0%, #18132f 100%);
+  }
+
+  /* Soft purple glow behind primary CTAs / active nav pills. */
+  .shadow-brand-glow {
+    box-shadow: 0 2px 10px -2px color-mix(in oklch, #6d4aff 45%, transparent);
+  }
+  .shadow-brand-glow-lg {
+    box-shadow: 0 6px 18px -4px color-mix(in oklch, #6d4aff 50%, transparent);
+  }
+
+  /* 2px gradient top accent for feature cards (used sparingly). */
+  .card-accent-top {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-accent-top::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background-image: linear-gradient(
+      90deg,
+      var(--primary),
+      var(--brand-accent)
+    );
+  }
+
+  /* Shimmer sweep layered on top of skeleton blocks. */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    translate: -100% 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      oklch(1 0 0 / 0.55),
+      transparent
+    );
+    animation: shimmer-sweep 1.6s ease-in-out infinite;
+  }
+  @keyframes shimmer-sweep {
+    100% {
+      translate: 100% 0;
+    }
   }
 }
 

@@ -22,7 +22,9 @@ export function ChatInput() {
   };
 
   return (
-    <div className="flex items-end gap-2">
+    // Premium composer (Phase 18.1): a single rounded surface with a soft
+    // shadow that focuses with a green ring; the send CTA sits inside it.
+    <div className="flex items-end gap-2 rounded-2xl border bg-card p-2 shadow-float transition-shadow focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30">
       <Textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -34,7 +36,7 @@ export function ChatInput() {
         }}
         placeholder="Ask anything about properties…"
         rows={1}
-        className="max-h-40 min-h-10 resize-none"
+        className="max-h-40 min-h-10 resize-none border-0 bg-transparent shadow-none focus-visible:border-transparent focus-visible:ring-0"
       />
       {isSending ? (
         <Button
@@ -42,6 +44,7 @@ export function ChatInput() {
           variant="secondary"
           aria-label="Stop generating"
           onClick={stopStreaming}
+          className="rounded-xl"
         >
           <Square className="fill-current" />
         </Button>
@@ -51,6 +54,7 @@ export function ChatInput() {
           aria-label="Send message"
           disabled={!value.trim()}
           onClick={submit}
+          className="rounded-xl"
         >
           <SendHorizontal />
         </Button>

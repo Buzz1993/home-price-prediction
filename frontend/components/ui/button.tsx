@@ -9,7 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        default:
+          // Premium primary CTA (Phase 18.2): purple brand gradient, soft
+          // purple glow and a subtle hover lift; brightness handles the
+          // gradient hover since bg-color utilities can't tint a gradient.
+          "bg-brand-gradient shadow-brand-glow text-primary-foreground transition-all hover:-translate-y-px hover:brightness-105 hover:shadow-brand-glow-lg active:translate-y-0",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

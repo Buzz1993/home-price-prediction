@@ -107,7 +107,7 @@ function priceIcon(property: MapPropertyWithCoords, selected: boolean): L.DivIco
   });
 }
 
-// Cluster bubble — a green circle with the child count, matching the design
+// Cluster bubble — a purple circle with the child count, matching the design
 // system. Replaces the plugin's default styling entirely.
 function clusterIcon(count: number): L.DivIcon {
   const size = count < 10 ? 34 : count < 100 ? 40 : 48;

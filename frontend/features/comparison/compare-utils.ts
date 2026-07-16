@@ -72,6 +72,17 @@ export function rankStatusCells(values: unknown[]): CellTone[] {
   );
 }
 
+// True when every compared property carries the SAME backend value for a row
+// (e.g. Bedrooms 2 / 2 / 2). The "Show Only Differences" toggle (Phase 17.2)
+// hides these rows so the comparison reads faster; a missing value counts as
+// a difference.
+export function allIdentical(values: unknown[]): boolean {
+  if (values.length < 2) return false;
+  if (!values.every(hasText)) return false;
+  const first = String(values[0]).trim();
+  return values.every((value) => String(value).trim() === first);
+}
+
 // Proportional bar widths for a numeric row (Phase 17.1, Goal 2): the best
 // backend value gets the fullest bar, the worst a small stub, everything in
 // between scales linearly. Display-only scaling of existing backend numbers —

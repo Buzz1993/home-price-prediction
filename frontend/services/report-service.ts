@@ -65,3 +65,37 @@ export async function downloadReportPdf(report: string): Promise<Blob> {
 
   return response.blob();
 }
+
+// ---------------------------------------------------------------------------
+// Comparison Report (Phase 17.3) — dedicated endpoints for the Property
+// Comparison page. Same backend pipeline (existing analyses, single Chromium
+// PDF generator, WhatsApp Cloud API delivery) but the report follows the
+// /compare page's own comparison layout instead of the standard investment
+// report. The Reports page endpoints above are untouched.
+// ---------------------------------------------------------------------------
+
+// POST /report/comparison — generate the Comparison Report for the compared
+// properties. Same `{ content, ai_enhanced }` response shape as POST /report.
+export function generateComparisonReport(
+  ids: string[]
+): Promise<EnhancedReport> {
+  return apiRequest<EnhancedReport>("/report/comparison", {
+    method: "POST",
+    body: { property_ids: ids },
+  });
+}
+
+// POST /report/comparison/share — send the Comparison Report to a WhatsApp
+// number. `report` carries the already-generated comparison report text so
+// the backend delivers exactly that report as a PDF without regenerating it
+// (the Phase 16.1 rule); when absent the backend composes it once.
+export function shareComparisonReport(payload: {
+  property_ids: string[];
+  phone_number: string;
+  report?: string;
+}): Promise<ShareResult> {
+  return apiRequest<ShareResult>("/report/comparison/share", {
+    method: "POST",
+    body: payload,
+  });
+}

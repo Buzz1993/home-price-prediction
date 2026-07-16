@@ -11,6 +11,7 @@ import { Trophy } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatScore } from "@/features/dashboard/format";
 import type { ComparisonRow } from "@/types/dashboard";
 import { StatusPill } from "@/features/analysis/ui/analysis-ui";
 
@@ -64,7 +65,7 @@ export function PropertyScoreCards({
                     isWinner && "text-primary"
                   )}
                 >
-                  {row.overall_score}
+                  {formatScore(row.overall_score)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">

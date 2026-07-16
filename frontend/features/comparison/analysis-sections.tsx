@@ -29,7 +29,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { formatCr, formatPerSqft, splitList } from "@/features/dashboard/format";
+import {
+  formatCell,
+  formatCr,
+  formatPercent,
+  formatPerSqft,
+  formatScore,
+  splitList,
+} from "@/features/dashboard/format";
 import { StatusPill } from "@/features/analysis/ui/analysis-ui";
 import type {
   AdvisorRow,
@@ -37,6 +44,7 @@ import type {
   NegotiationRow,
 } from "@/types/dashboard";
 import {
+  allIdentical,
   barFractions,
   hasText,
   rankLevelCells,
@@ -106,8 +114,15 @@ function row(
   return {
     label,
     tooltip,
+    identical: allIdentical(values),
     cells: values.map((value, i) => ({
-      content: hasText(value) ? (render ? render(value) : String(value)) : "—",
+      // formatCell cleans raw float noise from open backend values; renderers
+      // override it for typed cells.
+      content: hasText(value)
+        ? render
+          ? render(value)
+          : formatCell(value as string | number)
+        : "—",
       tone: tones?.[i] ?? "neutral",
       badge,
       barFraction: bars?.[i] ?? null,
@@ -125,33 +140,40 @@ const pill = (v: unknown) => <StatusPill value={v as string | number} />;
 function Section({
   value,
   title,
+  description,
   icon: Icon,
   columns,
   rows,
   winner,
   winnerCategory,
   resolveName,
+  hideIdentical,
 }: {
   value: string;
   title: string;
+  // One-line banner subtitle explaining what the section compares (Goal 8).
+  description: string;
   icon: LucideIcon;
   columns: MatrixColumn[];
   rows: MatrixRowData[];
   winner: CategoryWinner;
   winnerCategory: string;
   resolveName: (id: string) => string;
+  hideIdentical?: boolean;
 }) {
   if (rows.length === 0) return null;
   return (
     <AccordionItem value={value}>
       <AccordionTrigger>
-        <span className="flex items-center gap-2 font-heading text-sm font-semibold">
-          <Icon className="size-4 text-primary" />
-          {title}
-        </span>
+        <SectionBanner icon={Icon} title={title} description={description} />
       </AccordionTrigger>
       <AccordionContent>
-        <MatrixTable columns={columns} rows={rows} bare />
+        <MatrixTable
+          columns={columns}
+          rows={rows}
+          bare
+          hideIdentical={hideIdentical}
+        />
         {winner && (
           <div className="border-t p-3">
             <SectionWinnerCard
@@ -163,6 +185,34 @@ function Section({
         )}
       </AccordionContent>
     </AccordionItem>
+  );
+}
+
+// Premium accordion banner (Phase 17.2, Goal 8): icon chip + title +
+// one-line description of what the section compares.
+function SectionBanner({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}) {
+  return (
+    <span className="flex min-w-0 items-center gap-2.5">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <Icon className="size-4 text-primary" />
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate font-heading text-sm font-semibold">
+          {title}
+        </span>
+        <span className="block truncate text-xs font-normal text-muted-foreground">
+          {description}
+        </span>
+      </span>
+    </span>
   );
 }
 
@@ -195,6 +245,7 @@ export function AnalysisComparisonSections({
   columns,
   resolveName,
   overview,
+  hideIdentical = false,
 }: {
   bundle: CompareBundle;
   columns: MatrixColumn[];
@@ -202,6 +253,8 @@ export function AnalysisComparisonSections({
   // The Property Overview matrix (Basic Information) — rendered as the first
   // collapsible section so the whole comparison shares one accordion.
   overview?: React.ReactNode;
+  // "Show Only Differences" (Phase 17.2) — forwarded to every section table.
+  hideIdentical?: boolean;
 }) {
   const [open, setOpen] = useState<string[]>(loadOpenSections);
 
@@ -277,6 +330,7 @@ export function AnalysisComparisonSections({
         names,
         (diff, other) => `+${diff.toFixed(2)}% higher yield than ${other}`
       ),
+      render: (v) => formatPercent(v as number | string),
     }),
     row("Monthly Rent", val(rental, "monthly_rent_estimate"), {
       tooltip: "Estimated monthly rental income.",
@@ -332,11 +386,21 @@ export function AnalysisComparisonSections({
     }),
     row("Risk Score", advisor.map((r) => aRec(r).risk_score), {
       tooltip: "The analysis engine's internal risk score for the property.",
+      render: (v) => formatScore(v as number | string),
     }),
     row("Major Concerns", advisor.map((r) => r?.risks), {
       tooltip: "Risk factors the analysis engine flagged for this property.",
       tones: rankNumericCells(concernCounts, "lowest"),
       badge: "Fewest",
+      notes: relativeNotes(
+        concernCounts,
+        "lowest",
+        names,
+        (diff, other) =>
+          `${Math.round(diff)} fewer risk ${
+            Math.round(diff) === 1 ? "indicator" : "indicators"
+          } than ${other}`
+      ),
       render: (v) => {
         const list = splitList(String(v));
         return (
@@ -376,6 +440,7 @@ export function AnalysisComparisonSections({
         advisor.map((r) => r?.growth_score),
         "highest"
       ),
+      render: (v) => formatScore(v as number | string),
     }),
     row(
       "Infrastructure Signals",
@@ -437,6 +502,7 @@ export function AnalysisComparisonSections({
       tones: rankNumericCells(scores, "highest"),
       badge: "Highest score",
       bars: barFractions(scores, "highest"),
+      render: (v) => formatScore(v as number | string),
     }),
     row("Positives", advisor.map((r) => r?.positives), {
       render: (v) => <LongText value={v} />,
@@ -474,6 +540,7 @@ export function AnalysisComparisonSections({
         names,
         () => "Highest discount among compared properties"
       ),
+      render: (v) => formatPercent(v as number | string),
     }),
     row("Strategy", nVal("strategy"), {
       render: (v) => <LongText value={v} />,
@@ -490,10 +557,11 @@ export function AnalysisComparisonSections({
       {overview && (
         <AccordionItem value="basic-info">
           <AccordionTrigger>
-            <span className="flex items-center gap-2 font-heading text-sm font-semibold">
-              <Building2 className="size-4 text-primary" />
-              Basic Information
-            </span>
+            <SectionBanner
+              icon={Building2}
+              title="Basic Information"
+              description="Every backend property field, side by side"
+            />
           </AccordionTrigger>
           <AccordionContent className="p-3">{overview}</AccordionContent>
         </AccordionItem>
@@ -501,72 +569,86 @@ export function AnalysisComparisonSections({
       <Section
         value="prediction"
         title="Price Prediction"
+        description="Compare asking prices against the ML model's market values"
         icon={TrendingUp}
         columns={columns}
         rows={predictionRows}
         winner={predictionWinner(bundle)}
         winnerCategory="Price Prediction Winner"
         resolveName={resolveName}
+        hideIdentical={hideIdentical}
       />
       <Section
         value="rental"
         title="Rental Analysis"
+        description="Rental yield, income estimates and tenant demand"
         icon={KeyRound}
         columns={columns}
         rows={rentalRows}
         winner={rentalWinner(bundle)}
         winnerCategory="Rental Winner"
         resolveName={resolveName}
+        hideIdentical={hideIdentical}
       />
       <Section
         value="risk"
         title="Risk Analysis"
+        description="Risk levels and the concerns each property carries"
         icon={ShieldAlert}
         columns={columns}
         rows={riskRows}
         winner={riskWinner(bundle)}
         winnerCategory="Risk Winner"
         resolveName={resolveName}
+        hideIdentical={hideIdentical}
       />
       <Section
         value="growth"
         title="Future Growth"
+        description="Long-term appreciation outlook and infrastructure signals"
         icon={LineChart}
         columns={columns}
         rows={growthRows}
         winner={growthWinner(bundle)}
         winnerCategory="Growth Winner"
         resolveName={resolveName}
+        hideIdentical={hideIdentical}
       />
       <Section
         value="valuation"
         title="Property Valuation"
+        description="Overpriced, fair or undervalued vs. the market benchmark"
         icon={Gauge}
         columns={columns}
         rows={valuationRows}
         winner={valuationWinner(bundle)}
         winnerCategory="Valuation Winner"
         resolveName={resolveName}
+        hideIdentical={hideIdentical}
       />
       <Section
         value="advisor"
         title="Investment Advisor"
+        description="The advisor engine's overall verdicts and scores"
         icon={Brain}
         columns={columns}
         rows={advisorRows}
         winner={advisorWinner(bundle)}
         winnerCategory="Investment Winner"
         resolveName={resolveName}
+        hideIdentical={hideIdentical}
       />
       <Section
         value="negotiation"
         title="Negotiation"
+        description="Bargaining power, target prices and strategies"
         icon={Handshake}
         columns={columns}
         rows={negotiationRows}
         winner={negotiationWinner(bundle)}
         winnerCategory="Negotiation Winner"
         resolveName={resolveName}
+        hideIdentical={hideIdentical}
       />
     </Accordion>
   );

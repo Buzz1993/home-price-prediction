@@ -3,7 +3,9 @@
 // section titles, "Label: Value" lines, '•/✓/□' bullets and '|' tables) into a
 // small document model that report-document.tsx renders as cards, tables and
 // checklists. Every label, value and bullet is carried through VERBATIM — no
-// report content is created, computed or altered here. When the text does not
+// report content is created, computed or altered here, with one presentation
+// exception (Phase 17.5): floating-point artifacts like "0.7000000000000001"
+// are rounded to two decimals. When the text does not
 // match the expected structure (e.g. the non-enhanced backend fallback report)
 // parseReport returns null and the preview falls back to raw text.
 
@@ -49,6 +51,21 @@ export type ReportModel = {
 // A banner/divider line (═══ or ━━━) drawn by the report. Lenient: any run of
 // box-drawing characters counts, so a stray glyph never breaks the layout.
 const DIVIDER = /^[─-╿]{5,}\s*$/;
+
+// Floating-point artifacts in the backend text (Phase 17.5) — numbers like
+// "0.7000000000000001" or "0.39999999999999997". Only clear artifacts (a long
+// run of 0s or 9s in the decimals) are rounded to two decimals; every other
+// number passes through verbatim. Presentation cleanup only.
+const FLOAT_NOISE = /\d+\.\d*(?:0{6,}|9{6,})\d*/g;
+
+function cleanFloatNoise(line: string): string {
+  return line.replace(FLOAT_NOISE, (match) => Number(match).toFixed(2));
+}
+
+// Same cleanup for the raw-text fallback preview (when parseReport bails).
+export function cleanReportText(text: string): string {
+  return cleanFloatNoise(text);
+}
 
 // "🏠 PROPERTY 1" banner opening a per-property block.
 const PROPERTY_BANNER = /^🏠?\s*PROPERTY\s+(\d+)\b/i;
@@ -203,7 +220,7 @@ function valueAfterLabel(lines: string[], label: string): string | null {
 export function parseReport(text: string): ReportModel | null {
   if (!text || !text.trim()) return null;
 
-  const lines = text.split(/\r?\n/).map((line) => line.trim());
+  const lines = text.split(/\r?\n/).map((line) => cleanFloatNoise(line.trim()));
   let i = 0;
   while (i < lines.length && !lines[i]) i++;
 

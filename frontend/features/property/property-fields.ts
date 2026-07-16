@@ -54,11 +54,13 @@ export function toList(value: unknown): string[] | null {
   return null;
 }
 
-// Render a scalar backend value as display text.
+// Render a scalar backend value as display text. Floats are capped at two
+// decimals (Phase 17.5) so raw floating-point precision never reaches the UI.
 export function formatValue(value: unknown): string {
   if (isEmptyValue(value)) return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "number") return value.toLocaleString("en-IN");
+  if (typeof value === "number")
+    return value.toLocaleString("en-IN", { maximumFractionDigits: 2 });
   if (Array.isArray(value)) return value.map((v) => String(v)).join(", ");
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);

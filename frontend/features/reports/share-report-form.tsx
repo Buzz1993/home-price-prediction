@@ -5,7 +5,10 @@
 // entirely by the backend, which renders the report to a PDF and sends it via
 // the official Meta WhatsApp Cloud API (Phase 16.1). The previewed report text
 // is passed along so the backend delivers exactly what the user sees without
-// regenerating it. Same UI as before (phone → send → delivery status).
+// regenerating it. Phase 17.5: the send button, phone input and helper text all
+// switch to the sending state in the same render frame as the click, duplicate
+// submissions are blocked, and success/failure banners restate the delivery
+// number — presentation only, the share flow itself is unchanged.
 
 import { useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
@@ -76,12 +79,13 @@ export function ShareReportForm({
             placeholder="e.g. +91 98765 43210"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            disabled={share.isPending}
             className="sm:flex-1"
           />
           <Button onClick={handleShare} disabled={!canShare}>
             {share.isPending ? (
               <>
-                <Spinner /> Sending report…
+                <Spinner /> Sending…
               </>
             ) : (
               <>
@@ -90,12 +94,22 @@ export function ShareReportForm({
             )}
           </Button>
         </div>
+        {share.isPending && (
+          <p className="text-xs text-muted-foreground">
+            Sending property report to WhatsApp…
+          </p>
+        )}
       </div>
 
       {delivered && (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>Report sent successfully to {sentPhone}.</span>
+        <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+          <div>
+            <p className="font-medium">Property report sent successfully</p>
+            <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80">
+              Delivered to {sentPhone}
+            </p>
+          </div>
         </div>
       )}
 

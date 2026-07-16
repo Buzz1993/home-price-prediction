@@ -16,9 +16,10 @@ import { createPortal } from "react-dom";
 import { FileDown, Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { downloadReportPdf } from "@/services/report-service";
 import { ReportDocument } from "./report-document";
-import { parseReport } from "./report-parser";
+import { cleanReportText, parseReport } from "./report-parser";
 
 export function ReportPreview({
   report,
@@ -59,7 +60,7 @@ export function ReportPreview({
     <ReportDocument model={model} />
   ) : (
     <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground sm:text-sm">
-      {report}
+      {cleanReportText(report)}
     </pre>
   );
 
@@ -75,7 +76,8 @@ export function ReportPreview({
           onClick={handleExportPdf}
           disabled={exporting}
         >
-          <FileDown /> {exporting ? "Exporting…" : "Export PDF"}
+          {exporting ? <Spinner /> : <FileDown />}
+          {exporting ? "Exporting…" : "Export PDF"}
         </Button>
       </div>
 

@@ -1,15 +1,36 @@
 "use client";
 
-// Export & share toolbar for the Property Comparison workspace (Phase 17.1,
-// Goal 8). Reuses the EXISTING report pipeline end-to-end: POST /report
-// composes (and Claude-polishes) the investment report for the compared
-// properties, POST /report/pdf renders it through the application's single
-// Chromium PDF generator, and POST /report/share delivers the same PDF via the
-// official WhatsApp Cloud API. No new PDF generator, no new backend logic —
-// the report is generated once per comparison and reused for both actions.
+// Export & share toolbar for the Property Comparison workspace (Phase 17.1
+// Goal 8, extended in Phase 17.2 Goal 12; Comparison Report in Phase 17.3).
+// Reuses the EXISTING report pipeline end-to-end, but through the dedicated
+// COMPARISON report endpoints: POST /report/comparison composes the
+// comparison-layout report for the compared properties (backend analyses +
+// Claude presentation), POST /report/pdf renders it through the
+// application's single Chromium PDF generator, and
+// POST /report/comparison/share delivers the same PDF via the official
+// WhatsApp Cloud API. Print uses the browser's native dialog and the
+// full-report action simply navigates to the existing Reports page — whose
+// standard report flow is untouched (the compared properties are already
+// staged in the shared tray it reads). No new PDF generator, no new backend
+// logic — the report is generated once per comparison and reused.
+//
+// Phase 17.5: the lazy report generation now runs INSIDE the share mutation,
+// so the button flips to "Sending…" in the same render frame as the click
+// (previously isPending stayed false while the report generated for 20-30s).
+// The phone input and share toggle are disabled while sending, a grey helper
+// line narrates the send, and success/failure banners restate the delivery
+// number. Presentation only — the same endpoints are called in the same order.
 
+import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, FileDown, Send, X } from "lucide-react";
+import {
+  CheckCircle2,
+  FileDown,
+  FileText,
+  Printer,
+  Send,
+  X,
+} from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -18,9 +39,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { ApiError } from "@/lib/api-client";
 import {
   downloadReportPdf,
-  generateReport,
+  generateComparisonReport,
+  shareComparisonReport,
 } from "@/services/report-service";
-import { useShareReport } from "@/features/reports/use-report";
 
 export function CompareExport({ ids }: { ids: string[] }) {
   // The comparison report text, generated lazily on the first export/share and
@@ -29,11 +50,11 @@ export function CompareExport({ ids }: { ids: string[] }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [phone, setPhone] = useState("");
 
-  // Generate the backend report once, preferring the Claude-enhanced text —
-  // the same choice the Reports page makes.
+  // Generate the backend comparison report once, preferring the
+  // Claude-presented text — mirroring the choice the Reports page makes.
   const ensureReport = async (): Promise<string> => {
     if (report) return report;
-    const generated = await generateReport(ids);
+    const generated = await generateComparisonReport(ids);
     const text = generated.ai_enhanced ?? generated.content;
     setReport(text);
     return text;
@@ -52,19 +73,25 @@ export function CompareExport({ ids }: { ids: string[] }) {
     },
   });
 
-  const share = useShareReport();
+  // The report generation runs inside the mutation so share.isPending covers
+  // the FULL send (generate → deliver) from the moment of the click.
+  const share = useMutation({
+    mutationFn: async (phoneNumber: string) => {
+      // Generate first so the delivered PDF matches a later Export PDF exactly.
+      const text = await ensureReport().catch(() => undefined);
+      return shareComparisonReport({
+        property_ids: ids,
+        phone_number: phoneNumber,
+        report: text,
+      });
+    },
+  });
   const trimmed = phone.trim();
   const canSend = trimmed.length > 0 && !share.isPending;
 
-  const handleShare = async () => {
+  const handleShare = () => {
     if (!canSend) return;
-    // Generate first so the delivered PDF matches a later Export PDF exactly.
-    const text = await ensureReport().catch(() => undefined);
-    share.mutate({
-      property_ids: ids,
-      phone_number: trimmed,
-      report: text,
-    });
+    share.mutate(trimmed);
   };
 
   // Report delivery faithfully from the backend's ShareResult (same rule as
@@ -76,6 +103,8 @@ export function CompareExport({ ids }: { ids: string[] }) {
   const shareFailed = share.isError || (share.isSuccess && !delivered);
   const failureDetail =
     share.error instanceof ApiError ? share.error.message : undefined;
+  // The number the report was actually sent to, not the edited input value.
+  const sentPhone = share.variables ?? trimmed;
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -93,9 +122,22 @@ export function CompareExport({ ids }: { ids: string[] }) {
           variant="outline"
           size="sm"
           onClick={() => setShareOpen((open) => !open)}
+          disabled={share.isPending}
         >
           {shareOpen ? <X /> : <Send />}
           Share on WhatsApp
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => window.print()}>
+          <Printer />
+          Print
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          {/* The compared properties are already staged in the shared tray the
+              Reports page reads — plain navigation, nothing re-implemented. */}
+          <Link href="/reports">
+            <FileText />
+            Full Report
+          </Link>
         </Button>
       </div>
 
@@ -115,6 +157,7 @@ export function CompareExport({ ids }: { ids: string[] }) {
               placeholder="e.g. +91 98765 43210"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              disabled={share.isPending}
               className="sm:w-56"
             />
             <Button size="sm" onClick={handleShare} disabled={!canSend}>
@@ -130,18 +173,41 @@ export function CompareExport({ ids }: { ids: string[] }) {
             </Button>
           </div>
 
-          {delivered && (
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700">
-              <CheckCircle2 className="size-3.5 shrink-0" />
-              Comparison report sent to{" "}
-              {share.variables?.phone_number ?? trimmed}.
+          {share.isPending && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Sending comparison report to WhatsApp…
             </p>
           )}
+
+          {delivered && (
+            <div className="mt-2 flex items-start gap-1.5 text-xs text-emerald-700">
+              <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" />
+              <span>
+                <span className="block font-medium">
+                  Comparison report sent successfully
+                </span>
+                Delivered to {sentPhone}
+              </span>
+            </div>
+          )}
           {shareFailed && (
-            <p className="mt-2 text-xs text-red-600">
-              {failureDetail ??
-                "Unable to send the report. Please check the number and try again."}
-            </p>
+            <div className="mt-2 space-y-1.5">
+              <p className="text-xs font-medium text-red-600">
+                Unable to send report
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {failureDetail ??
+                  "Something went wrong while sending. Please check the number and try again."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShare}
+                disabled={!canSend}
+              >
+                Try Again
+              </Button>
+            </div>
           )}
         </div>
       )}

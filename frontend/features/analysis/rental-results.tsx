@@ -14,6 +14,7 @@ import { BadgeIndianRupee, CalendarRange, KeyRound } from "lucide-react";
 
 import type { AnalysisRow } from "@/types/dashboard";
 import { toneKey } from "@/lib/value-tone";
+import { formatPercent } from "@/features/dashboard/format";
 import { CompactPropertyHeader } from "./property-header";
 import {
   KeyValueList,
@@ -93,10 +94,10 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
             name={resolveName(winner.id)}
             badge={winnerRating ?? undefined}
             stars={winnerRating ? ratingStars(winnerRating) : undefined}
-            statement={`Highest rental yield of ${winner.row.rental_yield_percent} among the compared properties`}
+            statement={`Highest rental yield of ${formatPercent(winner.row.rental_yield_percent as string)} among the compared properties`}
             stat={{
               label: "Rental yield",
-              value: String(winner.row.rental_yield_percent),
+              value: formatPercent(winner.row.rental_yield_percent as string),
               sub: "Annual rent vs. price",
             }}
             reasons={[
@@ -113,7 +114,7 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
               status: hasValue(c.row.investment_rating)
                 ? c.row.investment_rating
                 : undefined,
-              display: `${c.row.rental_yield_percent} yield`,
+              display: `${formatPercent(c.row.rental_yield_percent as string)} yield`,
               isWinner: c === winner,
             }))}
           />
@@ -130,7 +131,9 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
         // Why checklist — restates the backend rental fields verbatim.
         const reasons: string[] = [];
         if (hasValue(row.rental_yield_percent))
-          reasons.push(`Rental yield of ${row.rental_yield_percent}`);
+          reasons.push(
+            `Rental yield of ${formatPercent(row.rental_yield_percent as string)}`
+          );
         if (hasValue(row.annual_rent))
           reasons.push(
             `Estimated annual income ${formatRupees(row.annual_rent)}`
@@ -163,7 +166,7 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
                   hasValue(row.rental_yield_percent)
                     ? {
                         label: "Expected rental yield",
-                        value: String(row.rental_yield_percent),
+                        value: formatPercent(row.rental_yield_percent as string),
                         sub: "Annual rent vs. price",
                       }
                     : undefined
@@ -204,7 +207,7 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
                   <RadialGauge
                     value={yieldValue}
                     max={5}
-                    display={String(row.rental_yield_percent)}
+                    display={formatPercent(row.rental_yield_percent as string)}
                   />
                   <div className="min-w-0">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">

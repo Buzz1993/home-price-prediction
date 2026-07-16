@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { ComparisonResult as ComparisonResultType } from "@/types/dashboard";
 import { StatusPill } from "@/features/analysis/ui/analysis-ui";
-import { splitList } from "./format";
+import { formatScore, splitList } from "./format";
 import { useWorkspace } from "./workspace-provider";
 
 export function ComparisonResult({ data }: { data: ComparisonResultType }) {
@@ -68,7 +68,7 @@ export function ComparisonResult({ data }: { data: ComparisonResultType }) {
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-primary-foreground/15 px-2.5 py-0.5 text-xs font-semibold">
-                Score {winner.overall_score}
+                Score {formatScore(winner.overall_score)}
               </span>
               <span className="rounded-full bg-primary-foreground/15 px-2.5 py-0.5 text-xs font-semibold">
                 {winner.verdict}
@@ -110,7 +110,7 @@ export function ComparisonResult({ data }: { data: ComparisonResultType }) {
             )}
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               <span className="font-heading text-xl font-semibold tabular-nums">
-                {runnerUp.overall_score}
+                {formatScore(runnerUp.overall_score)}
               </span>
               <StatusPill value={runnerUp.verdict} />
             </div>
@@ -163,7 +163,7 @@ export function ComparisonResult({ data }: { data: ComparisonResultType }) {
                       isWinner && "text-primary"
                     )}
                   >
-                    {row.overall_score}
+                    {formatScore(row.overall_score)}
                   </TableCell>
                   <TableCell className="text-center">
                     <StatusPill value={row.verdict} />

@@ -49,6 +49,9 @@ export type MatrixRowData = {
   label: string;
   tooltip?: string;
   cells: MatrixCell[];
+  // Every property carries the same backend value — hidden by the
+  // "Show Only Differences" toggle (Phase 17.2).
+  identical?: boolean;
 };
 
 const TONE_CELL: Record<CellTone, string> = {
@@ -117,6 +120,7 @@ export function MatrixTable({
   rows,
   showThumbnails = false,
   bare = false,
+  hideIdentical = false,
 }: {
   title?: string;
   icon?: LucideIcon;
@@ -125,8 +129,16 @@ export function MatrixTable({
   rows: MatrixRowData[];
   showThumbnails?: boolean;
   bare?: boolean;
+  // "Show Only Differences" (Phase 17.2): drop rows whose values are identical
+  // across every compared property.
+  hideIdentical?: boolean;
 }) {
   if (rows.length === 0) return null;
+
+  const visibleRows = hideIdentical
+    ? rows.filter((row) => !row.identical)
+    : rows;
+  const hiddenCount = rows.length - visibleRows.length;
 
   return (
     <section
@@ -189,7 +201,18 @@ export function MatrixTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, rowIndex) => (
+            {visibleRows.length === 0 && (
+              <tr>
+                <td
+                  colSpan={columns.length + 1}
+                  className="px-3 py-4 text-center text-xs text-muted-foreground"
+                >
+                  All values in this section are identical across the compared
+                  properties.
+                </td>
+              </tr>
+            )}
+            {visibleRows.map((row, rowIndex) => (
               <tr
                 key={`${row.label}-${rowIndex}`}
                 className="border-b transition-colors last:border-0 hover:bg-muted/40"
@@ -256,6 +279,12 @@ export function MatrixTable({
           </tbody>
         </table>
       </div>
+      {hideIdentical && hiddenCount > 0 && visibleRows.length > 0 && (
+        <p className="border-t px-3 py-1.5 text-[11px] text-muted-foreground">
+          {hiddenCount} identical {hiddenCount === 1 ? "row" : "rows"} hidden —
+          switch off “Show only differences” to see everything.
+        </p>
+      )}
     </section>
   );
 }

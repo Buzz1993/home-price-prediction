@@ -61,6 +61,7 @@ import {
 import {
   formatArea,
   formatCr,
+  formatNumber,
   humanizeKey,
   splitList,
 } from "@/features/dashboard/format";
@@ -659,7 +660,7 @@ function RatingsSection({ entries }: { entries: FieldEntry[] }) {
               </span>
               {isNumeric ? (
                 <span className="font-medium tabular-nums">
-                  {num} / {scale}
+                  {formatNumber(num)} / {scale}
                 </span>
               ) : (
                 <Badge variant="outline">{formatValue(entry.value)}</Badge>

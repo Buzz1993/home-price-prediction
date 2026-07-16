@@ -18,7 +18,12 @@ import {
   ratingStars,
 } from "@/features/analysis/ui/decision-summary";
 import { ExecutiveSummary } from "@/features/analysis/ui/executive-summary";
-import { formatCr, splitList } from "@/features/dashboard/format";
+import {
+  formatCr,
+  formatPercent,
+  formatScore,
+  splitList,
+} from "@/features/dashboard/format";
 import { hasText } from "./compare-utils";
 import { scoreboard } from "./compare-winners";
 import { winTally } from "./win-tally";
@@ -51,7 +56,7 @@ export function ExecutiveWinner({
           hasText(winner.overall_score)
             ? {
                 label: "Overall score",
-                value: String(winner.overall_score),
+                value: formatScore(winner.overall_score),
                 sub: "Backend comparison score",
               }
             : undefined
@@ -62,7 +67,7 @@ export function ExecutiveWinner({
           name: resolveName(row.id),
           status: hasText(row.verdict) ? row.verdict : undefined,
           display: hasText(row.overall_score)
-            ? `Score ${row.overall_score}`
+            ? `Score ${formatScore(row.overall_score)}`
             : undefined,
           isWinner: row.id === winner.id,
         }))}
@@ -207,7 +212,7 @@ export function FinalRecommendation({
                   Overall score
                 </p>
                 <p className="font-heading text-2xl font-bold tabular-nums sm:text-3xl">
-                  {winner.overall_score}
+                  {formatScore(winner.overall_score)}
                 </p>
                 <p className="text-[11px] text-primary-foreground/70">
                   Backend comparison score
@@ -279,7 +284,8 @@ export function FinalRecommendation({
                 </p>
                 {hasText(negotiation.suggested_discount_percent) && (
                   <p className="text-[11px] text-muted-foreground">
-                    {negotiation.suggested_discount_percent} suggested discount
+                    {formatPercent(negotiation.suggested_discount_percent as string)}{" "}
+                    suggested discount
                   </p>
                 )}
               </div>

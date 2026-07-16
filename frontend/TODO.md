@@ -1592,6 +1592,132 @@ Examples:
 
 ---
 
+## Phase 17.2 — Comparison UX Polish & 5-Second Decisions
+
+> Frontend-only polish of the /compare page so the decision is readable in
+> seconds — no backend, API, prompt or logic changes. At-a-Glance winner strip
+> right below the Executive Summary (Lowest Price / Highest Rental / Lowest
+> Risk / Best Growth / Best Investment — the EXISTING compare-winners category
+> winners with their backend-derived reason + supporting metric). "Show only
+> differences" toggle (persisted to localStorage) hides rows whose backend
+> values are identical across every compared property, with a per-table hidden
+> count and an all-identical empty note. Accordion sections open with premium
+> banners (icon chip + title + one-line description). Property header cards
+> gain quick actions reusing EXISTING pages — Open Property Details
+> (/property/{id}), Run Individual Analysis (/analysis), Generate Report
+> (/reports; the compared properties are already staged in the shared tray) —
+> plus Remove From Comparison (re-runs the comparison on the remaining ids, or
+> clears the result below 2). Floating compact winner card (name, verdict
+> stars, category wins, price — all already-displayed values) appears
+> bottom-right once the Executive Summary scrolls out of view
+> (IntersectionObserver), dismissible. Export toolbar extended with Print
+> Comparison (browser dialog) and Full Report (navigates to the existing
+> Reports page) alongside the Phase 17.1 PDF/WhatsApp actions. Hover polish:
+> image zoom on header cards, gently pulsing Overall Winner ribbon, soft
+> elevation everywhere. Risk section gains a "fewer risk indicators than …"
+> relative note (display arithmetic only).
+
+- [x] At-a-Glance winner strip (existing category winners, reason + metric)
+- [x] Show Only Differences toggle (persisted, per-table hidden-row count)
+- [x] Premium accordion section banners (icon chip + description)
+- [x] Property header quick actions (details / analysis / report / remove)
+- [x] Remove From Comparison re-runs on the remaining properties
+- [x] Floating winner card on scroll (IntersectionObserver, dismissible)
+- [x] Print Comparison + Full Report export actions
+- [x] Hover polish (image zoom, pulsing winner ribbon)
+
+---
+
+## Phase 17.3 — Comparison Report & WhatsApp Integration
+
+> The Comparison page (/compare) now exports and shares a dedicated
+> COMPARISON REPORT that mirrors the comparison view itself — Executive
+> Summary, Best Overall Investment, Compared Properties, Category Winners
+> (the Winner Strip), side-by-side comparison tables (overview, price
+> prediction, rental, risk, future growth, negotiation, scores & verdicts),
+> Negotiation Insights and the Final Recommendation — instead of the standard
+> per-property investment report. New thin endpoints POST /report/comparison
+> and POST /report/comparison/share reuse the whole EXISTING pipeline (the
+> backend comparison + analyses via the Phase 15.10 _gather_analyses, the
+> Claude client, the single Chromium PDF generator and the WhatsApp Cloud API
+> delivery with a comparison filename) with a new comparison report prompt
+> template (src/llm/prompts/comparison_report_prompt.py) that follows the
+> same plain-text divider/icon conventions, so the existing print route and
+> PDF pipeline render it unchanged. If the Claude presentation is
+> unavailable, the endpoints degrade to the standard report so sharing never
+> hard-fails. The Reports page (/reports) and its /report, /report/pdf and
+> /report/share endpoints are COMPLETELY UNCHANGED — the two flows are fully
+> independent.
+
+- [x] Comparison report prompt template (comparison-view layout, plain text)
+- [x] Comparison report generator reusing existing backend analyses
+- [x] POST /report/comparison + POST /report/comparison/share (thin endpoints)
+- [x] /compare export toolbar uses the comparison endpoints (PDF + WhatsApp)
+- [x] Reports page flow untouched (independent, backward compatible)
+
+---
+
+## Phase 17.4 — Comparison Report Matches the Premium Comparison Dashboard
+
+> The Comparison Report is now the /compare page printed into a premium PDF
+> instead of a text report. The comparison report prompt template
+> (src/llm/prompts/comparison_report_prompt.py) was redesigned to emit the
+> compare page's own structure — Best Overall Investment hero, Overall
+> Comparison Score (win tally), ONE side-by-side '|' table per analysis
+> (Basic Information, Price Prediction, Rental, Risk, Future Growth,
+> Valuation, Investment Advisor, Negotiation) with '🏆 ' prefixes on the
+> winning cells and a per-table Winner line, then the Final Scoreboard and
+> Final Recommendation. A new frontend renderer
+> (features/reports/comparison-report-document.tsx) renders that report with
+> the compare page's own visual system: the green winner hero with score /
+> category-wins stats, proportional win bars with category chips, emerald 🏆
+> winner cells in every table, per-section winner strips, the Final
+> Scoreboard card grid and the large green Final Recommendation block. The
+> print route (/print/report) picks this renderer only when the parsed
+> report title is the comparison title (isComparisonReport), so the standard
+> Reports page document, parser, prompt, PDF and WhatsApp flows are
+> COMPLETELY UNCHANGED — same single Chromium PDF pipeline, same endpoints,
+> nothing regenerated.
+
+- [x] Comparison prompt emits the compare-page layout (side-by-side tables, 🏆 winner cells, win tally, scoreboard)
+- [x] ComparisonReportDocument renderer (winner hero, win bars, emerald winner cells, scoreboard cards, recommendation block)
+- [x] /print/report routes comparison reports to the new renderer (standard path untouched)
+- [x] Verified end-to-end through the real Chromium PDF pipeline
+- [x] Reports page flow untouched (independent, backward compatible)
+
+---
+
+## Phase 17.5 — Global Number Formatting & Instant Loading Feedback
+
+> UI polish only — no backend, API or business-logic changes. ONE shared
+> formatting utility (features/dashboard/format.ts: formatScore, formatPercent,
+> formatInteger, formatCurrency, formatNumber, and a number-aware formatCell)
+> now cleans every backend numeric display, so raw floating-point precision
+> (0.7000000000000001) never reaches the UI: scores always show two decimals,
+> percentages show two decimals, counts stay integers, currency/area formatting
+> unchanged. Applied across the dashboard comparison result, all /analysis
+> renderers, the /compare workspace (executive summary, score cards, matrix
+> tables, winners, final recommendation), property details ratings, property
+> cards, and the report preview/print documents (report-parser rounds float
+> artifacts — long runs of 0s/9s — to two decimals; verbatim otherwise).
+> WhatsApp sharing feels instant: the comparison share now generates the report
+> INSIDE the mutation so "Sending…" + spinner appear in the same render frame
+> as the click (previously nothing changed for 20-30s), phone inputs and share
+> buttons are disabled while sending, a grey "Sending … report to WhatsApp…"
+> helper line shows under the form, success banners restate the delivered
+> number, and failures show "Unable to send report" + the backend reason with
+> a Try Again button. Export PDF buttons show the shared spinner. Same
+> endpoints, same order — presentation only.
+
+- [x] Shared number formatters (formatScore / formatPercent / formatInteger / formatCurrency / formatNumber)
+- [x] Formatting applied across dashboard, /analysis, /compare, property details and property cards
+- [x] Report preview/print float-artifact cleanup (parser-level, presentation only)
+- [x] Instant "Sending…" state for WhatsApp share (property + comparison reports)
+- [x] Duplicate-click protection (send button, phone input, share toggle disabled while sending)
+- [x] Sending helper text, improved success (delivered-to number) and error (reason + Try Again) feedback
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be

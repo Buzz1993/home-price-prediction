@@ -13,7 +13,12 @@ import { ChevronDown, type LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { valueTone } from "@/lib/value-tone";
-import { formatCell, formatCr, humanizeKey } from "@/features/dashboard/format";
+import {
+  formatCell,
+  formatCr,
+  formatNumber,
+  humanizeKey,
+} from "@/features/dashboard/format";
 
 // A backend field is "present" only when it is a non-empty value.
 export function hasValue(value: unknown): value is string | number {
@@ -277,7 +282,7 @@ export function RadialGauge({
         />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">
-        {display ?? String(value)}
+        {display ?? formatNumber(value)}
       </span>
     </div>
   );

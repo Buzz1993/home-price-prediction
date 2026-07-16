@@ -35,6 +35,7 @@ import {
   formatArea,
   formatCr,
   formatPerSqft,
+  formatScore,
   splitList,
 } from "@/features/dashboard/format";
 import type { PropertyCardData } from "@/types/dashboard";
@@ -234,7 +235,7 @@ export function PropertyCard({
               staged && "border-primary/40 bg-primary/20 text-primary"
             )}
           >
-            <TrendingUp /> Recommendation {property.search_score.toFixed(2)}
+            <TrendingUp /> Recommendation {formatScore(property.search_score)}
           </Badge>
         )}
 

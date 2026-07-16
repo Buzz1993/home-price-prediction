@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from src.mcp.tools.property_tools import create_property_report
 from src.llm.report_enhancement import enhance_report
+from src.llm.comparison_report import generate_comparison_report
 from src.services.pdf_service import PdfRenderError, generate_report_pdf
 from src.services.whatsapp_service import WhatsAppError, send_report
 
@@ -199,5 +200,91 @@ def share_report(request: ShareReportRequest, enhance: bool = False):
 
     try:
         return send_report(request.phone_number, report)
+    except WhatsAppError as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e))
+
+
+# =====================================================
+# COMPARISON REPORT (Phase 17.3)
+# =====================================================
+#
+# Dedicated endpoints for the Property Comparison page (/compare). They
+# REUSE the whole existing pipeline — the backend analyses, the Claude
+# client, the single Chromium PDF generator and the WhatsApp Cloud API
+# delivery — but present the results with the comparison report template
+# (src/llm/comparison_report.py) instead of the standard investment report.
+# The existing /report, /report/pdf and /report/share endpoints used by the
+# Reports page are UNCHANGED, so the two flows stay fully independent.
+
+COMPARISON_REPORT_FILENAME = "EstateMind Property Comparison Report.pdf"
+
+
+def _compose_comparison_report(property_ids: list[str]) -> str:
+    """
+    Compose the comparison report for the compared properties. Falls back to
+    the standard backend report when the comparison presentation cannot be
+    generated (LLM unavailable), so sharing/export never hard-fails on the
+    AI layer.
+    """
+    if len(property_ids) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="A comparison report requires at least two properties.",
+        )
+
+    report = execute(generate_comparison_report, property_ids)
+    if report:
+        return report
+
+    # Degrade gracefully: the standard report pipeline (with the Phase 15.10
+    # readability pass) still delivers the backend results.
+    fallback = execute(create_property_report, property_ids)
+    enhanced = attach_report_enhancement(fallback, True, property_ids)
+    return enhanced.get("ai_enhanced") or fallback
+
+
+@router.post("/report/comparison")
+def generate_comparison(request: ReportRequest):
+    """
+    Generate the Comparison Report for the compared properties (Phase 17.3).
+
+    The backend runs the existing comparison and analyses; Claude only
+    re-presents those results in the /compare page's own layout (Executive
+    Summary, Best Overall Investment, Compared Properties, Category Winners,
+    side-by-side tables, Negotiation Insights, Final Recommendation).
+
+    Returns the same `{ content, ai_enhanced }` shape as POST /report with
+    enhance=true, so the existing frontend preview/PDF plumbing is reused
+    as-is.
+    """
+
+    report = _compose_comparison_report(request.property_ids)
+    return {"content": report, "ai_enhanced": report}
+
+
+@router.post("/report/comparison/share")
+def share_comparison(request: ShareReportRequest):
+    """
+    Share the Comparison Report to a WhatsApp number (Phase 17.3).
+
+    Same delivery pipeline as /report/share — the report is rendered to a
+    PDF once by the single Chromium generator and sent as a document through
+    the official Meta WhatsApp Cloud API — but the document is the
+    comparison report and carries a comparison filename.
+
+    When the frontend passes the previewed report in `request.report`, that
+    exact text is delivered and nothing is regenerated (the Phase 16.1
+    rule); otherwise the comparison report is composed here once.
+    """
+
+    report = (request.report or "").strip()
+
+    if not report:
+        report = _compose_comparison_report(request.property_ids)
+
+    try:
+        return send_report(
+            request.phone_number, report, filename=COMPARISON_REPORT_FILENAME
+        )
     except WhatsAppError as e:
         raise HTTPException(status_code=e.status_code, detail=str(e))

@@ -13,6 +13,7 @@ import { Building2, ListPlus } from "lucide-react";
 
 import {
   formatArea,
+  formatCell,
   formatCr,
   formatPerSqft,
   humanizeKey,
@@ -22,6 +23,7 @@ import { formatValue } from "@/features/property/property-fields";
 import { StatusPill } from "@/features/analysis/ui/analysis-ui";
 import type { PropertyDetail, SearchResult } from "@/types/dashboard";
 import {
+  allIdentical,
   barFractions,
   hasText,
   rankNumericCells,
@@ -109,10 +111,12 @@ function buildRow(
       : null;
 
   const cells: MatrixCell[] = values.map((value, i) => ({
+    // formatCell cleans raw float noise from open backend values; renderers
+    // override it for typed cells.
     content: hasText(value)
       ? render
         ? render(value)
-        : String(value)
+        : formatCell(value as string | number)
       : "—",
     tone: tones[i],
     badge,
@@ -120,15 +124,21 @@ function buildRow(
     note: notes?.[i] ?? null,
   }));
 
-  return { label, tooltip, cells };
+  return { label, tooltip, identical: allIdentical(values), cells };
 }
 
 export function PropertyMatrix({
   columns,
   sources,
+  hideIdentical = false,
+  onRemove,
 }: {
   columns: MatrixColumn[];
   sources: MatrixSource[];
+  // "Show Only Differences" (Phase 17.2) — forwarded to both tables.
+  hideIdentical?: boolean;
+  // Removes a property from the running comparison (header quick action).
+  onRemove?: (id: string) => void;
 }) {
   const values = (key: string) => sources.map((source) => fieldOf(source, key));
   // Column names for the Goal-6 relative-difference notes.
@@ -152,6 +162,7 @@ export function PropertyMatrix({
         location={fieldOf(sources[i], "location")}
         verdict={column.verdict}
         isOverallWinner={Boolean(column.isWinner)}
+        onRemove={onRemove}
       />
     ),
   }));
@@ -292,6 +303,7 @@ export function PropertyMatrix({
         description="Every field returned by the backend, compared side-by-side. The best value in each row is highlighted."
         columns={headerColumns}
         rows={knownRows}
+        hideIdentical={hideIdentical}
       />
       {extraRows.length > 0 && (
         <MatrixTable
@@ -299,6 +311,7 @@ export function PropertyMatrix({
           icon={ListPlus}
           columns={columns}
           rows={extraRows}
+          hideIdentical={hideIdentical}
         />
       )}
     </div>

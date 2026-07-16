@@ -1,20 +1,67 @@
 "use client";
 
-// Premium property header card (Phase 17.1, Goal 3) — the column header of
-// the Property Overview comparison matrix. A compact mini-card: property
-// image, name, id, price, configuration, area, location, the backend advisor
-// verdict (pill + star restatement) and a "🏆 Overall Winner" badge when this
-// property is the backend comparison winner. Presentation only — every field
-// is the verbatim backend value the matrix already receives.
+// Premium property header card (Phase 17.1 Goal 3, quick actions + hover
+// polish in Phase 17.2) — the column header of the Property Overview
+// comparison matrix. A compact mini-card: property image (slight zoom on
+// hover), name, id, price, configuration, area, location, the backend advisor
+// verdict (pill + star restatement), a gently pulsing "🏆 Overall Winner"
+// ribbon, and quick actions that REUSE existing pages: property details,
+// AI Analysis, Reports (the compared properties are already staged in the
+// shared tray those pages read) and remove-from-comparison. Presentation
+// only — every field is the verbatim backend value the matrix already
+// receives.
 
-import { Home, MapPin, Trophy } from "lucide-react";
+import Link from "next/link";
+import { Eye, FileText, Home, LineChart, MapPin, Trophy, X } from "lucide-react";
 import { useState } from "react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { StatusPill } from "@/features/analysis/ui/analysis-ui";
 import { StarRow, ratingStars } from "@/features/analysis/ui/decision-summary";
 import { formatArea, formatCr } from "@/features/dashboard/format";
 import { cn } from "@/lib/utils";
 import { hasText } from "./compare-utils";
+
+// One small labelled icon action in the header card's action row.
+function QuickAction({
+  label,
+  href,
+  onClick,
+  children,
+}: {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  const className =
+    "flex size-7 items-center justify-center rounded-lg border bg-card text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary";
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {href ? (
+          <Link href={href} aria-label={label} className={className}>
+            {children}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            aria-label={label}
+            onClick={onClick}
+            className={className}
+          >
+            {children}
+          </button>
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 export function PropertyHeaderCard({
   id,
@@ -26,6 +73,7 @@ export function PropertyHeaderCard({
   location,
   verdict,
   isOverallWinner,
+  onRemove,
 }: {
   id: string;
   name: string;
@@ -37,6 +85,8 @@ export function PropertyHeaderCard({
   // The backend advisor verdict for this property (pill + stars).
   verdict?: unknown;
   isOverallWinner: boolean;
+  // Removes this property from the running comparison.
+  onRemove?: (id: string) => void;
 }) {
   const [imageError, setImageError] = useState(false);
   const showImage = Boolean(imageUrl) && !imageError;
@@ -45,7 +95,7 @@ export function PropertyHeaderCard({
   return (
     <div
       className={cn(
-        "w-48 space-y-2 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md",
+        "group w-48 space-y-2 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md",
         isOverallWinner && "border-primary/40 bg-primary/5"
       )}
     >
@@ -58,13 +108,13 @@ export function PropertyHeaderCard({
             loading="lazy"
             decoding="async"
             onError={() => setImageError(true)}
-            className="size-full object-cover"
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <Home className="size-6 text-primary" />
         )}
         {isOverallWinner && (
-          <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm">
+          <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm motion-safe:animate-pulse">
             <Trophy className="size-3" />
             Overall Winner
           </span>
@@ -106,11 +156,32 @@ export function PropertyHeaderCard({
       )}
 
       {(hasText(verdict) || typeof stars === "number") && (
-        <div className="flex flex-wrap items-center gap-1.5 px-0.5 pb-0.5">
+        <div className="flex flex-wrap items-center gap-1.5 px-0.5">
           {typeof stars === "number" && <StarRow count={stars} />}
           {hasText(verdict) && <StatusPill value={verdict as string | number} />}
         </div>
       )}
+
+      {/* Quick actions — existing pages only (Phase 17.2, Goal 10). */}
+      <div className="flex items-center gap-1 border-t px-0.5 pt-1.5">
+        <QuickAction label="Open property details" href={`/property/${id}`}>
+          <Eye className="size-3.5" />
+        </QuickAction>
+        <QuickAction label="Run individual analysis" href="/analysis">
+          <LineChart className="size-3.5" />
+        </QuickAction>
+        <QuickAction label="Generate report" href="/reports">
+          <FileText className="size-3.5" />
+        </QuickAction>
+        {onRemove && (
+          <QuickAction
+            label="Remove from comparison"
+            onClick={() => onRemove(id)}
+          >
+            <X className="size-3.5" />
+          </QuickAction>
+        )}
+      </div>
     </div>
   );
 }

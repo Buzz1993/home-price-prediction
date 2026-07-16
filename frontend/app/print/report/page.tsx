@@ -5,7 +5,9 @@
 // PDF. It renders the SAME approved report document as the Reports page —
 // ReportDocument + report-parser + the existing .report-print-root print CSS
 // (globals.css) — so the exported PDF is pixel-identical to the browser's
-// Export PDF / Chrome print output. No report layout or styling lives here.
+// Export PDF / Chrome print output. Comparison reports (Phase 17.4) render
+// through ComparisonReportDocument instead, mirroring the /compare page; the
+// standard report path is unchanged. No report layout or styling lives here.
 //
 // The renderer injects the already-generated report text as
 // window.__ESTATEMIND_REPORT__ before the page loads; nothing is regenerated.
@@ -16,6 +18,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
+import {
+  ComparisonReportDocument,
+  isComparisonReport,
+} from "@/features/reports/comparison-report-document";
 import { ReportDocument } from "@/features/reports/report-document";
 import { parseReport } from "@/features/reports/report-parser";
 
@@ -41,10 +47,17 @@ export default function PrintReportPage() {
 
   if (!report) return null;
 
-  // Same document + raw-text fallback as the Reports page preview, so the
-  // exported PDF can never diverge from what the user previewed.
+  // Comparison reports (Phase 17.4) print with the compare-page renderer;
+  // standard reports keep the unchanged ReportDocument. Same raw-text
+  // fallback as the Reports page preview, so the exported PDF can never
+  // diverge from what the user previewed.
+  const comparison = model !== null && isComparisonReport(model);
   const document_ = model ? (
-    <ReportDocument model={model} />
+    comparison ? (
+      <ComparisonReportDocument model={model} />
+    ) : (
+      <ReportDocument model={model} />
+    )
   ) : (
     <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground sm:text-sm">
       {report}
@@ -57,7 +70,12 @@ export default function PrintReportPage() {
     <div className="report-print-root" data-report-ready="true" aria-hidden>
       {document_}
       <div className="report-print-footer justify-between border-t px-1 pt-2 text-[10px] text-muted-foreground">
-        <span>EstateMind · Property Investment Report</span>
+        <span>
+          EstateMind ·{" "}
+          {comparison
+            ? "Property Comparison Report"
+            : "Property Investment Report"}
+        </span>
         <span>Confidential — prepared for the client</span>
       </div>
     </div>,

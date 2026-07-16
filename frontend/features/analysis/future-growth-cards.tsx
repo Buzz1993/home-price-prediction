@@ -15,7 +15,7 @@ import { LineChart, Sparkles, TrendingUp } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { AdvisorRow } from "@/types/dashboard";
 import { toneKey, toneRank } from "@/lib/value-tone";
-import { splitList } from "@/features/dashboard/format";
+import { formatScore, splitList } from "@/features/dashboard/format";
 import { CompactPropertyHeader } from "./property-header";
 import {
   MetricExplainer,
@@ -80,7 +80,7 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
               hasValue(winner.item.growth_score)
                 ? {
                     label: "Growth score",
-                    value: String(winner.item.growth_score),
+                    value: formatScore(winner.item.growth_score as number),
                     sub: "Out of 5",
                   }
                 : undefined
@@ -94,7 +94,7 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
               name: resolveName(c.item.id),
               status: c.label,
               display:
-                c.score !== null ? `Score ${c.score}` : undefined,
+                c.score !== null ? `Score ${formatScore(c.score)}` : undefined,
               isWinner: c === winner,
             }))}
           />
@@ -144,7 +144,7 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
                       hasValue(item.growth_score)
                         ? {
                             label: "Growth score",
-                            value: String(item.growth_score),
+                            value: formatScore(item.growth_score as number),
                             sub: "Out of 5",
                           }
                         : undefined
@@ -168,7 +168,7 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
                     <RadialGauge
                       value={growthScore}
                       max={5}
-                      display={String(item.growth_score)}
+                      display={formatScore(item.growth_score as number)}
                     />
                     <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                       Growth score

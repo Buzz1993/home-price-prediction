@@ -8,7 +8,12 @@
 // re-scored here.
 
 import { toneRank } from "@/lib/value-tone";
-import { formatCr, splitList } from "@/features/dashboard/format";
+import {
+  formatCr,
+  formatPercent,
+  formatScore,
+  splitList,
+} from "@/features/dashboard/format";
 import { ratingStars } from "@/features/analysis/ui/decision-summary";
 import type {
   AdvisorRow,
@@ -79,7 +84,9 @@ export function rentalWinner(bundle: CompareBundle): CategoryWinner {
     parseNumeric(row.rental_yield_percent)
   );
   if (!best) return null;
-  const points = [`Highest rental yield of ${best.rental_yield_percent}`];
+  const points = [
+    `Highest rental yield of ${formatPercent(best.rental_yield_percent as string)}`,
+  ];
   if (hasText(best.annual_rent)) {
     const annual = parseNumeric(best.annual_rent);
     if (annual !== null)
@@ -126,7 +133,7 @@ export function growthWinner(bundle: CompareBundle): CategoryWinner {
   if (!best) return null;
   const points = [String(best.growth_label)];
   if (hasText(best.growth_score))
-    points.push(`Growth score ${best.growth_score}`);
+    points.push(`Growth score ${formatScore(best.growth_score as number)}`);
   return { id: best.id, points };
 }
 
@@ -155,7 +162,7 @@ export function advisorWinner(bundle: CompareBundle): CategoryWinner {
       return {
         id: best.id,
         points: [
-          `Investment score ${rec(best).overall_score}`,
+          `Investment score ${formatScore(rec(best).overall_score as number)}`,
           ...(hasText(best.verdict) ? [String(best.verdict)] : []),
         ],
       };
@@ -184,7 +191,9 @@ export function negotiationWinner(bundle: CompareBundle): CategoryWinner {
   if (!best) return null;
   const points: string[] = [];
   if (hasText(best.suggested_discount_percent))
-    points.push(`${best.suggested_discount_percent} suggested discount`);
+    points.push(
+      `${formatPercent(best.suggested_discount_percent as string)} suggested discount`
+    );
   if (hasText(best.negotiation_power))
     points.push(`${best.negotiation_power} negotiation power`);
   if (hasText(best.target_price))
@@ -199,7 +208,7 @@ export function investmentWinner(bundle: CompareBundle): CategoryWinner {
   // The backend score can be null (NaN-scrubbed) — only cite it when present.
   const points = [
     ...(hasText(winner.overall_score)
-      ? [`Overall score ${winner.overall_score}`]
+      ? [`Overall score ${formatScore(winner.overall_score)}`]
       : []),
     ...(hasText(winner.verdict) ? [String(winner.verdict)] : []),
   ];

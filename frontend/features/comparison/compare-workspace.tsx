@@ -8,11 +8,13 @@
 // property records are fetched from the EXISTING documented endpoints
 // (use-compare-data) and rendered unchanged — no analysis logic lives here.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PackageOpen, Scale, Sparkles } from "lucide-react";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SectionLabel } from "@/features/analysis/ui/analysis-ui";
@@ -26,10 +28,12 @@ import {
   FinalScoreboard,
 } from "./compare-summary";
 import { hasText } from "./compare-utils";
+import { FloatingWinner } from "./floating-winner";
 import type { MatrixColumn } from "./matrix-table";
 import { OverallScoreboard } from "./overall-scoreboard";
 import { PropertyMatrix } from "./property-matrix";
 import { useCompareData } from "./use-compare-data";
+import { WinnerStrip } from "./winner-strip";
 
 // Loading placeholder shaped like the page: summary banner + two matrices.
 function CompareSkeleton() {
@@ -42,10 +46,26 @@ function CompareSkeleton() {
   );
 }
 
+// Persisted "Show only differences" preference (Phase 17.2, Goal 3).
+const ONLY_DIFFERENCES_KEY = "estatemind.compare.only-differences";
+
+function loadOnlyDifferences(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(ONLY_DIFFERENCES_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 export function CompareWorkspace() {
   const { tray, properties } = useWorkspace();
   const [chosen, setChosen] = useState<string[]>([]);
+  const [onlyDifferences, setOnlyDifferences] = useState(loadOnlyDifferences);
   const compare = useCompareData();
+  // Anchor for the floating winner card: it appears once the Executive
+  // Summary has scrolled out of view.
+  const summaryRef = useRef<HTMLDivElement | null>(null);
 
   // Drop selections that were removed from the tray since they were picked.
   const selection = chosen.filter((id) => tray.includes(id));
@@ -57,6 +77,25 @@ export function CompareWorkspace() {
   const retry = compare.variables
     ? () => compare.mutate(compare.variables)
     : undefined;
+
+  const toggleOnlyDifferences = (checked: boolean) => {
+    setOnlyDifferences(checked);
+    try {
+      window.localStorage.setItem(ONLY_DIFFERENCES_KEY, String(checked));
+    } catch {
+      // Storage unavailable — the toggle still works for this session.
+    }
+  };
+
+  // Remove one property from the running comparison (header quick action).
+  // With 2+ properties left the comparison re-runs on the remaining ids;
+  // otherwise the result clears and the user picks new contenders.
+  const removeFromComparison = (id: string) => {
+    const remaining = selection.filter((current) => current !== id);
+    setChosen(remaining);
+    if (remaining.length >= 2) compare.mutate(remaining);
+    else compare.reset();
+  };
 
   // Resolve a property id to its best available backend name: the fetched
   // property record first, the workspace search row next, the raw id last.
@@ -151,16 +190,32 @@ export function CompareWorkspace() {
                   <CompareExport ids={bundle.ids} />
                 </div>
 
-                <ExecutiveWinner bundle={bundle} resolveName={resolveName} />
+                <div ref={summaryRef}>
+                  <ExecutiveWinner bundle={bundle} resolveName={resolveName} />
+                </div>
+
+                <WinnerStrip bundle={bundle} resolveName={resolveName} />
 
                 <OverallScoreboard bundle={bundle} resolveName={resolveName} />
 
                 <div className="space-y-2">
-                  <SectionLabel>Comparison Breakdown</SectionLabel>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <SectionLabel>Comparison Breakdown</SectionLabel>
+                    <Label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <Checkbox
+                        checked={onlyDifferences}
+                        onCheckedChange={(checked) =>
+                          toggleOnlyDifferences(checked === true)
+                        }
+                      />
+                      Show only differences
+                    </Label>
+                  </div>
                   <AnalysisComparisonSections
                     bundle={bundle}
                     columns={columns}
                     resolveName={resolveName}
+                    hideIdentical={onlyDifferences}
                     overview={
                       <PropertyMatrix
                         columns={columns}
@@ -168,6 +223,8 @@ export function CompareWorkspace() {
                           detail: bundle.details[i],
                           fallback: properties.find((p) => p.id === id),
                         }))}
+                        hideIdentical={onlyDifferences}
+                        onRemove={removeFromComparison}
                       />
                     }
                   />
@@ -177,6 +234,12 @@ export function CompareWorkspace() {
                 <FinalRecommendation
                   bundle={bundle}
                   resolveName={resolveName}
+                />
+
+                <FloatingWinner
+                  bundle={bundle}
+                  resolveName={resolveName}
+                  watchRef={summaryRef}
                 />
               </div>
             )}

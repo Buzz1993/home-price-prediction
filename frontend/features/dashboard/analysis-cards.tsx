@@ -19,7 +19,7 @@ import {
 
 import type { AdvisorRow, NegotiationRow } from "@/types/dashboard";
 import { toneKey, toneRank } from "@/lib/value-tone";
-import { formatCr, splitList } from "./format";
+import { formatCr, formatPercent, splitList } from "./format";
 import { CompactPropertyHeader } from "@/features/analysis/property-header";
 import {
   CalloutCard,
@@ -89,7 +89,7 @@ export function NegotiationCards({ rows }: { rows: NegotiationRow[] }) {
             }
             statement={
               hasValue(winner.item.suggested_discount_percent)
-                ? `Largest suggested discount — ${winner.item.suggested_discount_percent} off the asking price`
+                ? `Largest suggested discount — ${formatPercent(winner.item.suggested_discount_percent)} off the asking price`
                 : undefined
             }
             stat={
@@ -109,7 +109,7 @@ export function NegotiationCards({ rows }: { rows: NegotiationRow[] }) {
                 ? c.item.negotiation_power
                 : undefined,
               display: hasValue(c.item.suggested_discount_percent)
-                ? `${c.item.suggested_discount_percent} discount`
+                ? `${formatPercent(c.item.suggested_discount_percent)} discount`
                 : undefined,
               isWinner: c === winner,
             }))}
@@ -146,7 +146,7 @@ export function NegotiationCards({ rows }: { rows: NegotiationRow[] }) {
                 tone={tone}
                 tagline={
                   hasValue(item.suggested_discount_percent)
-                    ? `Suggested discount of ${item.suggested_discount_percent} off the asking price`
+                    ? `Suggested discount of ${formatPercent(item.suggested_discount_percent)} off the asking price`
                     : undefined
                 }
                 stat={
@@ -183,7 +183,7 @@ export function NegotiationCards({ rows }: { rows: NegotiationRow[] }) {
               {hasValue(item.suggested_discount_percent) && (
                 <MetricCard
                   label="Suggested discount"
-                  value={String(item.suggested_discount_percent)}
+                  value={formatPercent(item.suggested_discount_percent)}
                   sub="Off the asking price"
                   icon={Percent}
                 />

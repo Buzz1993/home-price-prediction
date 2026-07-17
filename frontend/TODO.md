@@ -1788,6 +1788,63 @@ Examples:
 
 ---
 
+## Phase 18.3 — Dashboard & Property Cards Premium Polish
+
+> Visual-only polish of the Dashboard workspace and the reusable Property
+> Card. No feature, routing, API, state-management or business-logic changes.
+> Property card: ~25% taller imagery (aspect 16/13) with hover zoom, a subtle
+> bottom dark gradient for badge readability, an image-count badge, and a
+> premium lavender-gradient "Image Unavailable" placeholder (building icon —
+> never a broken-image glyph or empty white box). Typography hierarchy
+> re-weighted: dominant bold 2xl price, larger bold purple project name,
+> small gray monospace cardid, muted icon-aligned location, evenly-spaced
+> Lucide spec row (beds / baths / balconies / parking / area). AI
+> recommendation badge redesigned as a purple gradient pill ("✨ AI
+> Recommended · Score …", backend value only); amenity chips as padded
+> lavender pills with a hover wash; description at 3-line clamp with relaxed
+> leading. Actions row: gradient "View Listing" primary CTA beside an
+> outlined purple "Read More", consistent heights; the Staged state renders a
+> soft green pill. Whole card lifts slightly with a deeper soft shadow on
+> hover (150–200ms). Chat composer: more generous padding, softer
+> placeholder, purple focus ring + shadow lift. Map panel header: purple icon
+> chip beside the title; map card gets the float shadow. Evaluation tray and
+> skeletons keep their Phase 18.2 design.
+
+- [x] Property image: taller frame, hover zoom, gradient overlay, photo-count badge
+- [x] Premium lavender "Image Unavailable" placeholder (building icon)
+- [x] Typography hierarchy: dominant price → purple name → mono cardid → location → specs
+- [x] Purple gradient AI Recommended pill (backend score only)
+- [x] Lavender amenity pills with hover wash; 3-line clamped description
+- [x] Gradient View Listing CTA + outlined purple Read More; green Staged pill
+- [x] Card hover lift + deeper shadow (150–200ms transitions)
+- [x] Composer, map panel header and spacing polish
+- [x] Production build verified (next build passes)
+
+---
+
+## Phase 18.4 — Premium Theme Customization
+
+> Visual-only theme customization. Four built-in premium themes — Estate
+> Green (default), Royal Purple (the Phase 18.2 palette), Midnight Blue and
+> Sunset Gold — defined entirely as design-token sets in globals.css
+> (`:root` + `[data-theme="…"]` overrides, incl. variable-driven sidebar
+> gradient and brand glows). A ThemeProvider applies the selection as
+> `data-theme` on <html>, persists it to localStorage
+> (`estatemind.theme`) and cross-fades colors (~200ms) on switch; an inline
+> boot script in the root layout restores the theme before hydration, so
+> there is no flash of the default. Profile gains an "Appearance" section
+> with four accessible radio-group theme cards (swatches, name, description,
+> check indicator, hover lift). No layout, routing, API, state-management or
+> business-logic changes.
+
+- [x] Four theme token sets in globals.css (Estate Green default)
+- [x] ThemeProvider + localStorage persistence + no-flicker boot script
+- [x] ~200ms cross-fade on theme switch (reduced-motion honored)
+- [x] Profile → Appearance section with premium theme cards
+- [x] Production build verified (next build passes)
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be

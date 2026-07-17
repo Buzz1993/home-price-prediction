@@ -50,58 +50,172 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* EstateMind premium SaaS design system (Phase 18.2, evolving Phase 18.1).
-   Purple-and-white design language: a soft lavender page canvas (#F6F5FD) so
-   the pure-white cards float above it, a purple brand palette (#6D4AFF /
-   #8C6DFF), thin lavender borders (#ECE9F8), a faint lavender hover wash
-   (#F3F0FF) and a slightly larger radius scale for the floating-card look.
-   Every shadcn component reads these tokens, so the whole application
-   inherits the refreshed theme without per-page styling. */
+/* EstateMind premium SaaS design system (Phase 18.4, evolving 18.1/18.2).
+   The whole application is painted through these design tokens, so Phase 18.4
+   theme customization only swaps token values: `:root` holds the Estate Green
+   default and `[data-theme="…"]` blocks override the same tokens for the
+   Royal Purple, Midnight Blue and Sunset Gold themes. Layouts, spacing and
+   typography never change — every shadcn component simply re-reads the
+   variables when `data-theme` flips on <html>. */
 :root {
-  /* Soft lavender page background (#F6F5FD), deep-purple-tinted text. */
+  /* Estate Green (default) — soft slate canvas (#F8FAFC), white floating
+     cards, green brand palette (#15803D / #22C55E). */
+  --background: #f8fafc;
+  --foreground: #14231b;
+  --card: #ffffff;
+  --card-foreground: #14231b;
+  --popover: #ffffff;
+  --popover-foreground: #14231b;
+  /* Brand green (#15803D) — AA contrast against white text. */
+  --primary: #15803d;
+  --primary-foreground: #ffffff;
+  /* Brand secondary (#22C55E) and light accent as chart/gradient stops;
+     secondary SURFACES stay soft green for readable chips. */
+  --brand-secondary: #22c55e;
+  --brand-accent: #4ade80;
+  --secondary: #f0fdf4;
+  --secondary-foreground: #166534;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  /* Faint green hover / active wash (#F0FDF4). */
+  --accent: #f0fdf4;
+  --accent-foreground: #15803d;
+  --destructive: #ef4444;
+  /* Thin gray borders (#E5E7EB) and green focus ring. */
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #22c55e;
+  /* Green chart scale. */
+  --chart-1: #15803d;
+  --chart-2: #22c55e;
+  --chart-3: #4ade80;
+  --chart-4: #86efac;
+  --chart-5: #bbf7d0;
+  /* Larger radius: rounded-xl cards land at ~20px for the floating look. */
+  --radius: 0.9rem;
+  /* Sidebar: dark green rail with green active/primary + ring. */
+  --sidebar: #122a1c;
+  --sidebar-foreground: #ecfdf3;
+  --sidebar-primary: #15803d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklch, #22c55e 16%, transparent);
+  --sidebar-accent-foreground: #d8f5e3;
+  --sidebar-border: color-mix(in oklch, #ffffff 9%, transparent);
+  --sidebar-ring: #22c55e;
+  /* Dark sidebar-rail gradient stops (used by .bg-sidebar-gradient). */
+  --sidebar-gradient-from: #1b3a28;
+  --sidebar-gradient-to: #10231a;
+}
+
+/* Royal Purple — the Phase 18.2 luxury SaaS palette: lavender canvas
+   (#F6F5FD), purple brand (#6D4AFF / #8C6DFF), lavender borders and wash. */
+[data-theme="royal-purple"] {
   --background: #f6f5fd;
   --foreground: #1c1633;
-  /* Pure-white floating cards / popovers (#FFFFFF). */
   --card: #ffffff;
   --card-foreground: #1c1633;
   --popover: #ffffff;
   --popover-foreground: #1c1633;
-  /* Brand purple (#6D4AFF) — AA contrast against white text. */
   --primary: #6d4aff;
   --primary-foreground: #ffffff;
-  /* Brand secondary (#8C6DFF) and light accent as chart/gradient stops;
-     secondary SURFACES stay soft lavender for readable chips. */
   --brand-secondary: #8c6dff;
   --brand-accent: #b4a0ff;
   --secondary: #f5f2ff;
   --secondary-foreground: #43356e;
   --muted: #f5f2ff;
   --muted-foreground: #6f6a8f;
-  /* Faint lavender hover / active wash (#F3F0FF). */
   --accent: #f3f0ff;
   --accent-foreground: #5b3df5;
-  --destructive: #ef4444;
-  /* Thin lavender borders (#ECE9F8) and purple focus ring. */
   --border: #ece9f8;
   --input: #ece9f8;
   --ring: #8c6dff;
-  /* Purple chart scale. */
   --chart-1: #6d4aff;
   --chart-2: #8c6dff;
   --chart-3: #a98eff;
   --chart-4: #c4b2ff;
   --chart-5: #ded3ff;
-  /* Larger radius: rounded-xl cards land at ~20px for the floating look. */
-  --radius: 0.9rem;
-  /* Sidebar: dark purple rail (#17132C), purple active/primary + ring. */
   --sidebar: #17132c;
   --sidebar-foreground: #f0edfb;
   --sidebar-primary: #6d4aff;
-  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: color-mix(in oklch, #8c6dff 16%, transparent);
   --sidebar-accent-foreground: #eee8ff;
-  --sidebar-border: color-mix(in oklch, #ffffff 9%, transparent);
   --sidebar-ring: #8c6dff;
+  --sidebar-gradient-from: #221a44;
+  --sidebar-gradient-to: #18132f;
+}
+
+/* Midnight Blue — professional enterprise palette: airy blue-white canvas
+   (#F8FAFF), blue brand (#2563EB / #3B82F6), blue-tinted borders and wash. */
+[data-theme="midnight-blue"] {
+  --background: #f8faff;
+  --foreground: #101c36;
+  --card: #ffffff;
+  --card-foreground: #101c36;
+  --popover: #ffffff;
+  --popover-foreground: #101c36;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --brand-secondary: #3b82f6;
+  --brand-accent: #60a5fa;
+  --secondary: #eff6ff;
+  --secondary-foreground: #1e40af;
+  --muted: #eff6ff;
+  --muted-foreground: #64748b;
+  --accent: #eff6ff;
+  --accent-foreground: #1d4ed8;
+  --border: #dbeafe;
+  --input: #dbeafe;
+  --ring: #3b82f6;
+  --chart-1: #2563eb;
+  --chart-2: #3b82f6;
+  --chart-3: #60a5fa;
+  --chart-4: #93c5fd;
+  --chart-5: #bfdbfe;
+  --sidebar: #101c36;
+  --sidebar-foreground: #eaf1ff;
+  --sidebar-primary: #2563eb;
+  --sidebar-accent: color-mix(in oklch, #3b82f6 16%, transparent);
+  --sidebar-accent-foreground: #d8e6ff;
+  --sidebar-ring: #3b82f6;
+  --sidebar-gradient-from: #1a2b55;
+  --sidebar-gradient-to: #101c38;
+}
+
+/* Sunset Gold — premium investment palette: warm ivory canvas (#FFFDF5),
+   gold brand (#C48A00 / #EAB308), soft amber borders and wash. */
+[data-theme="sunset-gold"] {
+  --background: #fffdf5;
+  --foreground: #2a2208;
+  --card: #ffffff;
+  --card-foreground: #2a2208;
+  --popover: #ffffff;
+  --popover-foreground: #2a2208;
+  --primary: #c48a00;
+  --primary-foreground: #ffffff;
+  --brand-secondary: #eab308;
+  --brand-accent: #facc15;
+  --secondary: #fef9c3;
+  --secondary-foreground: #854d0e;
+  --muted: #fdf8dd;
+  --muted-foreground: #8a7a4a;
+  --accent: #fef9c3;
+  --accent-foreground: #a16207;
+  --border: #fde68a;
+  --input: #fde68a;
+  --ring: #eab308;
+  --chart-1: #c48a00;
+  --chart-2: #eab308;
+  --chart-3: #facc15;
+  --chart-4: #fde047;
+  --chart-5: #fef08a;
+  --sidebar: #2a2108;
+  --sidebar-foreground: #fdf6e3;
+  --sidebar-primary: #c48a00;
+  --sidebar-accent: color-mix(in oklch, #eab308 16%, transparent);
+  --sidebar-accent-foreground: #fdeeb0;
+  --sidebar-ring: #eab308;
+  --sidebar-gradient-from: #3a2e0c;
+  --sidebar-gradient-to: #241c06;
 }
 
 .dark {
@@ -138,6 +252,8 @@
   --sidebar-accent-foreground: #d6c9ff;
   --sidebar-border: color-mix(in oklch, #ffffff 10%, transparent);
   --sidebar-ring: #8c6dff;
+  --sidebar-gradient-from: #221a44;
+  --sidebar-gradient-to: #18132f;
 }
 
 @layer base {
@@ -206,17 +322,24 @@
     );
   }
 
-  /* Deep purple sidebar gradient (#221A44 → #18132F) for the dark rail. */
+  /* Deep sidebar gradient for the dark rail — stops come from the active
+     theme's tokens so every theme keeps its own tinted rail. */
   .bg-sidebar-gradient {
-    background-image: linear-gradient(180deg, #221a44 0%, #18132f 100%);
+    background-image: linear-gradient(
+      180deg,
+      var(--sidebar-gradient-from) 0%,
+      var(--sidebar-gradient-to) 100%
+    );
   }
 
-  /* Soft purple glow behind primary CTAs / active nav pills. */
+  /* Soft brand glow behind primary CTAs / active nav pills. */
   .shadow-brand-glow {
-    box-shadow: 0 2px 10px -2px color-mix(in oklch, #6d4aff 45%, transparent);
+    box-shadow: 0 2px 10px -2px
+      color-mix(in oklch, var(--primary) 45%, transparent);
   }
   .shadow-brand-glow-lg {
-    box-shadow: 0 6px 18px -4px color-mix(in oklch, #6d4aff 50%, transparent);
+    box-shadow: 0 6px 18px -4px
+      color-mix(in oklch, var(--primary) 50%, transparent);
   }
 
   /* 2px gradient top accent for feature cards (used sparingly). */
@@ -259,6 +382,23 @@
       translate: 100% 0;
     }
   }
+}
+
+/* Theme switching (Phase 18.4): while the ThemeProvider swaps `data-theme` it
+   briefly adds `.theme-switching` to <html>, so colors cross-fade (~200ms)
+   instead of flashing. The class is removed right after, keeping ordinary
+   hover/focus transitions untouched. Honors prefers-reduced-motion via the
+   global rule above. */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    fill 200ms ease,
+    stroke 200ms ease,
+    box-shadow 200ms ease !important;
 }
 
 /* Interactive Property Map (Phase 14.6) — integrate the Leaflet popup with the

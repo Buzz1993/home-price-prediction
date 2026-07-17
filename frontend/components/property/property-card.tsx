@@ -8,6 +8,13 @@
 // Every rich field (image, project name, locality/city, bed/bath/parking/
 // balcony, area, cost per sqft, recommendation score) is rendered only when the
 // backend provides it and hidden otherwise — the card never invents data.
+//
+// Phase 18.3 premium polish: taller imagery with a readability gradient and a
+// premium lavender "Image Unavailable" placeholder, a dominant price line, a
+// larger purple project name, lavender amenity pills, a gradient AI badge, a
+// gradient View Listing CTA with an outlined Read More beside it, and more
+// generous vertical rhythm. Presentation only — data, props and behavior are
+// unchanged.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -16,13 +23,12 @@ import {
   Bath,
   BedDouble,
   Bookmark,
+  Building2,
   Car,
   Fence,
-  ImageOff,
   MapPin,
   Ruler,
   Sparkles,
-  TrendingUp,
 } from "lucide-react";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -78,6 +84,7 @@ export function PropertyCard({
   const amenities = splitList(property.amenities_mcp);
   const primaryImage = property.image_urls?.[0];
   const showImage = Boolean(primaryImage) && !imageError;
+  const imageCount = property.image_urls?.length ?? 0;
 
   // Prefer the granular locality/city; fall back to the combined location.
   const place =
@@ -88,59 +95,84 @@ export function PropertyCard({
   const specs = [
     { icon: BedDouble, label: "Beds", value: property.bed },
     { icon: Bath, label: "Baths", value: property.bath },
+    { icon: Fence, label: "Balconies", value: property.balcony },
     { icon: Car, label: "Parking", value: property.parking },
-    { icon: Fence, label: "Balcony", value: property.balcony },
   ].filter((spec) => hasValue(spec.value));
 
   return (
     <Card
       className={cn(
-        // Premium floating card (Phase 18.1): slight lift + deeper soft shadow
-        // on hover; `group` drives the image hover-zoom below.
-        "group gap-0 overflow-hidden py-0 transition-all duration-[250ms] hover:-translate-y-0.5 hover:shadow-float-lg",
+        // Premium floating listing card (Phase 18.3): slightly stronger lift +
+        // deeper soft shadow on hover; `group` drives the image hover-zoom
+        // below. 150–200ms transitions keep interactions crisp.
+        "group gap-0 overflow-hidden py-0 transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-float-lg",
         // Horizontal layout (md+): image on the left, details on the right.
         horizontal && "md:flex-row",
         // Staged: the ENTIRE card switches to a rich (but still elegant)
         // premium light-purple appearance — a clear purple gradient wash, a
         // deeper purple border, a purple ring and a soft glow — so staged
         // properties are immediately recognizable. Kept light enough that all
-        // text stays fully readable. Reverts smoothly (250ms) when unstaged.
+        // text stays fully readable. Reverts smoothly when unstaged.
         staged &&
           "border-primary/60 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 shadow-lg shadow-primary/25 ring-2 ring-primary/40"
       )}
     >
-      {/* Primary image (image_urls[0]) with a consistent fallback placeholder.
-          Horizontal: a fixed-width column on the left (a touch narrower on
-          tablet, wider from lg) that stretches to the card's height. */}
+      {/* Primary image (image_urls[0]) with a premium lavender placeholder
+          fallback. Vertical: ~25% taller than the previous 4/3 frame (3/2 →
+          16/13 ≈ +23–25% height for the same width). Horizontal: a fixed-width
+          column on the left that stretches to the card's height. */}
       <div
         className={cn(
-          "relative aspect-[4/3] w-full overflow-hidden bg-muted",
+          "relative aspect-[16/13] w-full overflow-hidden",
           horizontal &&
-            "md:aspect-auto md:w-48 md:shrink-0 md:self-stretch lg:w-60"
+            "md:aspect-auto md:w-56 md:shrink-0 md:self-stretch lg:w-72"
         )}
       >
         {showImage ? (
-          // Plain img keeps arbitrary external listing URLs working without
-          // per-domain Next image config; lazy + object-cover avoids distortion.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={primaryImage}
-            alt={property.project_name || `Property ${property.id}`}
-            loading="lazy"
-            decoding="async"
-            onError={() => setImageError(true)}
-            className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          />
+          <>
+            {/* Plain img keeps arbitrary external listing URLs working without
+                per-domain Next image config; lazy + object-cover avoids
+                distortion. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={primaryImage}
+              alt={property.project_name || `Property ${property.id}`}
+              loading="lazy"
+              decoding="async"
+              onError={() => setImageError(true)}
+              className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+            />
+            {/* Subtle dark gradient at the bottom so the overlaid badges stay
+                readable on bright photos. Purely decorative. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/35 to-transparent"
+            />
+          </>
         ) : (
-          <div className="flex size-full items-center justify-center text-muted-foreground">
-            <ImageOff className="size-8" />
+          // Premium placeholder — soft lavender gradient, building icon and an
+          // explicit label so a missing image looks intentional, never broken.
+          <div className="flex size-full flex-col items-center justify-center gap-2.5 bg-gradient-to-br from-secondary via-accent to-primary/10">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-card/80 text-primary shadow-float ring-1 ring-primary/10">
+              <Building2 className="size-6" />
+            </div>
+            <p className="text-xs font-medium text-muted-foreground">
+              Image Unavailable
+            </p>
           </div>
         )}
 
         {/* BHK badge overlaid on the image. */}
-        <Badge className="bg-brand-gradient absolute left-2 top-2 border-transparent text-primary-foreground shadow-sm">
+        <Badge className="bg-brand-gradient absolute left-2.5 top-2.5 border-transparent text-primary-foreground shadow-sm">
           <BedDouble /> {property.bhk_type}
         </Badge>
+
+        {/* Image counter — how many photos the listing carries. */}
+        {imageCount > 1 && (
+          <Badge className="absolute bottom-2.5 left-2.5 border-transparent bg-black/55 text-white backdrop-blur-sm">
+            {imageCount} photos
+          </Badge>
+        )}
 
         {/* Bookmark toggle — reuses the existing saved-property workflow. */}
         {onToggleSave && (
@@ -154,7 +186,7 @@ export function PropertyCard({
             title={saved ? "Remove from saved" : "Save property"}
             disabled={savePending}
             onClick={() => onToggleSave(property.id)}
-            className="absolute right-2 top-2 bg-background/80 backdrop-blur hover:bg-background"
+            className="absolute right-2.5 top-2.5 bg-background/80 shadow-sm backdrop-blur transition-transform duration-200 hover:scale-105 hover:bg-background"
           >
             <Bookmark className={cn(saved && "fill-primary text-primary")} />
           </Button>
@@ -170,10 +202,10 @@ export function PropertyCard({
           horizontal && "md:flex-1"
         )}
       >
-      <CardContent className="space-y-3 p-4">
-        {/* Price and cost per sqft. */}
+      <CardContent className="space-y-3.5 p-5">
+        {/* Price — the dominant element — with cost per sqft as secondary. */}
         <div className="flex items-end justify-between gap-2">
-          <p className="font-heading text-xl font-semibold leading-none tracking-tight">
+          <p className="font-heading text-2xl font-bold leading-none tracking-tight">
             {formatCr(property.price)}
           </p>
           {hasValue(property.costpersqft) && (
@@ -183,100 +215,122 @@ export function PropertyCard({
           )}
         </div>
 
-        {/* Project name — bold purple (Phase 18.2). */}
+        {/* Project name — bold purple, a clear step below the price. */}
         {property.project_name && (
-          <p className="truncate font-semibold leading-tight text-primary">
+          <p className="truncate pt-0.5 text-base font-bold leading-tight text-primary">
             {property.project_name}
           </p>
         )}
 
-        {/* Property ID — links to the details page. */}
+        {/* Property ID — small gray monospace; links to the details page. */}
         <Link
           href={`/property/${property.id}`}
-          className="flex w-fit items-center gap-0.5 truncate font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+          className="flex w-fit items-center gap-0.5 truncate font-mono text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
         >
           {property.id}
           <ArrowUpRight className="size-3 shrink-0" />
         </Link>
 
-        {/* Locality / city. */}
+        {/* Locality / city — muted, icon-aligned. */}
         {place && (
-          <p className="flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="size-3.5 shrink-0" />
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="size-4 shrink-0 text-primary/60" />
             <span className="truncate">{place}</span>
           </p>
         )}
 
-        {/* Bed / bath / parking / balcony and area. */}
+        {/* Bed / bath / balcony / parking and area — consistent Lucide icons,
+            equal spacing. */}
         {(specs.length > 0 || hasValue(property.area)) && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
             {specs.map((spec) => (
-              <span key={spec.label} className="flex items-center gap-1">
-                <spec.icon className="size-3.5 shrink-0" />
-                <span className="tabular-nums">{spec.value}</span>
+              <span key={spec.label} className="flex items-center gap-1.5">
+                <spec.icon className="size-4 shrink-0" />
+                <span className="font-medium tabular-nums text-foreground/80">
+                  {spec.value}
+                </span>
                 <span>{spec.label}</span>
               </span>
             ))}
             {hasValue(property.area) && (
-              <span className="flex items-center gap-1">
-                <Ruler className="size-3.5 shrink-0" />
-                <span className="tabular-nums">{formatArea(property.area)}</span>
+              <span className="flex items-center gap-1.5">
+                <Ruler className="size-4 shrink-0" />
+                <span className="font-medium tabular-nums text-foreground/80">
+                  {formatArea(property.area)}
+                </span>
               </span>
             )}
           </div>
         )}
 
-        {/* Recommendation score (backend hybrid score) — purple AI badge
-            (Phase 18.2); slightly deeper while staged so it reads with the
-            selected card. */}
+        {/* Recommendation score (backend hybrid score) — premium purple
+            gradient pill. Displays ONLY the backend value. */}
         {property.search_score !== undefined && (
           <Badge
             title="Recommendation score"
-            className={cn(
-              "w-fit",
-              staged && "border-primary/40 bg-primary/20 text-primary"
-            )}
+            className="bg-brand-gradient shadow-brand-glow w-fit border-transparent px-3 py-1 text-primary-foreground"
           >
-            <TrendingUp /> Recommendation {formatScore(property.search_score)}
+            <Sparkles /> AI Recommended · Score{" "}
+            {formatScore(property.search_score)}
           </Badge>
         )}
 
+        {/* Amenity chips — lavender pills with a soft hover wash. */}
         {amenities.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {amenities.slice(0, 4).map((a) => (
-              <Badge key={a} variant="secondary">
+              <Badge
+                key={a}
+                variant="secondary"
+                className="px-3 py-1 transition-colors duration-150 hover:bg-accent hover:text-accent-foreground"
+              >
                 {a}
               </Badge>
             ))}
             {amenities.length > 4 && (
-              <Badge variant="secondary">+{amenities.length - 4}</Badge>
+              <Badge
+                variant="secondary"
+                className="px-3 py-1 transition-colors duration-150 hover:bg-accent hover:text-accent-foreground"
+              >
+                +{amenities.length - 4}
+              </Badge>
             )}
           </div>
         )}
 
+        {/* Why recommended — up to 3 relaxed lines, clamped (faded by clamp). */}
         {property.why_recommended && (
-          <p className="flex gap-1.5 text-xs text-muted-foreground">
+          <p className="flex gap-2 text-xs leading-relaxed text-muted-foreground">
             <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
             <span className="line-clamp-3">{property.why_recommended}</span>
           </p>
         )}
-
-        {/* Original listing — reuses the shared action; hidden when no valid
-            backend URL exists. */}
-        <OriginalListingButton
-          url={property.ap_pjt_url}
-          label="View Listing"
-          variant="outline"
-          size="sm"
-        />
       </CardContent>
 
-      <CardFooter className="justify-between border-t p-4">
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/property/${property.id}`}>
-            Read More <ArrowUpRight />
-          </Link>
-        </Button>
+      {/* Actions — primary gradient View Listing + outlined purple Read More,
+          consistent heights; staging keeps its existing checkbox workflow. */}
+      <CardFooter className="mt-auto flex-wrap gap-3 border-t p-5 pt-4">
+        <div className="flex flex-1 flex-wrap items-center gap-2.5">
+          {/* Original listing — reuses the shared action; hidden when no valid
+              backend URL exists. Primary CTA styling comes from the default
+              button variant (purple gradient, hover lift, soft glow). */}
+          <OriginalListingButton
+            url={property.ap_pjt_url}
+            label="View Listing"
+            variant="default"
+            size="sm"
+          />
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="border-primary/30 bg-card text-primary hover:border-primary/50 hover:bg-accent hover:text-accent-foreground"
+          >
+            <Link href={`/property/${property.id}`}>
+              Read More <ArrowUpRight />
+            </Link>
+          </Button>
+        </div>
         {onToggleStage && (
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <Checkbox
@@ -284,7 +338,14 @@ export function PropertyCard({
               onCheckedChange={() => onToggleStage(property.id)}
               aria-label={`Stage property ${property.id}`}
             />
-            {staged ? "Staged" : "Stage to tray"}
+            {staged ? (
+              // Staged badge — soft green rounded pill.
+              <Badge variant="success" className="px-3 py-1">
+                Staged
+              </Badge>
+            ) : (
+              "Stage to tray"
+            )}
           </label>
         )}
       </CardFooter>

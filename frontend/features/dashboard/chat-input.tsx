@@ -22,9 +22,10 @@ export function ChatInput() {
   };
 
   return (
-    // Premium composer (Phase 18.1): a single rounded surface with a soft
-    // shadow that focuses with a green ring; the send CTA sits inside it.
-    <div className="flex items-end gap-2 rounded-2xl border bg-card p-2 shadow-float transition-shadow focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30">
+    // Premium composer (Phase 18.3): a single generously-padded rounded
+    // surface with a soft shadow that focuses with a purple ring; the send CTA
+    // sits inside it.
+    <div className="flex items-end gap-2 rounded-2xl border bg-card p-2.5 shadow-float transition-shadow duration-200 focus-within:border-ring focus-within:shadow-float-lg focus-within:ring-3 focus-within:ring-ring/25">
       <Textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -36,7 +37,7 @@ export function ChatInput() {
         }}
         placeholder="Ask anything about properties…"
         rows={1}
-        className="max-h-40 min-h-10 resize-none border-0 bg-transparent shadow-none focus-visible:border-transparent focus-visible:ring-0"
+        className="max-h-40 min-h-10 resize-none border-0 bg-transparent px-2.5 text-[0.95rem] leading-relaxed shadow-none placeholder:text-muted-foreground/70 focus-visible:border-transparent focus-visible:ring-0"
       />
       {isSending ? (
         <Button

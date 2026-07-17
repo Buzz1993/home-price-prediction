@@ -10,6 +10,7 @@
 import { FileText, LogOut, MessageSquare, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { AppearanceSection } from "./appearance-section";
 import { ChatHistoryList } from "./chat-history-list";
 import { ProfileSection } from "./profile-section";
 import { ReportsList } from "./reports-list";
@@ -53,6 +54,8 @@ export function ProfileWorkspace() {
       >
         {profile.data && <UserInfoCard user={profile.data} />}
       </ProfileSection>
+
+      <AppearanceSection />
 
       <ProfileSection
         title="Generated Reports"

@@ -25,12 +25,16 @@ export function MapPanel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {/* Fixed header; the map body fills the rest of the column and never
-          scrolls away. */}
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-        <div>
+      {/* Fixed header (Phase 18.3 polish) — small purple icon chip beside the
+          title; the map body fills the rest of the column and never scrolls
+          away. */}
+      <div className="flex shrink-0 items-center gap-3 border-b px-4 py-3.5">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <MapPin className="size-4" />
+        </div>
+        <div className="min-w-0">
           <h2 className="font-heading text-sm font-semibold">Property Map</h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             {mappable > 0
               ? `${mappable} ${mappable === 1 ? "location" : "locations"}`
               : "Locations from your search"}
@@ -38,13 +42,13 @@ export function MapPanel() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 p-3">
+      <div className="min-h-0 flex-1 p-3.5">
         {mappable > 0 ? (
           <InteractivePropertyMap
             properties={properties}
             selectedId={selectedPropertyId}
             onSelect={setSelectedPropertyId}
-            className="h-full"
+            className="h-full shadow-float"
           />
         ) : (
           <div className="flex h-full items-center justify-center">

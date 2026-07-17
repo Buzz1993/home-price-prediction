@@ -1,19 +1,36 @@
 "use client";
 
 // Sticky top bar (Phase 18.1): a floating glass panel matching the sidebar,
-// with a rounded global search (⌘K hint), notifications and the signed-in
-// user's avatar. The search stays a placeholder — wired up in a later phase —
-// and the avatar links to the existing Profile page (no new logic).
+// with notifications and the signed-in user's avatar.
+//
+// Phase 18.9: the search is a REAL input wired to the shared SearchProvider,
+// and it only appears on routes with searchable content (currently the Reports
+// page, where it filters the report history). Pages without meaningful
+// searchable content (Profile, Saved, Comparison, AI Analysis, …) show no
+// search box at all — no fake search anywhere. The Copilot workspace routes
+// render their own full-bleed shell without this navbar.
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, Search } from "lucide-react";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { useGlobalSearch } from "@/components/providers/search-provider";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "./mobile-nav";
 
+// Routes where the global search has real content to filter, with a matching
+// placeholder. Search is hidden everywhere else.
+const SEARCHABLE_ROUTES: Record<string, string> = {
+  "/reports": "Search reports…",
+};
+
 export function Navbar() {
   const { user } = useAuth();
+  const pathname = usePathname();
+  const { query, setQuery } = useGlobalSearch();
+
+  const placeholder = SEARCHABLE_ROUTES[pathname];
 
   const displayName = user?.name?.trim() || "Guest";
   const initials =
@@ -29,18 +46,24 @@ export function Navbar() {
     <header className="glass sticky top-3 z-30 flex h-14 items-center gap-3 rounded-2xl border px-3 shadow-float lg:top-4 lg:px-4">
       <MobileNav />
 
-      {/* Placeholder global search — wired up in a later phase. */}
-      <div className="hidden flex-1 sm:block">
-        <div className="flex h-9 max-w-md items-center gap-2 rounded-full border bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:bg-accent">
-          <Search className="size-4" />
-          <span className="flex-1">Search properties, reports…</span>
-          <kbd className="hidden rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[0.65rem] font-medium text-muted-foreground md:inline-block">
-            ⌘K
-          </kbd>
+      {/* Functional search — only on routes with searchable content. */}
+      {placeholder && (
+        <div className="hidden flex-1 sm:block">
+          <label className="flex h-9 max-w-md items-center gap-2 rounded-full border bg-background/70 px-4 text-sm transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/20 hover:bg-accent/40">
+            <Search className="size-4 shrink-0 text-muted-foreground" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={placeholder}
+              aria-label={placeholder}
+              className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+            />
+          </label>
         </div>
-      </div>
+      )}
 
-      <div className="flex flex-1 items-center justify-end gap-1.5 sm:flex-none">
+      <div className="flex flex-1 items-center justify-end gap-1.5">
         <Button variant="ghost" size="icon" aria-label="Notifications">
           <Bell />
         </Button>

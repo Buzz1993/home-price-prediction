@@ -1954,6 +1954,67 @@ Examples:
 
 ---
 
+## Phase 18.9 — Final UX Polish, Navigation & Persistence
+
+> Production-readiness pass fixing the remaining UX inconsistencies — no
+> redesign, no backend/API/report-generation/PDF/WhatsApp changes.
+>
+> Property card hierarchy: the card id moved to the top-right as a small gray
+> monospace low-emphasis reference (still linking to details) and ₹/sq.ft
+> moved under the property name as secondary text, so cards read Price →
+> Name → ₹/sq.ft → Location → Specs.
+>
+> Report History & persistence: every successfully generated report (Reports
+> page property reports AND /compare comparison reports) is stored locally
+> (features/reports/report-history.ts, localStorage, bounded to 30 — the same
+> client-only pattern as conversations.ts). The Reports page is now a report
+> center: a Recent Reports list (newest first) with icon, title, date, time,
+> property count and an AI Generated badge, plus Preview / Download PDF /
+> Share WhatsApp / Delete per report. Preview reopens the stored report text
+> instantly; Download renders it through the existing POST /report/pdf; Share
+> reuses the existing share endpoints with the stored text — nothing is ever
+> regenerated. Reports survive refresh, navigation and returning later.
+>
+> Profile cleanup: the placeholder Generated Reports cards and the AI Chat
+> History section were removed. Profile now links to /reports via a View
+> Report History button, and its stats read the same local stores the Reports
+> and Chat History pages use.
+>
+> Chat History page: a dedicated /history page (sidebar entry between AI
+> Analysis and Property Comparison) lists the stored Copilot conversations
+> (pinned + recent, newest first) with message/property counts; opening one
+> resumes it in the Copilot workspace, delete reuses the provider action. UI
+> relocation only — no conversation logic changes.
+>
+> Global search: the navbar placeholder search was replaced with a real input
+> wired to a lightweight SearchProvider, shown ONLY on routes with searchable
+> content (currently /reports, where it filters the report history live). No
+> fake search boxes remain.
+>
+> Saved Properties: cards render in a new compact PropertyCard density
+> (shorter 16/9 image, tighter padding, 3-per-row on desktop) — no
+> information removed.
+>
+> Property Details: feature/nearby/field chips now wrap correctly with a
+> maximum chip width and graceful long-text wrapping (no container overflow),
+> and section spacing rhythm was made slightly more generous and consistent.
+>
+> Validation: TypeScript passes, ESLint passes clean, production build
+> generates all routes including the new /history.
+
+- [x] Property card hierarchy (id top-right low-emphasis, ₹/sq.ft under name)
+- [x] Report History store (localStorage, property + comparison reports)
+- [x] Reports page report center (Recent Reports: Preview / Download / Share / Delete, no regeneration)
+- [x] Report persistence across refresh/navigation
+- [x] Profile cleanup (placeholders removed, View Report History → /reports)
+- [x] Dedicated Chat History page at /history + sidebar entry
+- [x] Route-scoped functional global search (reports filtering; hidden elsewhere)
+- [x] Compact Saved Properties cards (2–3 per row desktop)
+- [x] Property Details chips wrap + section spacing polish
+- [x] TypeScript · ESLint · production build all pass
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be

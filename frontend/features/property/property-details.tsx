@@ -260,7 +260,7 @@ function PropertyDetailsContent({ property }: { property: PropertyDetail }) {
   const insights = byId.get("insights");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="mx-auto max-w-5xl space-y-5">
       <BackLink />
 
       {/* 1-2. Hero image + thumbnail gallery + fullscreen viewer + remaining
@@ -359,12 +359,17 @@ function PropertyDetailsContent({ property }: { property: PropertyDetail }) {
         </Section>
       )}
 
-      {/* 10. Features. */}
+      {/* 10. Features — wrapping chips (Phase 18.9): capped width, long text
+          wraps inside the pill instead of overflowing the container. */}
       {features.length > 0 && (
         <Section title="Features">
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {features.map((f) => (
-              <Badge key={f} variant="secondary">
+              <Badge
+                key={f}
+                variant="secondary"
+                className="max-w-full whitespace-normal break-words px-3 py-1 text-left leading-relaxed sm:max-w-[24rem]"
+              >
                 {f}
               </Badge>
             ))}
@@ -465,7 +470,9 @@ function BookmarkButton({ id }: { id: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Section wrapper — a titled card, consistent with the design system.
+// Section wrapper — a titled card, consistent with the design system. The
+// heading/divider/body rhythm is slightly more generous (Phase 18.9) so the
+// stacked sections read like a premium property portal.
 function Section({
   title,
   children,
@@ -475,7 +482,7 @@ function Section({
 }) {
   return (
     <Card>
-      <CardContent className="space-y-3 p-6">
+      <CardContent className="space-y-4 p-6">
         <h2 className="font-heading text-sm font-semibold">{title}</h2>
         <Separator />
         {children}
@@ -484,16 +491,21 @@ function Section({
   );
 }
 
-// A single label / value pair. List-like values render as chips.
+// A single label / value pair. List-like values render as chips that wrap
+// gracefully instead of overflowing (Phase 18.9).
 function FieldItem({ entry }: { entry: FieldEntry }) {
   const list = toList(entry.value);
   return (
     <div className="space-y-1">
       <p className="text-xs text-muted-foreground">{humanizeKey(entry.key)}</p>
       {list ? (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {list.map((item) => (
-            <Badge key={item} variant="outline">
+            <Badge
+              key={item}
+              variant="outline"
+              className="max-w-full whitespace-normal break-words text-left leading-relaxed"
+            >
               {item}
             </Badge>
           ))}
@@ -564,19 +576,24 @@ function SpecificationGroups({ entries }: { entries: FieldEntry[] }) {
   );
 }
 
-// Nearby places — each field labeled, list values shown as chips.
+// Nearby places — each field labeled, list values shown as wrapping chips
+// capped in width so long place names never overflow (Phase 18.9).
 function ListFieldSection({ entries }: { entries: FieldEntry[] }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {entries.map((entry) => {
         const list = toList(entry.value);
         return (
-          <div key={entry.key} className="space-y-1.5">
+          <div key={entry.key} className="space-y-2">
             <p className="text-sm font-medium">{humanizeKey(entry.key)}</p>
             {list ? (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {list.map((item) => (
-                  <Badge key={item} variant="outline">
+                  <Badge
+                    key={item}
+                    variant="outline"
+                    className="max-w-full whitespace-normal break-words text-left leading-relaxed sm:max-w-[24rem]"
+                  >
                     <MapPin /> {item}
                   </Badge>
                 ))}

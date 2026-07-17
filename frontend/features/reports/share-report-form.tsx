@@ -19,18 +19,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { ApiError } from "@/lib/api-client";
-import { useShareReport } from "./use-report";
+import { useShareComparisonReport, useShareReport } from "./use-report";
+import type { ReportType } from "./report-history";
 
 export function ShareReportForm({
   propertyIds,
   report,
+  type = "property",
 }: {
   propertyIds: string[];
   // The previewed report text (Phase 16.1) — sent as-is, never regenerated.
   report?: string;
+  // Which existing share endpoint to use (Phase 18.9 report history):
+  // "property" → POST /report/share, "comparison" → POST /report/comparison/share.
+  type?: ReportType;
 }) {
   const [phone, setPhone] = useState("");
-  const share = useShareReport();
+  const shareProperty = useShareReport();
+  const shareComparison = useShareComparisonReport();
+  const share = type === "comparison" ? shareComparison : shareProperty;
 
   const trimmed = phone.trim();
   const canShare = trimmed.length > 0 && !share.isPending;

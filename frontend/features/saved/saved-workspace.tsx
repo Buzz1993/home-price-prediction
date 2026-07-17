@@ -50,9 +50,9 @@ export function SavedWorkspace() {
       </header>
 
       {isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-[420px] rounded-xl" />
+            <Skeleton key={i} className="h-[360px] rounded-xl" />
           ))}
         </div>
       )}
@@ -91,11 +91,14 @@ export function SavedWorkspace() {
               {saved.length === 1 ? "property" : "properties"} in your collection
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {/* Compact density (Phase 18.9): 3 cards per row on desktop with a
+              shorter image and tighter spacing — no information removed. */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {saved.map((property) => (
               <PropertyCard
                 key={property.id}
                 property={property}
+                compact
                 staged={tray.includes(property.id)}
                 onToggleStage={toggleTray}
                 saved

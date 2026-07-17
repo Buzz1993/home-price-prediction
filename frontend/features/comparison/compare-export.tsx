@@ -42,6 +42,7 @@ import {
   generateComparisonReport,
   shareComparisonReport,
 } from "@/services/report-service";
+import { addReport } from "@/features/reports/report-history";
 
 export function CompareExport({ ids }: { ids: string[] }) {
   // The comparison report text, generated lazily on the first export/share and
@@ -52,11 +53,19 @@ export function CompareExport({ ids }: { ids: string[] }) {
 
   // Generate the backend comparison report once, preferring the
   // Claude-presented text — mirroring the choice the Reports page makes.
+  // Phase 18.9: the finished report is also recorded in the local Report
+  // History so it can be reopened later without regenerating.
   const ensureReport = async (): Promise<string> => {
     if (report) return report;
     const generated = await generateComparisonReport(ids);
     const text = generated.ai_enhanced ?? generated.content;
     setReport(text);
+    addReport({
+      type: "comparison",
+      propertyIds: ids,
+      content: text,
+      aiEnhanced: Boolean(generated.ai_enhanced),
+    });
     return text;
   };
 

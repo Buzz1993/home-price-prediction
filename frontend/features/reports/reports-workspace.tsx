@@ -1,24 +1,35 @@
 "use client";
 
-// Reports page body (Phase 9). Reuses the shared evaluation tray (staged from AI
-// Chat search results) to pick which properties the report covers, generates an
-// AI report via POST /report, previews and downloads it, then shares it to a
-// phone number via POST /report/share. No report logic lives here — the backend
-// composes and delivers the report; this only triggers the requests and renders
-// the responses, mirroring the Streamlit report workflow
-// (select → generate → preview → share).
+// Reports page body (Phase 9, report center in Phase 18.9). Reuses the shared
+// evaluation tray (staged from AI Chat search results) to pick which properties
+// the report covers, generates an AI report via POST /report, previews and
+// downloads it, then shares it to a phone number via POST /report/share. No
+// report logic lives here — the backend composes and delivers the report; this
+// only triggers the requests and renders the responses, mirroring the Streamlit
+// report workflow (select → generate → preview → share).
 //
-// Phase 18.7: premium presentation polish — hero header with gradient icon,
-// better spacing, refined typography, floating layout, improved empty states.
+// Phase 18.9: the page is a proper report center. Every successfully generated
+// report is stored in the local Report History (report-history.ts) and listed
+// newest-first with Preview / Download PDF / Share WhatsApp / Delete actions.
+// Preview reopens the stored report text instantly — reports are NEVER
+// regenerated. The navbar's global search filters this history list.
 
-import { FileText, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileText, History, SearchX, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
+import { useGlobalSearch } from "@/components/providers/search-provider";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
+import {
+  deleteReport,
+  loadReportHistory,
+  type StoredReport,
+} from "./report-history";
+import { ReportHistoryList } from "./report-history-list";
 import { ReportPreview } from "./report-preview";
 import { ShareReportForm } from "./share-report-form";
 import { useGenerateReport } from "./use-report";
@@ -26,6 +37,20 @@ import { useGenerateReport } from "./use-report";
 export function ReportsWorkspace() {
   const { tray, selected } = useWorkspace();
   const generate = useGenerateReport();
+  const { query } = useGlobalSearch();
+
+  // Local report history (newest first). Loaded after mount — localStorage is
+  // client-only — and refreshed whenever a generation succeeds.
+  const [history, setHistory] = useState<StoredReport[]>([]);
+  // A stored report opened via Preview. Takes precedence over the freshly
+  // generated preview; cleared when a new generation starts.
+  const [opened, setOpened] = useState<StoredReport | null>(null);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setHistory(loadReportHistory());
+  }, [generate.isSuccess]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Report the ticked properties when there is a selection, otherwise the whole
   // tray (matches the analysis/report tools, which run on every staged property).
@@ -46,6 +71,37 @@ export function ReportsWorkspace() {
     report && !report.ai_enhanced
       ? "The report has been generated successfully, but the AI enhancement is temporarily unavailable."
       : null;
+
+  const handleGenerate = () => {
+    setOpened(null);
+    generate.mutate(targetIds);
+  };
+
+  const handleDelete = (id: string) => {
+    setHistory(deleteReport(id));
+    if (opened?.id === id) setOpened(null);
+  };
+
+  // Global search filters the history list (title, type, property ids, date).
+  const q = query.trim().toLowerCase();
+  const filteredHistory = q
+    ? history.filter((r) =>
+        [
+          r.title,
+          r.type,
+          new Date(r.createdAt).toLocaleDateString(),
+          ...r.propertyIds,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      )
+    : history;
+
+  // What the preview panel shows: an opened stored report wins, then the
+  // freshly generated one.
+  const showOpened = opened && !generate.isPending;
+  const showGenerated = !opened && report && !generate.isPending;
 
   return (
     <div className="space-y-5">
@@ -81,7 +137,7 @@ export function ReportsWorkspace() {
               </p>
             )}
             <Button
-              onClick={() => generate.mutate(targetIds)}
+              onClick={handleGenerate}
               disabled={!canGenerate}
               size="default"
               className="gap-2"
@@ -109,7 +165,20 @@ export function ReportsWorkspace() {
               />
             )}
 
-            {report && !generate.isPending && (
+            {/* A stored report reopened from the history — rendered from the
+                saved text, never regenerated. */}
+            {showOpened && (
+              <div className="space-y-5">
+                <ReportPreview report={opened.content} />
+                <ShareReportForm
+                  propertyIds={opened.propertyIds}
+                  report={opened.content}
+                  type={opened.type}
+                />
+              </div>
+            )}
+
+            {showGenerated && (
               <div className="space-y-5">
                 <ReportPreview report={displayReport!} notice={enhancementNotice} />
                 <ShareReportForm
@@ -119,17 +188,48 @@ export function ReportsWorkspace() {
               </div>
             )}
 
-            {!report && !generate.isPending && !generate.isError && (
+            {!showOpened && !showGenerated && !generate.isPending && !generate.isError && (
               <EmptyState
                 icon={Sparkles}
-                title="No report generated yet"
+                title="No report open"
                 description={
-                  tray.length === 0
-                    ? "Stage properties from AI Chat search results, then generate a comprehensive AI report here."
-                    : "Press Generate AI Report to build a comprehensive investment analysis for your staged properties."
+                  history.length > 0
+                    ? "Generate a new AI report, or reopen a previous one from Recent Reports below."
+                    : tray.length === 0
+                      ? "Stage properties from AI Chat search results, then generate a comprehensive AI report here."
+                      : "Press Generate AI Report to build a comprehensive investment analysis for your staged properties."
                 }
-                className="py-24"
+                className="py-16"
               />
+            )}
+
+            {/* Recent Reports — the local report center (Phase 18.9). */}
+            {(history.length > 0 || q) && (
+              <div className="space-y-4 border-t pt-5">
+                <div className="flex items-center gap-2.5">
+                  <History className="size-4 text-primary" />
+                  <h2 className="text-base font-semibold">Recent Reports</h2>
+                  <span className="text-xs text-muted-foreground">
+                    {filteredHistory.length}{" "}
+                    {filteredHistory.length === 1 ? "report" : "reports"}
+                    {q ? ` matching “${query.trim()}”` : ""}
+                  </span>
+                </div>
+                {filteredHistory.length > 0 ? (
+                  <ReportHistoryList
+                    reports={filteredHistory}
+                    activeId={opened?.id ?? null}
+                    onPreview={setOpened}
+                    onDelete={handleDelete}
+                  />
+                ) : (
+                  <EmptyState
+                    icon={SearchX}
+                    description={`No reports match “${query.trim()}”.`}
+                    className="py-10"
+                  />
+                )}
+              </div>
             )}
           </div>
         </section>

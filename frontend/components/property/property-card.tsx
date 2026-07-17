@@ -63,6 +63,10 @@ type PropertyCardProps = {
   // Below md the card always falls back to the default vertical layout. No
   // information changes; only the arrangement does.
   horizontal?: boolean;
+  // Opt-in compact density (Phase 18.9, Saved Properties): shorter image,
+  // tighter padding and rhythm, slightly smaller price. Every field still
+  // renders — only the spacing scale changes.
+  compact?: boolean;
 };
 
 // A backend value is renderable when it is neither missing nor empty.
@@ -78,6 +82,7 @@ export function PropertyCard({
   onToggleSave,
   savePending = false,
   horizontal = false,
+  compact = false,
 }: PropertyCardProps) {
   const [imageError, setImageError] = useState(false);
 
@@ -124,6 +129,7 @@ export function PropertyCard({
       <div
         className={cn(
           "relative aspect-[16/13] w-full overflow-hidden",
+          compact && "aspect-[16/9]",
           horizontal &&
             "md:aspect-auto md:w-56 md:shrink-0 md:self-stretch lg:w-72"
         )}
@@ -202,17 +208,27 @@ export function PropertyCard({
           horizontal && "md:flex-1"
         )}
       >
-      <CardContent className="space-y-3.5 p-5">
-        {/* Price — the dominant element — with cost per sqft as secondary. */}
-        <div className="flex items-end justify-between gap-2">
-          <p className="font-heading text-2xl font-bold leading-none tracking-tight">
+      <CardContent className={cn("space-y-3.5 p-5", compact && "space-y-2.5 p-4")}>
+        {/* Price — the dominant element. The property id sits top-right as a
+            low-emphasis monospace reference (Phase 18.9 hierarchy: price >
+            name > ₹/sq.ft > location > specs); it still links to details. */}
+        <div className="flex items-start justify-between gap-2">
+          <p
+            className={cn(
+              "font-heading text-2xl font-bold leading-none tracking-tight",
+              compact && "text-xl"
+            )}
+          >
             {formatCr(property.price)}
           </p>
-          {hasValue(property.costpersqft) && (
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {formatPerSqft(property.costpersqft)}
-            </span>
-          )}
+          <Link
+            href={`/property/${property.id}`}
+            className="flex max-w-[45%] shrink-0 items-center gap-0.5 truncate font-mono text-[0.68rem] text-muted-foreground/70 transition-colors hover:text-foreground hover:underline"
+            title={`Open property ${property.id}`}
+          >
+            <span className="truncate">{property.id}</span>
+            <ArrowUpRight className="size-3 shrink-0" />
+          </Link>
         </div>
 
         {/* Project name — bold purple, a clear step below the price. */}
@@ -222,14 +238,13 @@ export function PropertyCard({
           </p>
         )}
 
-        {/* Property ID — small gray monospace; links to the details page. */}
-        <Link
-          href={`/property/${property.id}`}
-          className="flex w-fit items-center gap-0.5 truncate font-mono text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
-        >
-          {property.id}
-          <ArrowUpRight className="size-3 shrink-0" />
-        </Link>
+        {/* Cost per sq.ft — small secondary line under the name, more visible
+            than the card id but clearly quieter than the price. */}
+        {hasValue(property.costpersqft) && (
+          <p className="text-xs font-medium text-muted-foreground tabular-nums">
+            {formatPerSqft(property.costpersqft)}
+          </p>
+        )}
 
         {/* Locality / city — muted, icon-aligned. */}
         {place && (
@@ -309,7 +324,12 @@ export function PropertyCard({
 
       {/* Actions — primary gradient View Listing + outlined purple Read More,
           consistent heights; staging keeps its existing checkbox workflow. */}
-      <CardFooter className="mt-auto flex-wrap gap-3 border-t p-5 pt-4">
+      <CardFooter
+        className={cn(
+          "mt-auto flex-wrap gap-3 border-t p-5 pt-4",
+          compact && "gap-2 p-4 pt-3"
+        )}
+      >
         <div className="flex flex-1 flex-wrap items-center gap-2.5">
           {/* Original listing — reuses the shared action; hidden when no valid
               backend URL exists. Primary CTA styling comes from the default

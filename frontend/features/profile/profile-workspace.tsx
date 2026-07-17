@@ -1,33 +1,40 @@
 "use client";
 
-// Profile page body (Phase 11). Composes three sections — account, generated
-// reports and AI chat history — from the documented GET /profile, GET /reports and
-// GET /chat-history endpoints, and offers a logout action. Each section handles
-// its own loading, empty and error states via the reusable ProfileSection. No
-// authentication or backend business logic lives here; the page only reads and
-// renders what the backend returns (UI doc §15).
-//
-// Phase 18.7: premium presentation polish — hero header with gradient avatar,
-// account stats cards, refined section cards, improved spacing and typography.
+// Profile page body (Phase 11, cleaned in Phase 18.9). Shows the account hero,
+// account stats, account information and appearance settings, plus a logout
+// action. The placeholder "Generated Reports" cards were removed — the Reports
+// page (/reports) is the single source of truth for report history, reached
+// via the View Report History button. AI Chat History moved to its own
+// dedicated page (/history); the stats below read the SAME local stores those
+// pages use, so the numbers always match what the user finds there.
 
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { FileText, LogOut, MessageSquare, TrendingUp, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useWorkspace } from "@/features/dashboard/workspace-provider";
+import { loadReportHistory } from "@/features/reports/report-history";
 import { AppearanceSection } from "./appearance-section";
-import { ChatHistoryList } from "./chat-history-list";
 import { ProfileSection } from "./profile-section";
-import { ReportsList } from "./reports-list";
 import { UserInfoCard } from "./user-info-card";
-import { useChatHistory, useLogout, useProfile, useReports } from "./use-profile";
+import { useLogout, useProfile } from "./use-profile";
 
 export function ProfileWorkspace() {
   const profile = useProfile();
-  const reports = useReports();
-  const history = useChatHistory();
   const logout = useLogout();
+  const { conversations } = useWorkspace();
 
-  const reportList = reports.data ?? [];
-  const chats = history.data ?? [];
+  // Local report count — read after mount (localStorage is client-only).
+  const [reportCount, setReportCount] = useState(0);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setReportCount(loadReportHistory().length), []);
+
+  // Count only conversations that actually contain messages.
+  const conversationCount = conversations.filter(
+    (c) => c.messages.length > 0
+  ).length;
+
   const user = profile.data;
 
   // Derive initials for the large avatar
@@ -73,7 +80,8 @@ export function ProfileWorkspace() {
         </div>
       </header>
 
-      {/* Account stats cards (Phase 18.7) */}
+      {/* Account stats cards (Phase 18.7) — counts come from the same local
+          stores the Reports and Chat History pages read. */}
       {!profile.isLoading && user && (
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="group rounded-xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 shadow-float transition-all duration-200 hover:-translate-y-0.5 hover:shadow-float-lg">
@@ -82,7 +90,7 @@ export function ProfileWorkspace() {
                 <FileText className="size-6" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{reportList.length}</p>
+                <p className="text-2xl font-bold">{reportCount}</p>
                 <p className="text-sm text-muted-foreground">Reports Generated</p>
               </div>
             </div>
@@ -93,7 +101,7 @@ export function ProfileWorkspace() {
                 <MessageSquare className="size-6" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{chats.length}</p>
+                <p className="text-2xl font-bold">{conversationCount}</p>
                 <p className="text-sm text-muted-foreground">AI Conversations</p>
               </div>
             </div>
@@ -129,31 +137,26 @@ export function ProfileWorkspace() {
 
         <AppearanceSection />
 
-        <ProfileSection
-          title="Generated Reports"
-          icon={FileText}
-          isLoading={reports.isLoading}
-          isError={reports.isError}
-          onRetry={() => reports.refetch()}
-          retrying={reports.isFetching}
-          isEmpty={reportList.length === 0}
-          emptyMessage="You haven't generated any reports yet. Create one from the Reports page."
-        >
-          <ReportsList reports={reportList} />
-        </ProfileSection>
-
-        <ProfileSection
-          title="AI Chat History"
-          icon={MessageSquare}
-          isLoading={history.isLoading}
-          isError={history.isError}
-          onRetry={() => history.refetch()}
-          retrying={history.isFetching}
-          isEmpty={chats.length === 0}
-          emptyMessage="No AI conversations yet. Start chatting from the AI Chat page."
-        >
-          <ChatHistoryList entries={chats} />
-        </ProfileSection>
+        {/* Reports live on the Reports page — the single source of truth
+            (Phase 18.9). */}
+        <div className="flex flex-col items-start justify-between gap-4 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-6 shadow-float sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <FileText className="size-6" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="font-semibold">Generated Reports</p>
+              <p className="text-sm text-muted-foreground">
+                Preview, download and share your previously generated reports.
+              </p>
+            </div>
+          </div>
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/reports">
+              <FileText /> View Report History
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

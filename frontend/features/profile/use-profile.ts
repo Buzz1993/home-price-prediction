@@ -1,29 +1,18 @@
 "use client";
 
-// Profile page data hooks. Three read-only queries (profile, chat history,
-// reports) plus a logout action. All persistence lives in the backend; these only
-// track request state and cache the responses.
+// Profile page data hooks. A read-only profile query plus a logout action.
+// Report history and chat history moved to their own pages (Phase 18.9) — the
+// Reports page reads the local report store and the Chat History page reads the
+// workspace conversations, so their old queries were removed with them.
 
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/components/providers/auth-provider";
-import {
-  getChatHistory,
-  getProfile,
-  getReports,
-} from "@/services/profile-service";
+import { getProfile } from "@/services/profile-service";
 
 export function useProfile() {
   return useQuery({ queryKey: ["profile"], queryFn: getProfile });
-}
-
-export function useChatHistory() {
-  return useQuery({ queryKey: ["chat-history"], queryFn: getChatHistory });
-}
-
-export function useReports() {
-  return useQuery({ queryKey: ["reports"], queryFn: getReports });
 }
 
 // Logout clears the client-side session (see auth-provider), drops any cached

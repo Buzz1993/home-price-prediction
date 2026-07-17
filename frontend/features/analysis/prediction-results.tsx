@@ -186,7 +186,7 @@ export function PredictionResults({ rows }: { rows: AnalysisRow[] }) {
           reasons.push(`Benchmarked against ${row.location} market data`);
 
         return (
-          <section key={String(row.id ?? index)} className="space-y-2">
+          <section key={String(row.id ?? index)} className="space-y-3">
             <CompactPropertyHeader
               id={String(row.id ?? "Property")}
               index={index}
@@ -224,7 +224,7 @@ export function PredictionResults({ rows }: { rows: AnalysisRow[] }) {
             )}
 
             {/* 3 — metrics */}
-            <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
               {original !== null && (
                 <MetricCard
                   label="Asking price"
@@ -242,7 +242,7 @@ export function PredictionResults({ rows }: { rows: AnalysisRow[] }) {
                 />
               )}
               {original !== null && predicted !== null && (
-                <div className="rounded-xl border bg-card px-3 py-2.5 shadow-sm">
+                <div className="rounded-xl border bg-card px-4 py-3 shadow-float">
                   <MiniCompareBars
                     items={[
                       {
@@ -264,7 +264,7 @@ export function PredictionResults({ rows }: { rows: AnalysisRow[] }) {
 
             {/* Failed predictions carry a status instead of a price. */}
             {predicted === null && hasValue(row.status) && (
-              <div className="rounded-xl border bg-card px-3 py-2.5 shadow-sm">
+              <div className="rounded-xl border bg-card px-4 py-3 shadow-float">
                 <StatusPill value={row.status as string} />
               </div>
             )}

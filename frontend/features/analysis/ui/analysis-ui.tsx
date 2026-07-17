@@ -1,14 +1,15 @@
 "use client";
 
-// Shared premium UI primitives for the AI Analysis workspace (Phase 15.18).
-// Pure presentation: these components render backend values verbatim in the
-// report-document design language (Phase 15.17) — compact dashboard cards with
-// soft shadows, uppercase micro-labels, dashed key-value rows and tone-tinted
-// status pills. Nothing is computed here beyond formatting and a percentage
-// for gauges/bars; every displayed value comes from the backend response.
+// Shared premium UI primitives for the AI Analysis workspace (Phase 15.18,
+// premium polish Phase 18.5). Pure presentation: these components render
+// backend values verbatim in the report-document design language — floating
+// dashboard cards with soft shadows and hover lift, uppercase micro-labels,
+// dashed key-value rows and tone-tinted status pills. Nothing is computed here
+// beyond formatting and a percentage for gauges/bars; every displayed value
+// comes from the backend response.
 
 import { useState } from "react";
-import { ChevronDown, type LucideIcon } from "lucide-react";
+import { ChevronDown, Sparkles, type LucideIcon } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -75,7 +76,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card px-3 py-2.5 shadow-sm transition-shadow hover:shadow-md",
+        "rounded-xl border bg-card px-4 py-3 shadow-float transition-all duration-200 hover:-translate-y-0.5 hover:shadow-float-lg",
         highlight && "border-primary/40 bg-primary/5"
       )}
     >
@@ -85,7 +86,7 @@ export function MetricCard({
       </p>
       <p
         className={cn(
-          "mt-0.5 truncate font-heading text-lg font-semibold tabular-nums",
+          "mt-1 truncate font-heading text-[26px] font-semibold leading-tight tabular-nums",
           tone === "positive" && "text-primary",
           tone === "negative" && "text-red-600"
         )}
@@ -93,7 +94,7 @@ export function MetricCard({
         {value}
       </p>
       {sub && (
-        <p className="truncate text-[11px] text-muted-foreground">{sub}</p>
+        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{sub}</p>
       )}
     </div>
   );
@@ -113,12 +114,12 @@ export function PillCard({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="rounded-xl border bg-card px-3 py-2.5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-xl border bg-card px-4 py-3 shadow-float transition-all duration-200 hover:-translate-y-0.5 hover:shadow-float-lg">
       <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {Icon && <Icon className="size-3.5 shrink-0 text-primary/70" />}
         {label}
       </p>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {values.map((value, index) => (
           <StatusPill key={index} value={value} />
         ))}
@@ -173,7 +174,7 @@ export function KeyValueRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 border-b border-dashed border-border/70 pb-1 last:border-0 last:pb-0">
+    <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-0.5 border-b border-dashed border-border/70 pb-1.5 last:border-0 last:pb-0">
       <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </dt>
@@ -212,7 +213,7 @@ export function KeyValueList({
   if (entries.length === 0) return null;
 
   return (
-    <dl className="space-y-1.5 rounded-xl border bg-card px-3 py-2.5 shadow-sm">
+    <dl className="space-y-2 rounded-xl border bg-card px-4 py-3 shadow-float">
       {entries.map(([key, value]) => (
         <KeyValueRow
           key={key}
@@ -254,7 +255,7 @@ export function RadialGauge({
   const radius = 26;
   const circumference = 2 * Math.PI * radius;
   return (
-    <div className="relative size-16 shrink-0">
+    <div className="relative size-[4.5rem] shrink-0">
       <svg viewBox="0 0 64 64" className="size-full -rotate-90">
         <circle
           cx="32"
@@ -281,7 +282,7 @@ export function RadialGauge({
           )}
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">
+      <span className="absolute inset-0 flex items-center justify-center font-heading text-sm font-semibold tabular-nums">
         {display ?? formatNumber(value)}
       </span>
     </div>
@@ -358,9 +359,9 @@ const CALLOUT_TONES = {
     icon: "text-amber-600",
   },
   blue: {
-    card: "border-blue-200 bg-blue-50/60",
-    title: "text-blue-700",
-    icon: "text-blue-600",
+    card: "border-border bg-muted/50",
+    title: "text-foreground",
+    icon: "text-muted-foreground",
   },
 } as const;
 
@@ -377,10 +378,10 @@ export function CalloutCard({
 }) {
   const styles = CALLOUT_TONES[tone];
   return (
-    <div className={cn("rounded-xl border p-3 shadow-sm", styles.card)}>
+    <div className={cn("rounded-xl border p-4 shadow-float", styles.card)}>
       <p
         className={cn(
-          "mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide",
+          "mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide",
           styles.title
         )}
       >
@@ -404,19 +405,23 @@ export function MetricExplainer({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl border bg-muted/40">
+    <div className="rounded-xl border bg-muted/40 transition-colors duration-200 hover:bg-muted/60">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         What do these metrics mean?
         <ChevronDown
-          className={cn("size-4 shrink-0 transition-transform", open && "rotate-180")}
+          className={cn(
+            "size-4 shrink-0 transition-transform duration-200",
+            open && "rotate-180"
+          )}
         />
       </button>
       {open && (
-        <dl className="space-y-2 border-t px-3 pb-3 pt-2">
+        <dl className="space-y-2.5 border-t px-4 pb-4 pt-3 duration-200 animate-in fade-in slide-in-from-top-1">
           {items.map((item) => (
             <div key={item.term}>
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -434,19 +439,45 @@ export function MetricExplainer({
 }
 
 // ---------------------------------------------------------------------------
-// AnalysisSkeleton — compact loading placeholder: header bar + metric grid.
+// AnalysisSkeleton — premium "AI is working" placeholder (Phase 18.5): a
+// sparkle header with animated thinking dots over shimmering blocks shaped
+// like the decision-first layout (summary → metric grid → recommendation).
+// Purely visual; no behavior.
 // ---------------------------------------------------------------------------
-export function AnalysisSkeleton() {
+export function AnalysisSkeleton({ label }: { label?: string }) {
   return (
-    <div className="space-y-2" aria-busy="true" aria-label="Loading analysis">
-      <Skeleton className="h-20 rounded-xl" />
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-        <Skeleton className="h-[4.5rem] rounded-xl" />
-        <Skeleton className="h-[4.5rem] rounded-xl" />
-        <Skeleton className="h-[4.5rem] rounded-xl" />
-        <Skeleton className="h-[4.5rem] rounded-xl" />
+    <div className="space-y-3" aria-busy="true" aria-label="Loading analysis">
+      {/* AI working banner */}
+      <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gradient text-primary-foreground shadow-brand-glow">
+          <Sparkles className="size-4 animate-pulse" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            {label ?? "EstateMind AI is analyzing"}
+            <span className="ml-0.5 inline-flex gap-0.5" aria-hidden="true">
+              <span className="animate-bounce [animation-delay:0ms]">.</span>
+              <span className="animate-bounce [animation-delay:150ms]">.</span>
+              <span className="animate-bounce [animation-delay:300ms]">.</span>
+            </span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Crunching backend metrics and preparing your report
+          </p>
+        </div>
       </div>
+
+      {/* Decision summary placeholder */}
       <Skeleton className="h-24 rounded-xl" />
+      {/* Metric grid placeholder */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <Skeleton className="h-20 rounded-xl" />
+        <Skeleton className="h-20 rounded-xl" />
+        <Skeleton className="h-20 rounded-xl" />
+        <Skeleton className="h-20 rounded-xl" />
+      </div>
+      {/* Recommendation placeholder */}
+      <Skeleton className="h-16 rounded-xl" />
     </div>
   );
 }

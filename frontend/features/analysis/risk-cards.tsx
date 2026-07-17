@@ -89,7 +89,7 @@ export function RiskCards({ rows }: { rows: AdvisorRow[] }) {
         const tone = verdict ? toneKey(verdict) : "neutral";
 
         return (
-          <section key={item.id} className="space-y-2">
+          <section key={item.id} className="space-y-3">
             <CompactPropertyHeader
               id={item.id}
               index={index}

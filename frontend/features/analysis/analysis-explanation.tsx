@@ -34,16 +34,20 @@ export function AnalysisExplanation({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-primary/20 bg-primary/5 shadow-sm">
-      <div className="h-1 bg-primary" />
-      <div className="space-y-1.5 p-3">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
-          <Sparkles className="size-3.5" />
-          EstateMind Insight
-        </p>
-        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
-          {text}
-        </p>
+    <div className="overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent shadow-float">
+      <div className="bg-brand-gradient h-1" />
+      <div className="flex gap-3 p-4">
+        <span className="bg-brand-gradient shadow-brand-glow flex size-8 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
+          <Sparkles className="size-4" />
+        </span>
+        <div className="min-w-0 space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            EstateMind Insight
+          </p>
+          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
+            {text}
+          </p>
+        </div>
       </div>
     </div>
   );

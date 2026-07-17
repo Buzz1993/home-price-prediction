@@ -128,7 +128,7 @@ export function NegotiationCards({ rows }: { rows: NegotiationRow[] }) {
         const tone = power ? toneKey(power) : "neutral";
 
         return (
-          <section key={item.id} className="space-y-2">
+          <section key={item.id} className="space-y-3">
             <CompactPropertyHeader
               id={item.id}
               index={index}
@@ -170,7 +170,7 @@ export function NegotiationCards({ rows }: { rows: NegotiationRow[] }) {
             )}
 
             {/* 3 — metrics */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {hasValue(item.target_price) && (
                 <MetricCard
                   label="Target price"
@@ -279,7 +279,7 @@ export function AdvisorCards({ rows }: { rows: AdvisorRow[] }) {
         const tone = verdict ? toneKey(verdict) : "neutral";
 
         return (
-          <section key={item.id} className="space-y-2">
+          <section key={item.id} className="space-y-3">
             <CompactPropertyHeader
               id={item.id}
               index={index}

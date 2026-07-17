@@ -7,6 +7,9 @@
 // composes and delivers the report; this only triggers the requests and renders
 // the responses, mirroring the Streamlit report workflow
 // (select → generate → preview → share).
+//
+// Phase 18.7: premium presentation polish — hero header with gradient icon,
+// better spacing, refined typography, floating layout, improved empty states.
 
 import { FileText, Sparkles } from "lucide-react";
 
@@ -45,88 +48,96 @@ export function ReportsWorkspace() {
       : null;
 
   return (
-    <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-float">
-        <div className="border-b p-5">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Reports
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Stage properties in the tray, generate an AI report, then preview,
-            download or share it.
-          </p>
+    <div className="space-y-5">
+      {/* Premium page hero (Phase 18.7) */}
+      <header className="space-y-3">
+        <div className="flex items-center gap-4">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 via-accent to-transparent ring-1 ring-primary/10">
+            <FileText className="size-7 text-primary" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="font-heading text-3xl font-semibold tracking-tight">
+              AI Reports
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Generate comprehensive property investment reports powered by AI
+            </p>
+          </div>
         </div>
+      </header>
 
-        <div className="border-b p-4">
-          {targetIds.length > 0 ? (
-            <p className="mb-3 text-xs text-muted-foreground">
-              Report will cover {targetIds.length}{" "}
-              {targetIds.length === 1 ? "property" : "properties"}
-              {selected.length > 0 ? " (selected)" : " (whole tray)"}.
-            </p>
-          ) : (
-            <p className="mb-3 text-xs text-muted-foreground">
-              Your tray is empty. Stage properties from AI Chat search results to
-              build a report.
-            </p>
-          )}
-          <Button
-            onClick={() => generate.mutate(targetIds)}
-            disabled={!canGenerate}
-          >
-            {generate.isPending ? (
-              <>
-                <Spinner /> Generating…
-              </>
+      <div className="grid gap-5 lg:h-[calc(100dvh-12rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-float">
+          <div className="border-b bg-gradient-to-br from-muted/30 to-transparent p-6">
+            {targetIds.length > 0 ? (
+              <p className="mb-4 text-sm text-muted-foreground">
+                Report will cover <span className="font-semibold text-foreground">{targetIds.length}</span>{" "}
+                {targetIds.length === 1 ? "property" : "properties"}
+                {selected.length > 0 ? " (selected)" : " (whole tray)"}
+              </p>
             ) : (
-              <>
-                <FileText /> Generate Report
-              </>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Your tray is empty. Stage properties from AI Chat to begin.
+              </p>
             )}
-          </Button>
-        </div>
+            <Button
+              onClick={() => generate.mutate(targetIds)}
+              disabled={!canGenerate}
+              size="default"
+              className="gap-2"
+            >
+              {generate.isPending ? (
+                <>
+                  <Spinner /> Generating Report…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-4" />
+                  Generate AI Report
+                </>
+              )}
+            </Button>
+          </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
-          {generate.isError && (
-            <ErrorState
-              title="Report generation failed"
-              description="Something went wrong while generating your report. Please try again."
-              onRetry={() => generate.mutate(targetIds)}
-              retrying={generate.isPending}
-            />
-          )}
-
-          {report && !generate.isPending && (
-            <div className="space-y-4">
-              <ReportPreview report={displayReport!} notice={enhancementNotice} />
-              {/* The previewed report text travels with the share request so
-                  the backend sends exactly this report as a WhatsApp PDF
-                  without regenerating it (Phase 16.1). */}
-              <ShareReportForm
-                propertyIds={reportedIds}
-                report={displayReport ?? undefined}
+          <div className="flex-1 space-y-5 overflow-y-auto p-6">
+            {generate.isError && (
+              <ErrorState
+                title="Report generation failed"
+                description="Something went wrong while generating your report. Please try again."
+                onRetry={() => generate.mutate(targetIds)}
+                retrying={generate.isPending}
               />
-            </div>
-          )}
+            )}
 
-          {!report && !generate.isPending && !generate.isError && (
-            <EmptyState
-              icon={Sparkles}
-              title="No report yet"
-              description={
-                tray.length === 0
-                  ? "Your tray is empty. Stage properties from AI Chat search results, then generate a report here."
-                  : "Press Generate Report to build an AI report for your staged properties."
-              }
-              className="h-full"
-            />
-          )}
-        </div>
-      </section>
+            {report && !generate.isPending && (
+              <div className="space-y-5">
+                <ReportPreview report={displayReport!} notice={enhancementNotice} />
+                <ShareReportForm
+                  propertyIds={reportedIds}
+                  report={displayReport ?? undefined}
+                />
+              </div>
+            )}
 
-      <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-float">
-        <EvaluationTray />
-      </aside>
+            {!report && !generate.isPending && !generate.isError && (
+              <EmptyState
+                icon={Sparkles}
+                title="No report generated yet"
+                description={
+                  tray.length === 0
+                    ? "Stage properties from AI Chat search results, then generate a comprehensive AI report here."
+                    : "Press Generate AI Report to build a comprehensive investment analysis for your staged properties."
+                }
+                className="py-24"
+              />
+            )}
+          </div>
+        </section>
+
+        <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-float">
+          <EvaluationTray />
+        </aside>
+      </div>
     </div>
   );
 }

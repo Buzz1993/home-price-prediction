@@ -95,11 +95,13 @@ export function PropertyHeaderCard({
   return (
     <div
       className={cn(
-        "group w-48 space-y-2 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md",
-        isOverallWinner && "border-primary/40 bg-primary/5"
+        "group w-48 space-y-2 rounded-xl border bg-card p-2 text-left shadow-float transition-all duration-200 hover:-translate-y-0.5 hover:shadow-float-lg",
+        // Overall winner: soft emerald border + subtle glow (Phase 18.6).
+        isOverallWinner &&
+          "border-emerald-400/50 bg-emerald-50/40 shadow-[0_0_0_1px_rgba(16,185,129,0.15),0_4px_16px_-4px_rgba(16,185,129,0.25)]"
       )}
     >
-      <div className="relative flex h-24 items-center justify-center overflow-hidden rounded-lg bg-primary/10">
+      <div className="relative flex h-24 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary/10 via-accent to-transparent">
         {showImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -111,10 +113,10 @@ export function PropertyHeaderCard({
             className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <Home className="size-6 text-primary" />
+          <Home className="size-6 text-primary/70" />
         )}
         {isOverallWinner && (
-          <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground shadow-sm motion-safe:animate-pulse">
+          <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm motion-safe:animate-pulse">
             <Trophy className="size-3" />
             Overall Winner
           </span>

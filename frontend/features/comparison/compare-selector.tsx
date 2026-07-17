@@ -58,12 +58,14 @@ export function CompareSelector({
   const remove = (id: string) => onChange(chosen.filter((c) => c !== id));
 
   return (
-    <section className="rounded-xl border bg-card p-4 shadow-sm">
-      <h2 className="flex items-center gap-2 font-heading text-sm font-semibold">
-        <Scale className="size-4 text-primary" />
+    <section className="rounded-xl border bg-card p-4 shadow-float transition-shadow duration-200 hover:shadow-float-lg">
+      <h2 className="flex items-center gap-2.5 font-heading text-sm font-semibold">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+          <Scale className="size-4 text-primary" />
+        </span>
         Compare Properties
       </h2>
-      <p className="mt-0.5 text-xs text-muted-foreground">
+      <p className="mt-1 text-xs text-muted-foreground">
         Choose 2–3 properties staged in your Evaluation Tray, then show the
         comparison.
       </p>

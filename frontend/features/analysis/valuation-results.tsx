@@ -143,7 +143,7 @@ export function ValuationResults({ rows }: { rows: AnalysisRow[] }) {
           );
 
         return (
-          <section key={String(row.id ?? index)} className="space-y-2">
+          <section key={String(row.id ?? index)} className="space-y-3">
             <CompactPropertyHeader
               id={String(row.id ?? "Property")}
               index={index}
@@ -176,7 +176,7 @@ export function ValuationResults({ rows }: { rows: AnalysisRow[] }) {
             {flag && <WhyCard title={`Why ${flag}?`} reasons={reasons} />}
 
             {/* 3 — metrics */}
-            <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
               {hasValue(row.price) && (
                 <MetricCard
                   label="Listed price"

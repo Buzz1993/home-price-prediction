@@ -2,6 +2,8 @@
 // optional header action and switches its body between the loading, error, empty
 // and content states — so each profile section (account, reports, chat history)
 // handles all four states without duplicating the markup.
+//
+// Phase 18.7: premium card styling with floating shadow, better spacing.
 
 import type { LucideIcon } from "lucide-react";
 
@@ -39,19 +41,22 @@ export function ProfileSection({
   children,
 }: ProfileSectionProps) {
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Icon className="size-4 text-muted-foreground" />
+    <Card className="shadow-float">
+      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Icon className="size-5" />
+          </div>
           {title}
         </CardTitle>
         {action}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {isLoading && (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-4 w-2/3" />
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-1/3" />
+            <Skeleton className="h-5 w-2/3" />
+            <Skeleton className="h-5 w-1/2" />
           </div>
         )}
 
@@ -65,7 +70,7 @@ export function ProfileSection({
         )}
 
         {!isLoading && !isError && isEmpty && (
-          <EmptyState icon={Icon} description={emptyMessage} className="py-6" />
+          <EmptyState icon={Icon} description={emptyMessage} className="py-8" />
         )}
 
         {!isLoading && !isError && !isEmpty && children}

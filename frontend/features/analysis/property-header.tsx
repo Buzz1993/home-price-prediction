@@ -11,11 +11,11 @@
 // bare card id. Nothing is fetched or computed — if the property isn't in the
 // collection, it gracefully falls back to whatever the analysis row carried.
 
-import { Home, type LucideIcon } from "lucide-react";
+import { Home, MapPin, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { formatArea } from "@/features/dashboard/format";
+import { formatArea, formatCr, formatScore } from "@/features/dashboard/format";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
 import type { SearchResult } from "@/types/dashboard";
 import { StatusPill, hasValue } from "./ui/analysis-ui";
@@ -28,7 +28,7 @@ function Thumbnail({ property }: { property?: SearchResult }) {
   const showImage = Boolean(src) && !imageError;
 
   return (
-    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 sm:size-14">
+    <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 sm:size-16">
       {showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -86,26 +86,48 @@ export function CompactPropertyHeader({
     : [];
 
   return (
-    <header className="flex items-center gap-3 overflow-hidden rounded-xl border bg-card p-3 shadow-sm">
+    <header className="flex items-center gap-3.5 overflow-hidden rounded-xl border bg-card p-3.5 shadow-float">
       <Thumbnail property={property} />
 
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
-          {Icon && <Icon className="size-3.5 shrink-0" />}
+          {Icon && (
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/10">
+              <Icon className="size-3.5" />
+            </span>
+          )}
           {analysisLabel} · Property {index + 1}
         </p>
-        <h3 className="truncate font-heading text-base font-semibold leading-tight">
+        <h3 className="mt-0.5 truncate font-heading text-base font-semibold leading-tight sm:text-lg">
           {title}
         </h3>
-        <p className="truncate text-xs text-muted-foreground">
-          {[location, ...facts].filter(Boolean).join(" • ") || (
-            // Nothing beyond the id is known — keep it small, not prominent.
-            <span className="font-mono">{id}</span>
-          )}
+        <p className="mt-0.5 flex items-center gap-1 truncate text-[13px] text-muted-foreground">
+          {location && <MapPin className="size-3 shrink-0" />}
+          <span className="truncate">
+            {[location, ...facts].filter(Boolean).join(" • ") || (
+              // Nothing beyond the id is known — keep it small, not prominent.
+              <span className="font-mono">{id}</span>
+            )}
+          </span>
         </p>
+        {/* Price + AI score quick facts, straight from the backend search row. */}
+        {property && (
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px]">
+            {hasValue(property.price) && (
+              <span className="font-semibold tabular-nums">
+                {formatCr(property.price)}
+              </span>
+            )}
+            {property.search_score !== undefined && (
+              <span className="font-medium text-primary">
+                AI {formatScore(property.search_score)}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-1">
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
         {hasValue(status) && <StatusPill value={status} />}
         {/* The card id stays available as small metadata when a real name is
             shown instead. */}

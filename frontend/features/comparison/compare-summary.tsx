@@ -74,9 +74,11 @@ export function ExecutiveWinner({
       />
 
       {runnerUp && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border bg-card px-3 py-2.5 shadow-sm">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border bg-card px-4 py-3 shadow-float transition-shadow duration-200 hover:shadow-float-lg">
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Medal className="size-3.5 text-amber-500" />
+            <span className="flex size-6 items-center justify-center rounded-md bg-amber-100/80">
+              <Medal className="size-3.5 text-amber-500" />
+            </span>
             Runner Up
           </p>
           <p className="font-heading text-sm font-semibold">
@@ -111,27 +113,28 @@ export function FinalScoreboard({
   if (entries.length === 0) return null;
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card shadow-float">
-      <div className="h-1 bg-primary" />
-      <div className="border-b p-3">
-        <h3 className="flex items-center gap-2 font-heading text-sm font-semibold">
-          <Award className="size-4 text-primary" />
+    <section className="card-accent-top overflow-hidden rounded-xl border bg-card shadow-float transition-shadow duration-200 hover:shadow-float-lg">
+      <div className="border-b p-4">
+        <h3 className="flex items-center gap-2.5 font-heading text-sm font-semibold">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Award className="size-4 text-primary" />
+          </span>
           Final Scoreboard
         </h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           Category winners across the compared properties.
         </p>
       </div>
-      <div className="grid gap-2 p-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-2.5 p-4 sm:grid-cols-2 xl:grid-cols-3">
         {entries.map(({ label, winner }) => (
           <div
             key={label}
-            className="rounded-lg border bg-muted/20 px-3 py-2 transition-shadow hover:shadow-sm"
+            className="rounded-xl border bg-gradient-to-br from-muted/40 to-transparent px-3.5 py-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-float"
           >
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {label}
             </p>
-            <p className="mt-0.5 flex items-center gap-1.5 font-heading text-sm font-semibold">
+            <p className="mt-1 flex items-center gap-1.5 font-heading text-sm font-semibold">
               <Trophy className="size-3.5 shrink-0 text-primary" />
               <span className="min-w-0 truncate">{resolveName(winner.id)}</span>
             </p>
@@ -182,87 +185,98 @@ export function FinalRecommendation({
   const negotiation = bundle.negotiation.find((row) => row.id === winner.id);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-primary/30 shadow-md transition-shadow hover:shadow-lg">
-      <div className="bg-primary p-5 text-primary-foreground sm:p-6">
-        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-foreground/80">
-          <Trophy className="size-3.5" />
-          Final Recommendation
-        </p>
-        <div className="mt-1.5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-          <div className="min-w-0">
-            <h3 className="break-words font-heading text-3xl font-bold leading-tight sm:text-4xl">
-              {resolveName(winner.id)}
-            </h3>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              {hasText(winner.verdict) && (
-                <span className="rounded-full bg-primary-foreground/15 px-2.5 py-0.5 text-xs font-semibold">
-                  {winner.verdict}
+    <section className="overflow-hidden rounded-xl border border-primary/30 shadow-float transition-shadow duration-200 hover:shadow-float-lg">
+      <div className="bg-brand-gradient relative p-6 text-primary-foreground sm:p-7">
+        {/* Soft radial sheen, purely decorative (same as the Executive hero). */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.18),transparent_55%)]"
+        />
+        <div className="relative">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-foreground/80">
+            <span className="flex size-6 items-center justify-center rounded-md bg-primary-foreground/15">
+              <Trophy className="size-3.5" />
+            </span>
+            Final Recommendation
+          </p>
+          <div className="mt-2 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+            <div className="min-w-0">
+              <h3 className="break-words font-heading text-3xl font-bold leading-tight sm:text-4xl">
+                {resolveName(winner.id)}
+              </h3>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                {hasText(winner.verdict) && (
+                  <span className="rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                    {winner.verdict}
+                  </span>
+                )}
+                {typeof stars === "number" && <StarRow count={stars} onDark />}
+                <span className="font-mono text-[10px] text-primary-foreground/60">
+                  {winner.id}
                 </span>
+              </div>
+            </div>
+            <div className="flex shrink-0 gap-8 text-right">
+              {hasText(winner.overall_score) && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-primary-foreground/70">
+                    Overall score
+                  </p>
+                  <p className="mt-0.5 font-heading text-3xl font-bold tabular-nums sm:text-4xl">
+                    {formatScore(winner.overall_score)}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-primary-foreground/70">
+                    Backend comparison score
+                  </p>
+                </div>
               )}
-              {typeof stars === "number" && <StarRow count={stars} onDark />}
-              <span className="font-mono text-[10px] text-primary-foreground/60">
-                {winner.id}
-              </span>
+              {winnerTally && tally.totalCategories > 0 && (
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-primary-foreground/70">
+                    Category wins
+                  </p>
+                  <p className="mt-0.5 font-heading text-3xl font-bold tabular-nums sm:text-4xl">
+                    {winnerTally.wins}
+                    <span className="text-base font-semibold text-primary-foreground/70">
+                      /{tally.totalCategories}
+                    </span>
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-primary-foreground/70">
+                    Comparison categories won
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex shrink-0 gap-6 text-right">
-            {hasText(winner.overall_score) && (
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wide text-primary-foreground/70">
-                  Overall score
-                </p>
-                <p className="font-heading text-2xl font-bold tabular-nums sm:text-3xl">
-                  {formatScore(winner.overall_score)}
-                </p>
-                <p className="text-[11px] text-primary-foreground/70">
-                  Backend comparison score
-                </p>
-              </div>
-            )}
-            {winnerTally && tally.totalCategories > 0 && (
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wide text-primary-foreground/70">
-                  Category wins
-                </p>
-                <p className="font-heading text-2xl font-bold tabular-nums sm:text-3xl">
-                  {winnerTally.wins}
-                  <span className="text-base font-semibold text-primary-foreground/70">
-                    /{tally.totalCategories}
-                  </span>
-                </p>
-                <p className="text-[11px] text-primary-foreground/70">
-                  Comparison categories won
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {reasons.length > 0 && (
-          <div className="mt-4 border-t border-primary-foreground/15 pt-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary-foreground/70">
-              Why this property?
-            </p>
-            <ul className="mt-1.5 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-              {reasons.map((reason, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-1.5 text-xs font-medium text-primary-foreground/90"
-                >
-                  <Check className="mt-0.5 size-3.5 shrink-0" />
-                  <span className="min-w-0 break-words">{reason}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {reasons.length > 0 && (
+            <div className="mt-5 border-t border-primary-foreground/15 pt-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-primary-foreground/70">
+                Why this property?
+              </p>
+              <ul className="mt-2 grid gap-x-8 gap-y-1.5 sm:grid-cols-2">
+                {reasons.map((reason, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-1.5 text-xs font-medium text-primary-foreground/90"
+                  >
+                    <Check className="mt-0.5 size-3.5 shrink-0" />
+                    <span className="min-w-0 break-words">{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
       {negotiation &&
         (hasText(negotiation.strategy) || hasText(negotiation.target_price)) && (
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-card p-3">
-            <p className="flex min-w-0 items-start gap-2 text-sm">
-              <Handshake className="mt-0.5 size-4 shrink-0 text-primary" />
+          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2 bg-card p-4">
+            <p className="flex min-w-0 items-start gap-2.5 text-sm">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Handshake className="size-4 text-primary" />
+              </span>
               <span className="min-w-0">
                 <span className="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Recommended action
@@ -279,7 +293,7 @@ export function FinalRecommendation({
                 <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                   Target offer
                 </p>
-                <p className="font-heading text-lg font-bold tabular-nums text-primary">
+                <p className="font-heading text-xl font-bold tabular-nums text-primary">
                   {formatCr(negotiation.target_price)}
                 </p>
                 {hasText(negotiation.suggested_discount_percent) && (

@@ -122,7 +122,7 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
           : null;
 
         return (
-          <section key={item.id} className="space-y-2">
+          <section key={item.id} className="space-y-3">
             <CompactPropertyHeader
               id={item.id}
               index={index}
@@ -164,7 +164,7 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
                     backend's range — comparison_agent treats >= 3 as high
                     growth; 5 caps the visual; the verbatim score shows). */}
                 {growthScore !== null && (
-                  <div className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2 shadow-sm">
+                  <div className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 shadow-float">
                     <RadialGauge
                       value={growthScore}
                       max={5}
@@ -188,7 +188,7 @@ export function FutureGrowthCards({ rows }: { rows: AdvisorRow[] }) {
                 )}
               </>
             ) : (
-              <div className="rounded-xl border bg-card px-3 py-2 shadow-sm">
+              <div className="rounded-xl border bg-card px-4 py-3 shadow-float">
                 <EmptyState
                   icon={Sparkles}
                   description="No future growth information is available for this property."

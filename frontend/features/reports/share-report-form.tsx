@@ -61,17 +61,19 @@ export function ShareReportForm({
   const sentPhone = share.variables?.phone_number ?? trimmed;
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
-      <div className="space-y-1">
-        <h2 className="text-sm font-semibold text-muted-foreground">Share Report</h2>
-        <p className="text-xs text-muted-foreground">
-          Send this report as a PDF to a WhatsApp number.
+    <div className="space-y-4 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-5 shadow-float">
+      <div className="space-y-1.5">
+        <h2 className="text-base font-semibold">Share Report</h2>
+        <p className="text-sm text-muted-foreground">
+          Send this comprehensive report as a PDF to WhatsApp
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="report-phone">WhatsApp Number</Label>
-        <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="space-y-3">
+        <Label htmlFor="report-phone" className="text-sm font-medium">
+          WhatsApp Number
+        </Label>
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Input
             id="report-phone"
             type="tel"
@@ -82,7 +84,7 @@ export function ShareReportForm({
             disabled={share.isPending}
             className="sm:flex-1"
           />
-          <Button onClick={handleShare} disabled={!canShare}>
+          <Button onClick={handleShare} disabled={!canShare} className="gap-2">
             {share.isPending ? (
               <>
                 <Spinner /> Sending…
@@ -95,17 +97,17 @@ export function ShareReportForm({
           </Button>
         </div>
         {share.isPending && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Sending property report to WhatsApp…
           </p>
         )}
       </div>
 
       {delivered && (
-        <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-          <div>
-            <p className="font-medium">Property report sent successfully</p>
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0" />
+          <div className="space-y-1">
+            <p className="font-semibold">Report sent successfully</p>
             <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80">
               Delivered to {sentPhone}
             </p>

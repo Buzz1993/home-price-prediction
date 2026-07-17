@@ -33,6 +33,9 @@ export function ReportPreview({
   // The print copy is portaled to <body> so the app shell (sidebar, scroll
   // containers) can be hidden during printing without touching the layout.
   const [mounted, setMounted] = useState(false);
+  // Hydration guard: sync `mounted` after first paint so the portal only
+  // renders client-side. setMounted is intentionally the only effect action.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const [exporting, setExporting] = useState(false);
@@ -65,16 +68,21 @@ export function ReportPreview({
   );
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          Report Preview
-        </h2>
+    <div className="space-y-4">
+      {/* Premium toolbar (Phase 18.7) */}
+      <div className="flex items-center justify-between gap-3 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-4">
+        <div className="space-y-0.5">
+          <h2 className="text-base font-semibold">Report Preview</h2>
+          <p className="text-xs text-muted-foreground">
+            Review your comprehensive investment analysis
+          </p>
+        </div>
         <Button
           variant="outline"
-          size="sm"
+          size="default"
           onClick={handleExportPdf}
           disabled={exporting}
+          className="shrink-0 gap-2"
         >
           {exporting ? <Spinner /> : <FileDown />}
           {exporting ? "Exporting…" : "Export PDF"}
@@ -82,13 +90,14 @@ export function ReportPreview({
       </div>
 
       {notice && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400">
-          <Info className="mt-0.5 size-4 shrink-0" />
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400">
+          <Info className="mt-0.5 size-5 shrink-0" />
           <span>{notice}</span>
         </div>
       )}
 
-      <div className="rounded-xl border bg-muted/40 p-3 sm:p-6">
+      {/* Premium preview container (Phase 18.7) */}
+      <div className="rounded-xl border bg-gradient-to-br from-muted/20 to-transparent p-6 shadow-float">
         {document_}
       </div>
 

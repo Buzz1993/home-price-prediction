@@ -108,12 +108,13 @@ export function CompareExport({ ids }: { ids: string[] }) {
 
   return (
     <div className="flex flex-col items-end gap-2">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2 rounded-xl border bg-card p-1.5 shadow-float">
         <Button
           variant="outline"
           size="sm"
           onClick={() => exportPdf.mutate()}
           disabled={exportPdf.isPending}
+          className="transition-all duration-150 hover:-translate-y-0.5"
         >
           {exportPdf.isPending ? <Spinner /> : <FileDown />}
           {exportPdf.isPending ? "Exporting…" : "Export Comparison PDF"}
@@ -123,15 +124,26 @@ export function CompareExport({ ids }: { ids: string[] }) {
           size="sm"
           onClick={() => setShareOpen((open) => !open)}
           disabled={share.isPending}
+          className="transition-all duration-150 hover:-translate-y-0.5"
         >
           {shareOpen ? <X /> : <Send />}
           Share on WhatsApp
         </Button>
-        <Button variant="outline" size="sm" onClick={() => window.print()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.print()}
+          className="transition-all duration-150 hover:-translate-y-0.5"
+        >
           <Printer />
           Print
         </Button>
-        <Button variant="outline" size="sm" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="transition-all duration-150 hover:-translate-y-0.5"
+        >
           {/* The compared properties are already staged in the shared tray the
               Reports page reads — plain navigation, nothing re-implemented. */}
           <Link href="/reports">
@@ -142,7 +154,7 @@ export function CompareExport({ ids }: { ids: string[] }) {
       </div>
 
       {exportPdf.isError && (
-        <p className="text-xs text-red-600">
+        <p className="text-xs text-destructive">
           The PDF export failed. Please make sure the backend is running and
           try again.
         </p>

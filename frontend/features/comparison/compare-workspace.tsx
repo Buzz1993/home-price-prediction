@@ -9,8 +9,10 @@
 // (use-compare-data) and rendered unchanged — no analysis logic lives here.
 
 import { useRef, useState } from "react";
-import { PackageOpen, Scale, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { PackageOpen, Scale, Search, Sparkles } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -35,13 +37,42 @@ import { PropertyMatrix } from "./property-matrix";
 import { useCompareData } from "./use-compare-data";
 import { WinnerStrip } from "./winner-strip";
 
-// Loading placeholder shaped like the page: summary banner + two matrices.
-function CompareSkeleton() {
+// Premium loading placeholder shaped like the page (Phase 18.6): an
+// "AI is comparing" banner over shimmering blocks shaped like the hero,
+// winner strip, scoreboard and matrix. Purely visual; no behavior.
+function CompareSkeleton({ count }: { count: number }) {
   return (
-    <div className="space-y-3" aria-busy="true" aria-label="Loading comparison">
-      <Skeleton className="h-40 rounded-xl" />
-      <Skeleton className="h-72 rounded-xl" />
+    <div className="space-y-4" aria-busy="true" aria-label="Loading comparison">
+      {/* AI working banner */}
+      <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gradient text-primary-foreground shadow-brand-glow">
+          <Sparkles className="size-4 animate-pulse" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            Comparing {count} properties
+            <span className="ml-0.5 inline-flex gap-0.5" aria-hidden="true">
+              <span className="animate-bounce [animation-delay:0ms]">.</span>
+              <span className="animate-bounce [animation-delay:150ms]">.</span>
+              <span className="animate-bounce [animation-delay:300ms]">.</span>
+            </span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Running the backend analyses and building your side-by-side view
+          </p>
+        </div>
+      </div>
+      {/* Executive hero placeholder */}
+      <Skeleton className="h-44 rounded-xl" />
+      {/* Winner strip placeholder */}
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
+      </div>
+      {/* Scoreboard + matrix placeholders */}
       <Skeleton className="h-56 rounded-xl" />
+      <Skeleton className="h-72 rounded-xl" />
     </div>
   );
 }
@@ -139,11 +170,19 @@ export function CompareWorkspace() {
         </header>
 
         {tray.length === 0 ? (
-          <div className="rounded-xl border bg-card p-8 shadow-sm">
+          <div className="rounded-xl border bg-gradient-to-b from-card to-accent/30 p-12 shadow-float">
             <EmptyState
               icon={PackageOpen}
               title="Your tray is empty"
               description="Stage properties from the Dashboard search results to compare them here."
+              action={
+                <Button asChild>
+                  <Link href="/dashboard">
+                    <Search />
+                    Search Properties
+                  </Link>
+                </Button>
+              }
             />
           </div>
         ) : (
@@ -156,13 +195,9 @@ export function CompareWorkspace() {
             />
 
             {compare.isPending && (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Comparing {compare.variables?.length ?? selection.length}{" "}
-                  properties — running the backend analyses…
-                </p>
-                <CompareSkeleton />
-              </div>
+              <CompareSkeleton
+                count={compare.variables?.length ?? selection.length}
+              />
             )}
 
             {compare.isError && !compare.isPending && (
@@ -245,12 +280,13 @@ export function CompareWorkspace() {
             )}
 
             {!bundle && !compare.isPending && !compare.isError && (
-              <EmptyState
-                icon={compare.isIdle ? Scale : Sparkles}
-                title="Pick your contenders"
-                description="Select 2–3 staged properties above, then show the comparison to see the full side-by-side breakdown."
-                className="py-12"
-              />
+              <div className="rounded-xl border bg-gradient-to-b from-card to-accent/30 p-12 shadow-float">
+                <EmptyState
+                  icon={compare.isIdle ? Scale : Sparkles}
+                  title="Pick your contenders"
+                  description="Select 2–3 staged properties above, then show the comparison to see the full side-by-side breakdown."
+                />
+              </div>
             )}
           </>
         )}

@@ -56,7 +56,7 @@ export function FloatingWinner({
     <div
       role="status"
       aria-label="Comparison winner"
-      className="fixed bottom-4 right-4 z-40 hidden w-60 rounded-xl border border-primary/30 bg-card p-3 shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-300 sm:block"
+      className="fixed bottom-4 right-4 z-40 hidden w-60 rounded-xl border border-emerald-400/40 bg-card p-3 shadow-[0_0_0_1px_rgba(16,185,129,0.12),0_12px_32px_-8px_rgba(16,185,129,0.3)] animate-in fade-in slide-in-from-bottom-2 duration-300 sm:block"
     >
       <div className="flex items-start justify-between gap-2">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">

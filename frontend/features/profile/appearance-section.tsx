@@ -6,6 +6,8 @@
 // functionality changes) and persists it to localStorage. Implemented as a
 // radio group so keyboard users can arrow between themes; the selected card
 // shows a brand outline, glow and check icon.
+//
+// Phase 18.7: refined presentation with better spacing and visual hierarchy.
 
 import { Check, Palette } from "lucide-react";
 
@@ -18,17 +20,19 @@ export function AppearanceSection() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Palette className="size-4 text-muted-foreground" />
+    <Card className="shadow-float">
+      <CardHeader className="space-y-2 pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Palette className="size-5" />
+          </div>
           Appearance
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Choose your preferred EstateMind theme.
+          Choose your preferred EstateMind theme
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <div
           role="radiogroup"
           aria-label="EstateMind theme"
@@ -63,11 +67,11 @@ function ThemeCard({ theme, selected, onSelect }: ThemeCardProps) {
       aria-label={`${theme.name} theme — ${theme.description}`}
       onClick={onSelect}
       className={cn(
-        "group relative w-full rounded-xl border bg-card p-4 text-left transition-all duration-200",
+        "group relative w-full rounded-xl border bg-card p-5 text-left transition-all duration-200",
         "hover:-translate-y-0.5 hover:border-ring/60 hover:shadow-float-lg",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         selected
-          ? "border-primary shadow-brand-glow"
+          ? "border-primary shadow-brand-glow ring-2 ring-primary/20"
           : "border-border shadow-float",
       )}
     >
@@ -75,28 +79,28 @@ function ThemeCard({ theme, selected, onSelect }: ThemeCardProps) {
       <span
         aria-hidden
         className={cn(
-          "absolute right-3 top-3 flex size-5 items-center justify-center rounded-full transition-all duration-200",
+          "absolute right-3 top-3 flex size-6 items-center justify-center rounded-full transition-all duration-200",
           selected
-            ? "bg-primary text-primary-foreground opacity-100"
+            ? "bg-primary text-primary-foreground opacity-100 shadow-sm"
             : "opacity-0",
         )}
       >
-        <Check className="size-3" strokeWidth={3} />
+        <Check className="size-3.5" strokeWidth={3} />
       </span>
 
       {/* Color preview swatches (primary → secondary → accent). */}
-      <span aria-hidden className="flex items-center gap-1.5">
+      <span aria-hidden className="flex items-center gap-2">
         {theme.swatches.map((color) => (
           <span
             key={color}
-            className="size-6 rounded-full border border-black/10"
+            className="size-7 rounded-full border-2 border-background shadow-sm ring-1 ring-black/5"
             style={{ backgroundColor: color }}
           />
         ))}
       </span>
 
-      <span className="mt-3 block text-sm font-semibold">{theme.name}</span>
-      <span className="mt-0.5 block text-xs text-muted-foreground">
+      <span className="mt-4 block text-base font-semibold">{theme.name}</span>
+      <span className="mt-1 block text-sm text-muted-foreground">
         {theme.description}
       </span>
     </button>

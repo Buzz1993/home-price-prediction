@@ -62,21 +62,23 @@ export function WinnerStrip({
       {cards.map(({ label, icon: Icon, winner }) => (
         <div
           key={label}
-          className="rounded-xl border bg-card p-3 shadow-sm transition-shadow hover:shadow-md"
+          className="card-accent-top rounded-xl border bg-card p-3.5 shadow-float transition-all duration-200 hover:-translate-y-0.5 hover:shadow-float-lg"
         >
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
             <Trophy className="size-3.5 shrink-0" />
             {label}
           </p>
-          <p className="mt-1 flex items-center gap-1.5 font-heading text-sm font-semibold">
-            <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+          <p className="mt-1.5 flex items-center gap-2 font-heading text-sm font-semibold">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10">
+              <Icon className="size-3.5 text-primary" />
+            </span>
             <span className="min-w-0 truncate">
               {resolveName(winner!.id)}
             </span>
           </p>
           {/* Reason + one supporting metric, verbatim backend-derived points */}
           {winner!.points[0] && (
-            <p className="mt-1 truncate text-xs text-muted-foreground">
+            <p className="mt-1.5 truncate text-xs text-muted-foreground">
               {winner!.points[0]}
             </p>
           )}

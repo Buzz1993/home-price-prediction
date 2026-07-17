@@ -40,6 +40,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const applied = document.documentElement.dataset.theme;
+    // Hydration sync: read the theme the boot script already applied to <html>
+    // and align React state. This is the SSR hydration pattern — intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isThemeId(applied)) setThemeState(applied);
     return () => window.clearTimeout(switchTimeout.current);
   }, []);

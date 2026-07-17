@@ -6,7 +6,7 @@
 // to an inline input. Presentational only — all state lives in the workspace
 // provider.
 
-import { useEffect, useRef, useState } from "react";
+import { createElement, useEffect, useRef, useState } from "react";
 import {
   Brain,
   Building2,
@@ -110,7 +110,9 @@ export function ConversationItem({
     }
   }, [renaming]);
 
-  const RowIcon = iconForTitle(conversation.title);
+  // Lucide icon picked from the title's wording — a plain element factory
+  // call, not a component defined during render (react-hooks/static-components).
+  const rowIcon = iconForTitle(conversation.title);
   const updatedLabel = relativeTime(conversation.updatedAt);
 
   const startRename = () => {
@@ -166,12 +168,12 @@ export function ConversationItem({
         onClick={() => onSelect(conversation.id)}
         className="flex min-w-0 flex-1 items-start gap-2 px-2.5 py-2 text-left text-sm"
       >
-        <RowIcon
-          className={cn(
+        {createElement(rowIcon, {
+          className: cn(
             "mt-0.5 size-3.5 shrink-0",
             active ? "text-brand-accent" : "text-sidebar-foreground/50"
-          )}
-        />
+          ),
+        })}
         <span className="min-w-0 flex-1">
           <span
             className={cn(

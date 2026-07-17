@@ -55,8 +55,9 @@ export type MatrixRowData = {
 };
 
 const TONE_CELL: Record<CellTone, string> = {
-  best: "bg-emerald-50/80 font-semibold text-emerald-900",
-  worst: "bg-rose-50/60 text-rose-700",
+  // Winning value: soft emerald wash + a thin inset emerald ring (Phase 18.6).
+  best: "bg-emerald-50/80 font-semibold text-emerald-900 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.25)]",
+  worst: "bg-rose-50/50 text-rose-700/90",
   neutral: "",
 };
 
@@ -147,13 +148,17 @@ export function MatrixTable({
       )}
     >
       {title && (
-        <div className="border-b p-3">
-          <h3 className="flex items-center gap-2 font-heading text-sm font-semibold">
-            {Icon && <Icon className="size-4 text-primary" />}
+        <div className="border-b p-4">
+          <h3 className="flex items-center gap-2.5 font-heading text-sm font-semibold">
+            {Icon && (
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Icon className="size-4 text-primary" />
+              </span>
+            )}
             {title}
           </h3>
           {description && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground">
               {description}
             </p>
           )}
@@ -172,9 +177,9 @@ export function MatrixTable({
                 <th
                   key={column.id}
                   className={cn(
-                    // Purple accent header (Phase 18.2); the winner column
-                    // keeps its soft green highlight.
-                    "min-w-40 bg-secondary px-3 py-2 text-left align-bottom",
+                    // Theme-secondary header; the overall winner column keeps a
+                    // soft emerald highlight (Phase 18.6).
+                    "min-w-40 bg-secondary px-3 py-2.5 text-left align-bottom",
                     column.isWinner && "bg-emerald-100/80"
                   )}
                 >
@@ -217,7 +222,7 @@ export function MatrixTable({
             {visibleRows.map((row, rowIndex) => (
               <tr
                 key={`${row.label}-${rowIndex}`}
-                className="border-b transition-colors last:border-0 hover:bg-muted/40"
+                className="border-b border-border/70 transition-colors duration-150 last:border-0 hover:bg-accent/50"
               >
                 {/* The attribute column stays readable while the property
                     columns scroll horizontally beneath it. */}
@@ -247,7 +252,7 @@ export function MatrixTable({
                           {cell.content}
                         </span>
                         {tone === "best" && cell.badge && (
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100/90 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
                             <Trophy className="size-3" />
                             {cell.badge}
                           </span>
@@ -305,20 +310,22 @@ export function SectionWinnerCard({
   points: string[];
 }) {
   return (
-    <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/5 via-primary/[0.03] to-transparent px-4 py-3 shadow-float transition-shadow duration-200 hover:shadow-float-lg">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
-          <Trophy className="size-3.5" />
+          <span className="flex size-6 items-center justify-center rounded-md bg-primary/10">
+            <Trophy className="size-3.5" />
+          </span>
           {category}
         </p>
         <p className="min-w-0 font-heading text-sm font-semibold">{name}</p>
       </div>
       {points.length > 0 && (
-        <div className="mt-1.5 border-t border-primary/15 pt-1.5">
+        <div className="mt-2 border-t border-primary/15 pt-2">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             Why?
           </p>
-          <ul className="mt-1 grid gap-x-6 gap-y-0.5 sm:grid-cols-2">
+          <ul className="mt-1 grid gap-x-6 gap-y-1 sm:grid-cols-2">
             {points.map((point, i) => (
               <li
                 key={i}

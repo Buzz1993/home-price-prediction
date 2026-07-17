@@ -25,25 +25,26 @@ import { CalloutCard } from "./analysis-ui";
 export { toneKey, type ToneKey };
 
 // Card-level styling per tone — same wording rules as the status pills
-// (lib/value-tone.ts), scaled up to the summary card.
+// (lib/value-tone.ts), scaled up to the summary card. Phase 18.5: each tone
+// card carries a soft gradient wash instead of a flat tint.
 const SUMMARY_TONES: Record<
   ToneKey,
   { bar: string; headline: string; card: string }
 > = {
   positive: {
-    bar: "bg-primary",
+    bar: "bg-brand-gradient",
     headline: "text-primary",
-    card: "border-primary/30 bg-primary/5",
+    card: "border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent",
   },
   negative: {
     bar: "bg-red-500",
     headline: "text-red-600",
-    card: "border-red-200 bg-red-50/50",
+    card: "border-red-200 bg-gradient-to-br from-red-50 via-red-50/50 to-transparent",
   },
   warning: {
     bar: "bg-amber-500",
     headline: "text-amber-700",
-    card: "border-amber-200 bg-amber-50/40",
+    card: "border-amber-200 bg-gradient-to-br from-amber-50 via-amber-50/40 to-transparent",
   },
   neutral: {
     bar: "bg-border",
@@ -128,19 +129,19 @@ export function DecisionSummary({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border shadow-sm",
+        "overflow-hidden rounded-xl border shadow-float transition-shadow duration-200 hover:shadow-float-lg",
         styles.card
       )}
     >
       <div className={cn("h-1", styles.bar)} />
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 p-5">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
             {eyebrow}
           </p>
           <p
             className={cn(
-              "mt-0.5 flex items-center gap-2 font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl",
+              "mt-1 flex items-center gap-2.5 font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl",
               styles.headline
             )}
           >
@@ -148,17 +149,17 @@ export function DecisionSummary({
             <span className="min-w-0 break-words">{headline}</span>
           </p>
           {typeof stars === "number" && (
-            <div className="mt-1">
+            <div className="mt-1.5">
               <StarRow count={stars} />
             </div>
           )}
           {tagline && (
-            <p className="mt-1 text-sm font-medium text-foreground">
+            <p className="mt-1.5 text-sm font-medium text-foreground">
               {tagline}
             </p>
           )}
           {detail && (
-            <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+            <p className="mt-1 text-[13px] text-muted-foreground">{detail}</p>
           )}
         </div>
 
@@ -169,14 +170,16 @@ export function DecisionSummary({
             </p>
             <p
               className={cn(
-                "font-heading text-2xl font-bold tabular-nums sm:text-3xl",
+                "mt-0.5 font-heading text-2xl font-bold tabular-nums sm:text-3xl",
                 styles.headline
               )}
             >
               {stat.value}
             </p>
             {stat.sub && (
-              <p className="text-[11px] text-muted-foreground">{stat.sub}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {stat.sub}
+              </p>
             )}
           </div>
         )}
@@ -188,7 +191,8 @@ export function DecisionSummary({
 // ---------------------------------------------------------------------------
 // WhyCard — "Why this result?" checklist. Each reason is a short line the
 // caller assembled from backend fields (yields, differences, chips, verbatim
-// lists) — never generic filler. Hidden when there are no reasons.
+// lists) — never generic filler. Hidden when there are no reasons. Phase 18.5:
+// each reason renders as a soft success chip with a tinted ✓ icon container.
 // ---------------------------------------------------------------------------
 export function WhyCard({
   title,
@@ -199,14 +203,19 @@ export function WhyCard({
 }) {
   if (reasons.length === 0) return null;
   return (
-    <div className="rounded-xl border bg-card p-3 shadow-sm">
+    <div className="rounded-xl border bg-card p-4 shadow-float">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {title}
       </p>
-      <ul className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
         {reasons.map((reason, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm leading-snug">
-            <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+          <li
+            key={i}
+            className="flex items-start gap-2.5 rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-sm leading-snug"
+          >
+            <span className="mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-full bg-primary/15">
+              <Check className="size-3 text-primary" />
+            </span>
             <span className="min-w-0 break-words">{reason}</span>
           </li>
         ))}
@@ -259,21 +268,26 @@ export function TechnicalDetails({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl border bg-muted/40">
+    <div className="rounded-xl border bg-muted/40 transition-colors duration-200 hover:bg-muted/60">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         {title}
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 transition-transform",
+            "size-4 shrink-0 transition-transform duration-200",
             open && "rotate-180"
           )}
         />
       </button>
-      {open && <div className="border-t px-3 pb-3 pt-2">{children}</div>}
+      {open && (
+        <div className="border-t px-4 pb-4 pt-3 duration-200 animate-in fade-in slide-in-from-top-1">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

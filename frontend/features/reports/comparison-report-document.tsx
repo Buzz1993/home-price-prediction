@@ -12,6 +12,7 @@
 // The standard Reports page document (report-document.tsx) is untouched —
 // this renderer is used only for comparison reports (isComparisonReport).
 
+import { createElement } from "react";
 import {
   Award,
   Brain,
@@ -428,14 +429,16 @@ function ScoreboardBars({ section }: { section: GenericSection }) {
 // the compare page's accordion section permanently expanded.
 // ---------------------------------------------------------------------------
 function AnalysisSection({ section }: { section: GenericSection }) {
-  const Icon = sectionIcon(section.title);
+  // Lucide icon picked from the section title — rendered via createElement so
+  // no component is defined during render (react-hooks/static-components).
+  const icon = sectionIcon(section.title);
   const winner = findPair(sectionPairs(section), /^winner$/i);
 
   return (
     <section className="report-avoid-break overflow-hidden rounded-xl border bg-card shadow-sm">
       <div className="flex items-center gap-2.5 border-b p-3">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="size-4 text-primary" />
+          {createElement(icon, { className: "size-4 text-primary" })}
         </span>
         <h3 className="font-heading text-sm font-semibold">{section.title}</h3>
       </div>

@@ -12,11 +12,12 @@ import { cn } from "@/lib/utils";
 import { winTally } from "./win-tally";
 import type { CompareBundle } from "./use-compare-data";
 
-// Medal per rank position: gold trophy, silver medal, bronze medal.
+// Medal per rank position: gold trophy, silver medal, bronze medal — each in
+// its own soft-tinted chip.
 const MEDALS = [
-  { icon: Trophy, className: "text-amber-500" },
-  { icon: Medal, className: "text-slate-400" },
-  { icon: Medal, className: "text-amber-700" },
+  { icon: Trophy, className: "text-amber-500", chip: "bg-amber-100/80" },
+  { icon: Medal, className: "text-muted-foreground", chip: "bg-muted" },
+  { icon: Medal, className: "text-amber-700", chip: "bg-orange-100/70" },
 ];
 
 export function OverallScoreboard({
@@ -30,19 +31,20 @@ export function OverallScoreboard({
   if (tally.totalCategories === 0) return null;
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card shadow-float transition-shadow hover:shadow-float-lg">
-      <div className="h-1 bg-primary" />
-      <div className="border-b p-3">
-        <h3 className="flex items-center gap-2 font-heading text-sm font-semibold">
-          <Award className="size-4 text-primary" />
+    <section className="card-accent-top overflow-hidden rounded-xl border bg-card shadow-float transition-shadow duration-200 hover:shadow-float-lg">
+      <div className="border-b p-4">
+        <h3 className="flex items-center gap-2.5 font-heading text-sm font-semibold">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <Award className="size-4 text-primary" />
+          </span>
           Overall Comparison Score
         </h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           Category wins across all {tally.totalCategories} comparison sections.
         </p>
       </div>
 
-      <div className="space-y-4 p-4">
+      <div className="space-y-5 p-5">
         {tally.entries.map((entry, rank) => {
           const medal = MEDALS[Math.min(rank, MEDALS.length - 1)];
           const MedalIcon = medal.icon;
@@ -50,12 +52,19 @@ export function OverallScoreboard({
           const fraction = entry.wins / tally.totalCategories;
 
           return (
-            <div key={entry.id} className="space-y-1.5">
+            <div key={entry.id} className="space-y-2">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <p className="flex min-w-0 items-center gap-2">
-                  <MedalIcon
-                    className={cn("size-4 shrink-0", medal.className)}
-                  />
+                <p className="flex min-w-0 items-center gap-2.5">
+                  <span
+                    className={cn(
+                      "flex size-7 shrink-0 items-center justify-center rounded-lg",
+                      medal.chip
+                    )}
+                  >
+                    <MedalIcon
+                      className={cn("size-4 shrink-0", medal.className)}
+                    />
+                  </span>
                   <span
                     className={cn(
                       "min-w-0 truncate font-heading text-sm",
@@ -75,23 +84,23 @@ export function OverallScoreboard({
                 </p>
               </div>
 
-              {/* Proportional win bar — width animates in on render. */}
+              {/* Proportional win bar — gradient for the leader, animates in. */}
               <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn(
                     "h-full rounded-full transition-[width] duration-700 ease-out",
-                    leader ? "bg-primary" : "bg-primary/35"
+                    leader ? "bg-brand-gradient" : "bg-primary/30"
                   )}
                   style={{ width: `${Math.max(fraction * 100, entry.wins > 0 ? 6 : 0)}%` }}
                 />
               </div>
 
               {entry.categories.length > 0 && (
-                <ul className="flex flex-wrap gap-1">
+                <ul className="flex flex-wrap gap-1.5">
                   {entry.categories.map((category) => (
                     <li
                       key={category}
-                      className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                      className="rounded-full border border-primary/15 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary"
                     >
                       {category.replace(/ Winner$/, "")}
                     </li>

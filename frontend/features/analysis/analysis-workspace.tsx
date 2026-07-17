@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-// AI Analysis page body (Phase 8, premium presentation Phase 15.18). Reuses the
+// AI Analysis page body (Phase 8, premium presentation Phase 15.18, premium
+// AI-workspace polish Phase 18.5). Reuses the
 // shared evaluation tray (staged from AI Chat search results) to pick which
 // properties to analyze, then runs the documented per-property analysis
 // endpoints and renders each result with the premium renderers
@@ -31,7 +32,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
@@ -210,17 +210,20 @@ export function AnalysisWorkspace() {
   return (
     <div className="grid gap-4 lg:h-[calc(100dvh-7rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-float">
-        <div className="border-b p-5">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+        <div className="border-b p-6 pb-5">
+          <h1 className="flex items-center gap-2.5 font-heading text-[32px] font-semibold leading-tight tracking-tight">
+            <span className="bg-brand-gradient shadow-brand-glow flex size-9 shrink-0 items-center justify-center rounded-lg text-primary-foreground">
+              <Sparkles className="size-4.5" />
+            </span>
             AI Analysis
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Stage properties in the tray, then compare and analyze them here.
           </p>
         </div>
 
         {/* Card picker: Compare Properties first, then the analyses */}
-        <div className="grid gap-2 border-b p-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-2.5 border-b p-4 sm:grid-cols-2 xl:grid-cols-3">
           {[COMPARE_CARD, ...ANALYSES].map((meta) => {
             const isCompare = meta.key === "compare";
             const isActive = isCompare
@@ -228,46 +231,60 @@ export function AnalysisWorkspace() {
               : !showCompare && active === meta.key;
             const disabled = isCompare ? !canCompare : !canRun;
             return (
-              <Button
+              <button
                 key={meta.key}
-                variant={isActive ? "default" : "outline"}
-                className={cn(
-                  "h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left",
-                  isActive && "ring-2 ring-primary/30"
-                )}
+                type="button"
                 disabled={disabled}
                 onClick={() => handlePick(meta)}
+                className={cn(
+                  "group flex items-start gap-3 rounded-xl border bg-card p-3.5 text-left shadow-float transition-all duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                  isActive
+                    ? "border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent ring-1 ring-primary/30"
+                    : "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-float-lg"
+                )}
               >
-                <span className="flex items-center gap-2 font-medium">
-                  <meta.icon className="size-4 shrink-0" />
-                  {meta.label}
-                </span>
+                {/* Premium icon container */}
                 <span
                   className={cn(
-                    "text-xs font-normal",
+                    "flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200",
                     isActive
-                      ? "text-primary-foreground/80"
-                      : "text-muted-foreground"
+                      ? "bg-brand-gradient text-primary-foreground shadow-brand-glow"
+                      : "bg-primary/10 text-primary group-hover:bg-primary/15"
                   )}
                 >
-                  {meta.blurb}
+                  <meta.icon className="size-4.5" />
                 </span>
-              </Button>
+                <span className="min-w-0">
+                  <span
+                    className={cn(
+                      "block text-sm font-semibold leading-tight",
+                      isActive ? "text-primary" : "text-foreground"
+                    )}
+                  >
+                    {meta.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                    {meta.blurb}
+                  </span>
+                </span>
+              </button>
             );
           })}
         </div>
 
         {/* Result panel */}
-        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+        <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {canRun ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               Analyzing {targetIds.length}{" "}
               {targetIds.length === 1 ? "property" : "properties"}
               {selected.length > 0 ? " (selected)" : " (whole tray)"}. Pick an
               analysis above; click it again to re-run.
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[13px] text-muted-foreground">
               Your tray is empty. Stage properties from AI Chat search results to
               analyze them here.
             </p>
@@ -276,12 +293,7 @@ export function AnalysisWorkspace() {
           {/* Comparison result (Compare Properties card) — reuses the
               existing comparison mutation and the extracted ComparisonView. */}
           {showCompare && comparison.isPending && (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Comparing selected properties…
-              </p>
-              <AnalysisSkeleton />
-            </div>
+            <AnalysisSkeleton label="Comparing selected properties" />
           )}
 
           {showCompare && comparison.isError && (
@@ -294,7 +306,7 @@ export function AnalysisWorkspace() {
           )}
 
           {showCompare && compareResult && !comparison.isPending && (
-            <div className="space-y-3">
+            <div className="space-y-3 duration-300 animate-in fade-in slide-in-from-bottom-2">
               <SectionLabel>{COMPARE_CARD.label}</SectionLabel>
               <ComparisonView
                 content={compareResult}
@@ -304,12 +316,9 @@ export function AnalysisWorkspace() {
           )}
 
           {!showCompare && mutation.isPending && (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Running {activeMeta?.label ?? "analysis"}…
-              </p>
-              <AnalysisSkeleton />
-            </div>
+            <AnalysisSkeleton
+              label={`Running ${activeMeta?.label ?? "analysis"}`}
+            />
           )}
 
           {!showCompare && mutation.isError && (
@@ -325,7 +334,7 @@ export function AnalysisWorkspace() {
             active &&
             mutation.isSuccess &&
             mutation.data && (
-              <div className="space-y-3">
+              <div className="space-y-3 duration-300 animate-in fade-in slide-in-from-bottom-2">
                 <SectionLabel>{activeMeta?.label}</SectionLabel>
                 {/* Claude explains the backend analysis; the cards below still
                     render the unchanged backend result even if it is absent.

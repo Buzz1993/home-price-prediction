@@ -146,7 +146,7 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
           reasons.push(`${row.demand_level} tenant demand`);
 
         return (
-          <section key={String(row.id ?? index)} className="space-y-2">
+          <section key={String(row.id ?? index)} className="space-y-3">
             <CompactPropertyHeader
               id={String(row.id ?? "Property")}
               index={index}
@@ -183,7 +183,7 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
             )}
 
             {/* 3 — metrics */}
-            <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
               {hasValue(row.monthly_rent_estimate) && (
                 <MetricCard
                   label="Monthly rent"
@@ -203,7 +203,7 @@ export function RentalResults({ rows }: { rows: AnalysisRow[] }) {
               {/* Radial yield gauge — arc scaled against a 5% yield ceiling
                   for context; the verbatim backend percentage is displayed. */}
               {hasValue(row.rental_yield_percent) && yieldValue !== null && (
-                <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 px-3 py-2 shadow-sm">
+                <div className="flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 shadow-float">
                   <RadialGauge
                     value={yieldValue}
                     max={5}

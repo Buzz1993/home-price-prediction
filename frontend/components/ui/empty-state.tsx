@@ -3,6 +3,8 @@
 // Replaces the ad-hoc centered `<p>` / dashed-border blocks that each API-driven
 // section used to hand-roll, so empty UI is consistent across the app. It is not
 // for loading or error states — those have their own components.
+//
+// Phase 18.7: enhanced premium appearance with better gradient and spacing.
 
 import type { LucideIcon } from "lucide-react";
 
@@ -30,17 +32,17 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 text-center",
+        "flex flex-col items-center justify-center gap-4 text-center",
         className
       )}
     >
-      {/* Icon in a soft green gradient ring — friendly, premium focal point. */}
-      <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 via-accent to-transparent ring-1 ring-primary/10">
-        <Icon className="size-6 text-primary/70" />
+      {/* Icon in a premium gradient ring — friendly, elegant focal point. */}
+      <span className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 via-accent/10 to-primary/5 shadow-sm ring-1 ring-primary/10">
+        <Icon className="size-7 text-primary" strokeWidth={1.5} />
       </span>
-      {title && <p className="text-sm font-semibold">{title}</p>}
-      <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
-      {action && <div className="pt-1">{action}</div>}
+      {title && <p className="text-base font-semibold text-foreground">{title}</p>}
+      <p className="max-w-md text-sm leading-relaxed text-muted-foreground">{description}</p>
+      {action && <div className="pt-2">{action}</div>}
     </div>
   );
 }

@@ -1,0 +1,65 @@
+# Railway upload ignore list.
+# Deployed with `railway up --no-gitignore` so that DVC-managed model
+# artifacts in cache/artifacts_auto/ (gitignored) are included in the build.
+# Patterns are anchored with a leading "/" so they only match at the repo
+# root and never exclude nested packages like src/models or src/data.
+
+# Secrets — never upload
+/.env
+
+# Virtual environments
+/.venv
+/.venv2
+
+# Frontend (deployed separately, not part of this service)
+/frontend
+node_modules
+**/node_modules
+
+# Not required at runtime by the FastAPI backend
+/streamlit_app
+/project_docs
+
+# Version control / DVC internals
+/.git
+/.dvc/cache
+/.dvc/tmp
+
+# Data, experiments, and non-runtime assets.
+# The EstateMind Copilot API (src.api.main) loads these at startup, so they
+# must be uploaded:
+#   data/cleaned/final_combined_mcp_data.csv   (search registry master_df)
+#   data/cleaned/search_metadata.json          (search metadata cache)
+#   data/raw/f_original magicbricks cleaned 12022 data.csv (prediction service)
+# Everything else under /data is excluded.
+/data/interim
+/data/external
+/data/cleaned/final_cleaned_rec_data.csv
+/data/cleaned/property_cleaned.csv
+/data/cleaned/property_cleaned_for_utils.csv
+/data/cleaned/property_metadata_mcp.csv
+/data/raw/magic_text_webscrapping.csv
+/notebooks
+/models
+/mlruns
+/reports
+/references
+/docs
+/deploy
+/tests
+/.github
+/.claude
+/home_price_prediction.egg-info
+
+# Caches and local state
+__pycache__
+**/__pycache__
+.mypy_cache
+.pytest_cache
+/memory.db
+
+# Local images / reports not needed at runtime
+*.png
+*.pdf
+/graph.dot
+/graph_utf8.dot

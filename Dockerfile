@@ -20,6 +20,11 @@ WORKDIR /app
 COPY requirements-dockers.txt .
 RUN pip install --no-cache-dir -r requirements-dockers.txt
 
+# Chromium for the single PDF pipeline (src/services/pdf_service.py):
+# Export PDF and WhatsApp document delivery render the Next.js print route
+# with headless Chromium via Playwright.
+RUN playwright install --with-deps chromium
+
 # Install DVC with S3 support (needed to pull model artifacts)
 RUN pip install --no-cache-dir dvc[s3]
 
@@ -45,11 +50,13 @@ RUN if [ "$ENABLE_AWS" = "true" ]; then dvc pull; else echo "Skipping DVC pull (
 # Ensure 'src' and 'scripts' are discoverable by Python
 ENV PYTHONPATH="/app"
 
-# Expose FastAPI port
-EXPOSE 8000
+# Expose FastAPI ports (8001 = public EstateMind Copilot API, 8000 = internal ML API)
+EXPOSE 8001 8000
 
-# Run the API using uvicorn
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run both APIs: the ML Prediction API stays on 8000 (the Copilot API's
+# prediction service calls it at 127.0.0.1:8000), and the EstateMind
+# Copilot API on 8001 is the public entrypoint.
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port 8000 & exec uvicorn src.api.main:app --host 0.0.0.0 --port 8001"]
 
 
 

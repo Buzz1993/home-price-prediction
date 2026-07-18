@@ -1836,6 +1836,15 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
             llm_payload_prompt
         ).strip()
 
+        # ask_deepseek reports failures as sentinel STRINGS instead of raising
+        # (e.g. 'OLLAMA ERROR (401)\n{"error":"Unauthorized"}'). An error body
+        # like {"error": ...} would otherwise parse as valid JSON below and
+        # silently skip the Layer 2 regex fallback with empty filters.
+        if llm_raw_response.startswith(
+            ("REQUEST EXCEPTION", "OLLAMA ERROR", "STREAM EXCEPTION", "OLLAMA STREAM ERROR")
+        ):
+            raise ValueError(f"LLM backend unavailable: {llm_raw_response[:120]}")
+
         # Clean potential markdown formatting
         if llm_raw_response.startswith("```"):
 
@@ -2488,7 +2497,19 @@ def parse_intent_and_execute(
     USER REQUEST INPUTS: {user_prompt}
     Provide structured clear insights utilizing Indian Rupee (₹) denominations.
     """
-    return {"type": "text", "content": ask_deepseek(chat_prompt)}
+    chat_reply = ask_deepseek(chat_prompt)
+    # ask_deepseek returns sentinel error STRINGS instead of raising. Never
+    # surface the raw HTTP traceback to the user — show a clean message.
+    if chat_reply and (
+        chat_reply.startswith("REQUEST EXCEPTION")
+        or chat_reply.startswith("OLLAMA ERROR")
+    ):
+        chat_reply = (
+            "The AI assistant is temporarily unavailable. "
+            "Property search, analysis and comparison still work — "
+            "try a search like '3bhk in Thane with gym'."
+        )
+    return {"type": "text", "content": chat_reply}
     # so it return something like 
     # response = {
     #     "type": "search_results",

@@ -20,3 +20,11 @@ plotly
 wordcloud
 requests
 ddgs
+
+# EstateMind Copilot API (src.api.main) runtime dependencies
+python-dotenv
+rank-bm25
+fastmcp
+# Report PDF export + WhatsApp document delivery (Phase 16.2) —
+# headless Chromium renderer for /report/pdf and /report/share
+playwright

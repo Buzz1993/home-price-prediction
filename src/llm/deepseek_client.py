@@ -2,13 +2,36 @@
 # src/llm/deepseek_client.py
 # ===============================
 
+import os
+
 import requests
 import json
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "gpt-oss:120b-cloud"
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Deployment configuration (Railway/production parity):
+#   OLLAMA_URL     — generate endpoint. Defaults to the local Ollama daemon,
+#                    so local behaviour is unchanged. In production point it
+#                    at the hosted Ollama Cloud API
+#                    (https://ollama.com/api/generate).
+#   OLLAMA_MODEL   — model name. Defaults to the existing local alias.
+#                    On Ollama Cloud the same model is named "gpt-oss:120b".
+#   OLLAMA_API_KEY — bearer token for the hosted API. Unset locally.
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+MODEL_NAME = os.getenv("OLLAMA_MODEL", "gpt-oss:120b-cloud")
 # gpt-oss:120b-cloud
 # gemma4:31b-cloud
+
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "").strip()
+
+
+def _request_headers() -> dict:
+    """Authorization header for the hosted Ollama API (empty locally)."""
+    if OLLAMA_API_KEY:
+        return {"Authorization": f"Bearer {OLLAMA_API_KEY}"}
+    return {}
 
 def ask_deepseek(prompt):
 
@@ -37,6 +60,7 @@ def ask_deepseek(prompt):
         response = requests.post( # Make HTTP POST request to Ollama API, with the prompt and options
             OLLAMA_URL,
             json=payload,
+            headers=_request_headers(),
             timeout=180
         )
 
@@ -93,6 +117,7 @@ def ask_deepseek_stream(prompt):
         with requests.post(
             OLLAMA_URL,
             json=payload,
+            headers=_request_headers(),
             stream=True,
             timeout=180
         ) as response:

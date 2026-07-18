@@ -944,6 +944,18 @@ Return Markdown only.
 
     report = ask_deepseek(prompt)
 
+    # The LLM client returns sentinel error STRINGS instead of raising
+    # (e.g. "REQUEST EXCEPTION: HTTPConnectionPool(...)"). Never ship those
+    # to the user as report content — surface a clean, actionable message.
+    if report and (
+        report.startswith("REQUEST EXCEPTION")
+        or report.startswith("OLLAMA ERROR")
+    ):
+        raise ValueError(
+            "AI report generation is temporarily unavailable. "
+            "Please try again in a few minutes."
+        )
+
     if not report:
         raise ValueError("Failed to generate report.")
 

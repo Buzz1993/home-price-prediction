@@ -2187,6 +2187,13 @@ def parse_intent_and_execute(
     # and move to the next page. Otherwise, start a fresh search from page 1 with empty history.
     is_followup = is_followup_query(prompt_lower)
 
+    # TEMP LOG (routing debug — remove after verification)
+    print("\n===== ROUTING DEBUG =====")
+    print(f"INCOMING MESSAGE      : {user_prompt!r}")
+    print(f"IS_FOLLOWUP           : {is_followup}")
+    print(f"LAST_SEARCH_FILTERS   : {session_state.get('last_search_filters')}")
+    print("=========================\n")
+
     if is_followup:
         historical_filters = session_state.get(
             "last_search_filters",
@@ -2231,9 +2238,21 @@ def parse_intent_and_execute(
         error = require_tray(2)
         if error:
             return error
+        print("ROUTING DEBUG: branch=comparison")  # TEMP LOG
         return {"type": "comparison", "content": tools.compare_properties(session_state_tray)}
 
-    if any(k in prompt_lower for k in ["rent", "rental", "tenant", "lease", "yield", "rental yield", "monthly rent"]):
+    # Rental keywords must match at a word start ("\brent" still matches
+    # "rental"/"rents", "\blease" still matches "leased"). A plain substring
+    # check wrongly matched "lease" inside "please" and "rent" inside
+    # "different", hijacking follow-up searches like "more such properties
+    # please" into the rental branch.
+    rental_matched = [
+        k for k in ["rent", "rental", "tenant", "lease", "yield", "monthly rent"]
+        if re.search(r"\b" + re.escape(k), prompt_lower)
+    ]
+    if rental_matched:
+        # TEMP LOG (routing debug — remove after verification)
+        print(f"ROUTING DEBUG: branch=rental matched_keywords={rental_matched}")
         error = require_tray()
         if error:
             return error

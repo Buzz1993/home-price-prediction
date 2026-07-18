@@ -10,23 +10,38 @@
 // content is produced by the backend — this component only presents it. When
 // the text does not match the structured report layout (e.g. the non-enhanced
 // fallback report) the raw text is shown instead, so the preview never breaks.
+//
+// Phase 18.11: the Share Report action lives in this toolbar, beside Export
+// PDF. Phase 18.12 makes it a compact floating popover anchored to the Share
+// button (fade + scale in, closes on outside-click or Escape) instead of a
+// full-width collapsible panel — a lighter, SaaS-style share widget. Sharing
+// logic (validation, endpoint, states) is untouched; only the form's location
+// and container changed.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FileDown, Info } from "lucide-react";
+import { FileDown, Info, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { downloadReportPdf } from "@/services/report-service";
 import { ReportDocument } from "./report-document";
+import type { ReportType } from "./report-history";
 import { cleanReportText, parseReport } from "./report-parser";
+import { ShareReportForm } from "./share-report-form";
 
 export function ReportPreview({
   report,
   notice,
+  sharePropertyIds,
+  shareType = "property",
 }: {
   report: string;
   notice?: string | null;
+  // When provided, the toolbar shows a Share Report button that expands the
+  // existing WhatsApp share form (Phase 18.11) for these property ids.
+  sharePropertyIds?: string[];
+  shareType?: ReportType;
 }) {
   const model = useMemo(() => parseReport(report), [report]);
 
@@ -39,6 +54,28 @@ export function ReportPreview({
   useEffect(() => setMounted(true), []);
 
   const [exporting, setExporting] = useState(false);
+  // Floating share popover (Phase 18.12) — toggled from the toolbar and
+  // anchored to the Share button. Closes on outside-click or Escape.
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!shareOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!shareWrapRef.current?.contains(event.target as Node)) {
+        setShareOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShareOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [shareOpen]);
 
   const handleExportPdf = async () => {
     setExporting(true);
@@ -69,24 +106,57 @@ export function ReportPreview({
 
   return (
     <div className="space-y-4">
-      {/* Premium toolbar (Phase 18.7) */}
-      <div className="flex items-center justify-between gap-3 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-4">
+      {/* Premium toolbar (Phase 18.7; Share moved here in Phase 18.11) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-4">
         <div className="space-y-0.5">
           <h2 className="text-base font-semibold">Report Preview</h2>
           <p className="text-xs text-muted-foreground">
             Review your comprehensive investment analysis
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="default"
-          onClick={handleExportPdf}
-          disabled={exporting}
-          className="shrink-0 gap-2"
-        >
-          {exporting ? <Spinner /> : <FileDown />}
-          {exporting ? "Exporting…" : "Export PDF"}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="default"
+            onClick={handleExportPdf}
+            disabled={exporting}
+            className="gap-2"
+          >
+            {exporting ? <Spinner /> : <FileDown />}
+            {exporting ? "Exporting…" : "Export PDF"}
+          </Button>
+          {sharePropertyIds && (
+            <div ref={shareWrapRef} className="relative">
+              <Button
+                variant={shareOpen ? "secondary" : "default"}
+                size="default"
+                onClick={() => setShareOpen((open) => !open)}
+                aria-expanded={shareOpen}
+                aria-haspopup="dialog"
+                className="gap-2"
+              >
+                <Send /> Share Report
+              </Button>
+
+              {/* Compact floating share widget (Phase 18.12) — anchored to the
+                  button, right-aligned, with a fade + scale entrance. Holds the
+                  existing WhatsApp share form, unchanged. */}
+              {shareOpen && (
+                <div
+                  role="dialog"
+                  aria-label="Share report to WhatsApp"
+                  className="absolute right-0 top-full z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] origin-top-right animate-in fade-in zoom-in-95 duration-200"
+                >
+                  <ShareReportForm
+                    propertyIds={sharePropertyIds}
+                    report={report}
+                    type={shareType}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {notice && (

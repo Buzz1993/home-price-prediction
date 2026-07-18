@@ -52,7 +52,7 @@ export function SavedWorkspace() {
       {isLoading && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-[360px] rounded-xl" />
+            <Skeleton key={i} className="h-[300px] rounded-xl" />
           ))}
         </div>
       )}
@@ -91,9 +91,10 @@ export function SavedWorkspace() {
               {saved.length === 1 ? "property" : "properties"} in your collection
             </p>
           </div>
-          {/* Compact density (Phase 18.9): 3 cards per row on desktop with a
-              shorter image and tighter spacing — no information removed. */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Ultra-compact density (Phase 18.9, tightened in 18.11 and again
+              ~20% in 18.12): 3 cards per row on desktop with a much shorter
+              image and tighter spacing — no information removed. */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {saved.map((property) => (
               <PropertyCard
                 key={property.id}

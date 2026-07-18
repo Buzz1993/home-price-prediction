@@ -162,6 +162,18 @@ export type EnhancedReport = {
   ai_enhanced: string | null;
 };
 
+// The search context the backend echoes with every search response
+// (chat_service.parse_intent_and_execute -> current_query_state). The frontend
+// never interprets it — it is passed back verbatim as `last_query_state` on
+// follow-up messages (Phase 18.10) so the backend can restore the previous
+// search filters even when its in-memory session was lost (restart/expiry),
+// matching the Streamlit st.session_state behavior.
+export type SearchQueryState = {
+  active_filters?: Record<string, unknown>;
+  chat_preference_weights?: Record<string, number>;
+  [key: string]: unknown;
+};
+
 // Discriminated union of every response the /chat endpoint can return. The
 // `type` field matches RESPONSE_CONFIG keys in the Streamlit reference.
 type ChatResponseBody =
@@ -173,6 +185,7 @@ type ChatResponseBody =
       type: "search_results";
       content: SearchResult[];
       ai_explanation?: string;
+      current_query_state?: SearchQueryState;
     }
   | { type: "comparison"; content: ComparisonResult }
   | { type: "rental"; content: AnalysisRow[] }
@@ -199,6 +212,11 @@ export type ChatRequest = {
   message: string;
   staged_property_ids: string[];
   session_id?: string;
+  // The `current_query_state` of the LAST search response in this conversation
+  // (Phase 18.10), echoed back verbatim so the backend can restore the
+  // previous search filters for follow-ups ("show me more…") even after its
+  // in-memory session expired. Omitted when the conversation has no search yet.
+  last_query_state?: SearchQueryState;
 };
 
 // A rendered conversation entry. `text` is the header/message; when the entry

@@ -63,9 +63,10 @@ type PropertyCardProps = {
   // Below md the card always falls back to the default vertical layout. No
   // information changes; only the arrangement does.
   horizontal?: boolean;
-  // Opt-in compact density (Phase 18.9, Saved Properties): shorter image,
-  // tighter padding and rhythm, slightly smaller price. Every field still
-  // renders — only the spacing scale changes.
+  // Opt-in compact density (Phase 18.9, tightened in 18.11 and again ~20% in
+  // 18.12 for Saved Properties): a much shorter image, tighter padding and
+  // rhythm, smaller price/name/badges. Every field still renders — only the
+  // spacing scale changes.
   compact?: boolean;
 };
 
@@ -129,7 +130,7 @@ export function PropertyCard({
       <div
         className={cn(
           "relative aspect-[16/13] w-full overflow-hidden",
-          compact && "aspect-[16/9]",
+          compact && "aspect-[5/2]",
           horizontal &&
             "md:aspect-auto md:w-56 md:shrink-0 md:self-stretch lg:w-72"
         )}
@@ -169,13 +170,23 @@ export function PropertyCard({
         )}
 
         {/* BHK badge overlaid on the image. */}
-        <Badge className="bg-brand-gradient absolute left-2.5 top-2.5 border-transparent text-primary-foreground shadow-sm">
+        <Badge
+          className={cn(
+            "bg-brand-gradient absolute left-2.5 top-2.5 border-transparent text-primary-foreground shadow-sm",
+            compact && "left-2 top-2 px-1.5 py-0.5 text-[0.68rem]"
+          )}
+        >
           <BedDouble /> {property.bhk_type}
         </Badge>
 
         {/* Image counter — how many photos the listing carries. */}
         {imageCount > 1 && (
-          <Badge className="absolute bottom-2.5 left-2.5 border-transparent bg-black/55 text-white backdrop-blur-sm">
+          <Badge
+            className={cn(
+              "absolute bottom-2.5 left-2.5 border-transparent bg-black/55 text-white backdrop-blur-sm",
+              compact && "bottom-2 left-2 px-1.5 py-0.5 text-[0.68rem]"
+            )}
+          >
             {imageCount} photos
           </Badge>
         )}
@@ -208,7 +219,7 @@ export function PropertyCard({
           horizontal && "md:flex-1"
         )}
       >
-      <CardContent className={cn("space-y-3.5 p-5", compact && "space-y-2.5 p-4")}>
+      <CardContent className={cn("space-y-3.5 p-5", compact && "space-y-1.5 p-3")}>
         {/* Price — the dominant element. The property id sits top-right as a
             low-emphasis monospace reference (Phase 18.9 hierarchy: price >
             name > ₹/sq.ft > location > specs); it still links to details. */}
@@ -216,7 +227,7 @@ export function PropertyCard({
           <p
             className={cn(
               "font-heading text-2xl font-bold leading-none tracking-tight",
-              compact && "text-xl"
+              compact && "text-base"
             )}
           >
             {formatCr(property.price)}
@@ -233,7 +244,12 @@ export function PropertyCard({
 
         {/* Project name — bold purple, a clear step below the price. */}
         {property.project_name && (
-          <p className="truncate pt-0.5 text-base font-bold leading-tight text-primary">
+          <p
+            className={cn(
+              "truncate pt-0.5 text-base font-bold leading-tight text-primary",
+              compact && "pt-0 text-[0.8125rem]"
+            )}
+          >
             {property.project_name}
           </p>
         )}
@@ -248,8 +264,15 @@ export function PropertyCard({
 
         {/* Locality / city — muted, icon-aligned. */}
         {place && (
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="size-4 shrink-0 text-primary/60" />
+          <p
+            className={cn(
+              "flex items-center gap-1.5 text-sm text-muted-foreground",
+              compact && "text-xs"
+            )}
+          >
+            <MapPin
+              className={cn("size-4 shrink-0 text-primary/60", compact && "size-3.5")}
+            />
             <span className="truncate">{place}</span>
           </p>
         )}
@@ -257,10 +280,15 @@ export function PropertyCard({
         {/* Bed / bath / balcony / parking and area — consistent Lucide icons,
             equal spacing. */}
         {(specs.length > 0 || hasValue(property.area)) && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+          <div
+            className={cn(
+              "flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground",
+              compact && "gap-x-3 gap-y-1 text-xs"
+            )}
+          >
             {specs.map((spec) => (
               <span key={spec.label} className="flex items-center gap-1.5">
-                <spec.icon className="size-4 shrink-0" />
+                <spec.icon className={cn("size-4 shrink-0", compact && "size-3.5")} />
                 <span className="font-medium tabular-nums text-foreground/80">
                   {spec.value}
                 </span>
@@ -269,7 +297,7 @@ export function PropertyCard({
             ))}
             {hasValue(property.area) && (
               <span className="flex items-center gap-1.5">
-                <Ruler className="size-4 shrink-0" />
+                <Ruler className={cn("size-4 shrink-0", compact && "size-3.5")} />
                 <span className="font-medium tabular-nums text-foreground/80">
                   {formatArea(property.area)}
                 </span>
@@ -283,7 +311,10 @@ export function PropertyCard({
         {property.search_score !== undefined && (
           <Badge
             title="Recommendation score"
-            className="bg-brand-gradient shadow-brand-glow w-fit border-transparent px-3 py-1 text-primary-foreground"
+            className={cn(
+              "bg-brand-gradient shadow-brand-glow w-fit border-transparent px-3 py-1 text-primary-foreground",
+              compact && "px-2 py-0.5 text-[0.68rem]"
+            )}
           >
             <Sparkles /> AI Recommended · Score{" "}
             {formatScore(property.search_score)}
@@ -292,12 +323,15 @@ export function PropertyCard({
 
         {/* Amenity chips — lavender pills with a soft hover wash. */}
         {amenities.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className={cn("flex flex-wrap gap-2", compact && "gap-1.5")}>
             {amenities.slice(0, 4).map((a) => (
               <Badge
                 key={a}
                 variant="secondary"
-                className="px-3 py-1 transition-colors duration-150 hover:bg-accent hover:text-accent-foreground"
+                className={cn(
+                  "px-3 py-1 transition-colors duration-150 hover:bg-accent hover:text-accent-foreground",
+                  compact && "px-2 py-0.5 text-[0.68rem]"
+                )}
               >
                 {a}
               </Badge>
@@ -305,7 +339,10 @@ export function PropertyCard({
             {amenities.length > 4 && (
               <Badge
                 variant="secondary"
-                className="px-3 py-1 transition-colors duration-150 hover:bg-accent hover:text-accent-foreground"
+                className={cn(
+                  "px-3 py-1 transition-colors duration-150 hover:bg-accent hover:text-accent-foreground",
+                  compact && "px-2 py-0.5 text-[0.68rem]"
+                )}
               >
                 +{amenities.length - 4}
               </Badge>
@@ -327,10 +364,15 @@ export function PropertyCard({
       <CardFooter
         className={cn(
           "mt-auto flex-wrap gap-3 border-t p-5 pt-4",
-          compact && "gap-2 p-4 pt-3"
+          compact && "gap-1.5 p-3 pt-2"
         )}
       >
-        <div className="flex flex-1 flex-wrap items-center gap-2.5">
+        <div
+          className={cn(
+            "flex flex-1 flex-wrap items-center gap-2.5",
+            compact && "gap-1.5"
+          )}
+        >
           {/* Original listing — reuses the shared action; hidden when no valid
               backend URL exists. Primary CTA styling comes from the default
               button variant (purple gradient, hover lift, soft glow). */}

@@ -141,7 +141,7 @@ export function EvaluationTray({ onCompare, isComparing }: EvaluationTrayProps =
       ) : (
         <>
           {/* The staged list is the only scroller; header + actions stay fixed. */}
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto scroll-smooth p-3">
             {tray.map((id) => (
               <TrayItem
                 key={id}

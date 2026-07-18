@@ -13,6 +13,11 @@
 // newest-first with Preview / Download PDF / Share WhatsApp / Delete actions.
 // Preview reopens the stored report text instantly — reports are NEVER
 // regenerated. The navbar's global search filters this history list.
+//
+// Phase 18.11 layout refinement: two-column report center. The wide left
+// column holds Generate + Report Preview (sharing now lives in the preview
+// toolbar); the right sidebar stacks Recent Reports above the Evaluation
+// Tray. Same components, same behavior — only the arrangement changed.
 
 import { useEffect, useState } from "react";
 import { FileText, History, SearchX, Sparkles } from "lucide-react";
@@ -31,7 +36,6 @@ import {
 } from "./report-history";
 import { ReportHistoryList } from "./report-history-list";
 import { ReportPreview } from "./report-preview";
-import { ShareReportForm } from "./share-report-form";
 import { useGenerateReport } from "./use-report";
 
 export function ReportsWorkspace() {
@@ -122,7 +126,10 @@ export function ReportsWorkspace() {
         </div>
       </header>
 
-      <div className="grid gap-5 lg:h-[calc(100dvh-12rem)] lg:grid-cols-[minmax(0,1fr)_20rem]">
+      {/* Two-column report center (Phase 18.11): wide report area (~72%) +
+          right sidebar (~28%) stacking Recent Reports above the Evaluation
+          Tray. */}
+      <div className="grid gap-5 lg:h-[calc(100dvh-12rem)] lg:grid-cols-[minmax(0,72fr)_minmax(0,28fr)]">
         <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-float">
           <div className="border-b bg-gradient-to-br from-muted/30 to-transparent p-6">
             {targetIds.length > 0 ? (
@@ -166,26 +173,22 @@ export function ReportsWorkspace() {
             )}
 
             {/* A stored report reopened from the history — rendered from the
-                saved text, never regenerated. */}
+                saved text, never regenerated. Sharing lives in the preview
+                toolbar (Phase 18.11). */}
             {showOpened && (
-              <div className="space-y-5">
-                <ReportPreview report={opened.content} />
-                <ShareReportForm
-                  propertyIds={opened.propertyIds}
-                  report={opened.content}
-                  type={opened.type}
-                />
-              </div>
+              <ReportPreview
+                report={opened.content}
+                sharePropertyIds={opened.propertyIds}
+                shareType={opened.type}
+              />
             )}
 
             {showGenerated && (
-              <div className="space-y-5">
-                <ReportPreview report={displayReport!} notice={enhancementNotice} />
-                <ShareReportForm
-                  propertyIds={reportedIds}
-                  report={displayReport ?? undefined}
-                />
-              </div>
+              <ReportPreview
+                report={displayReport!}
+                notice={enhancementNotice}
+                sharePropertyIds={reportedIds}
+              />
             )}
 
             {!showOpened && !showGenerated && !generate.isPending && !generate.isError && (
@@ -194,7 +197,7 @@ export function ReportsWorkspace() {
                 title="No report open"
                 description={
                   history.length > 0
-                    ? "Generate a new AI report, or reopen a previous one from Recent Reports below."
+                    ? "Generate a new AI report, or reopen a previous one from Recent Reports in the sidebar."
                     : tray.length === 0
                       ? "Stage properties from AI Chat search results, then generate a comprehensive AI report here."
                       : "Press Generate AI Report to build a comprehensive investment analysis for your staged properties."
@@ -202,19 +205,31 @@ export function ReportsWorkspace() {
                 className="py-16"
               />
             )}
+          </div>
+        </section>
 
-            {/* Recent Reports — the local report center (Phase 18.9). */}
-            {(history.length > 0 || q) && (
-              <div className="space-y-4 border-t pt-5">
-                <div className="flex items-center gap-2.5">
-                  <History className="size-4 text-primary" />
-                  <h2 className="text-base font-semibold">Recent Reports</h2>
-                  <span className="text-xs text-muted-foreground">
-                    {filteredHistory.length}{" "}
-                    {filteredHistory.length === 1 ? "report" : "reports"}
-                    {q ? ` matching “${query.trim()}”` : ""}
-                  </span>
-                </div>
+        {/* Right sidebar — Recent Reports above the Evaluation Tray. Within
+            the viewport-height grid each panel gets its own bounded height
+            (flex-1) and scrolls internally (Phase 18.12): a long report list
+            can no longer push the tray down, and either panel scrolls without
+            moving the other. */}
+        <aside className="flex min-h-0 flex-col gap-5">
+          {/* Recent Reports — the local report center (Phase 18.9), moved to
+              the sidebar in Phase 18.11. Same component, same actions. */}
+          {(history.length > 0 || q) && (
+            <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-float">
+              <div className="flex shrink-0 flex-wrap items-center gap-2 border-b p-4">
+                <History className="size-4 text-primary" />
+                <h2 className="font-heading text-sm font-semibold">
+                  Recent Reports
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {filteredHistory.length}{" "}
+                  {filteredHistory.length === 1 ? "report" : "reports"}
+                  {q ? ` matching “${query.trim()}”` : ""}
+                </span>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth p-3">
                 {filteredHistory.length > 0 ? (
                   <ReportHistoryList
                     reports={filteredHistory}
@@ -230,12 +245,12 @@ export function ReportsWorkspace() {
                   />
                 )}
               </div>
-            )}
-          </div>
-        </section>
+            </section>
+          )}
 
-        <aside className="min-h-0 overflow-hidden rounded-xl border bg-card shadow-float">
-          <EvaluationTray />
+          <section className="min-h-0 flex-1 overflow-hidden rounded-xl border bg-card shadow-float">
+            <EvaluationTray />
+          </section>
         </aside>
       </div>
     </div>

@@ -306,6 +306,24 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (!message || !activeId) return;
       const convId = activeId;
       const stagedIds = trayOverride ?? active?.tray ?? [];
+
+      // Echo the last search's own `current_query_state` back to the backend
+      // (Phase 18.10). Conversations persist in localStorage but the backend's
+      // session memory does not survive a restart — without this, a follow-up
+      // like "show me more such properties" loses its previous filters there
+      // and falls into the generic-chat fallback instead of running the search.
+      // The state is backend-produced and passed back verbatim; the frontend
+      // never interprets or modifies it.
+      let lastQueryState;
+      const messages = active?.messages ?? [];
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const response = messages[i].response;
+        if (response?.type === "search_results" && response.current_query_state) {
+          lastQueryState = response.current_query_state;
+          break;
+        }
+      }
+
       updateConversation(convId, (c) => ({
         ...c,
         title: c.messages.length === 0 ? deriveTitle(message) : c.title,
@@ -316,6 +334,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         message,
         staged_property_ids: stagedIds,
         session_id: convId,
+        last_query_state: lastQueryState,
       });
     },
     [activeId, active, updateConversation, runStream]

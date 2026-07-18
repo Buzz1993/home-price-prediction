@@ -53,6 +53,15 @@ class ChatRequest(BaseModel):
     # can understand follow-up questions. When omitted, the endpoint behaves
     # exactly as before (stateless), so the API contract is preserved.
     session_id: str | None = Field(default=None)
+    # Optional client-held search context (Phase 18.10). The frontend echoes
+    # back the `current_query_state` of the LAST search response in the active
+    # conversation ({"active_filters": ..., "chat_preference_weights": ...}).
+    # It is used ONLY to re-seed the session's follow-up state when the
+    # in-memory session no longer has it (server restart / TTL expiry), so
+    # "show me more"-style follow-ups keep restoring the previous filters
+    # exactly like the Streamlit st.session_state flow. Optional and additive —
+    # existing clients and live sessions are unaffected.
+    last_query_state: dict | None = Field(default=None)
 
 
 # =====================================================
@@ -351,6 +360,34 @@ def _run_chat_workflow(request: "ChatRequest"):
         memory_summary = None
 
     # -------------------------------------------------
+    # Follow-up context re-hydration (Phase 18.10). The existing backend
+    # follow-up logic (chat_service.is_followup_query + last_search_filters)
+    # reads the session_state dict. In Streamlit that dict is st.session_state
+    # and always survives with the visible conversation; over HTTP it lives in
+    # the in-memory session store, which does NOT survive a server restart or
+    # TTL expiry — while the frontend conversation (localStorage) does. When
+    # that happens, "show me more such properties" finds no filters to restore
+    # and falls into the generic-chat fallback instead of running the search.
+    #
+    # Fix: if the session has no recorded search yet but the client sent the
+    # last search's own `current_query_state` back, seed the SAME keys the
+    # existing workflow already reads. Pure state restoration at the API
+    # boundary — no search, ranking or follow-up logic is changed, and live
+    # sessions (which already have the keys) are untouched.
+    # -------------------------------------------------
+    if (
+        session_state is not None
+        and not session_state.get("last_search_filters")
+        and isinstance(request.last_query_state, dict)
+    ):
+        filters = request.last_query_state.get("active_filters")
+        weights = request.last_query_state.get("chat_preference_weights")
+        if isinstance(filters, dict) and any(filters.values()):
+            session_state["last_search_filters"] = filters
+            if isinstance(weights, dict) and weights:
+                session_state["last_search_weights"] = weights
+
+    # -------------------------------------------------
     # Intelligent tool orchestration (Phase 15.8): let Claude route the message
     # to an EXISTING backend capability. Best-effort — any failure or an unsure
     # decision degrades to the existing backend chat behaviour below.
@@ -362,7 +399,18 @@ def _run_chat_workflow(request: "ChatRequest"):
             tray_ids=request.staged_property_ids,
             memory=memory_summary,
         )
+        # TEMP LOG (routing debug — remove after verification)
+        print("\n===== API ROUTING DEBUG =====")
+        print(f"INCOMING MESSAGE        : {request.message!r}")
+        print(f"ROUTER TOOL SELECTION   : {selection.tool if selection else None}")
+        print(f"ROUTER REASON           : {selection.reason if selection else None}")
+        print(f"HAS last_search_filters : {bool(session_state and session_state.get('last_search_filters'))}")
+        print("=============================\n")
         result = dispatch_selected_tool(selection, request)
+        if result is not None:
+            print(f"API ROUTING DEBUG: handled by router branch type={result.get('type')}")  # TEMP LOG
+        else:
+            print("API ROUTING DEBUG: deferring to parse_intent_and_execute fallback")  # TEMP LOG
     except HTTPException:
         raise
     except Exception:

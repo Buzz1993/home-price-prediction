@@ -2015,6 +2015,55 @@ Examples:
 
 ---
 
+## Phase 18.10 — Bug Fix: "Show More Properties" Follow-up Flow
+
+> Root cause: the frontend persists conversations in localStorage, but the
+> backend's conversational session memory (last_search_filters) is in-process
+> and volatile (server restart / TTL). A follow-up like "Show me more such
+> properties" on a conversation whose backend session was gone found no
+> filters to restore, fell into the DeepSeek generic-chat fallback
+> (chat_service.py STEP 5) and returned a huge fabricated markdown answer
+> (type "text") instead of search_results. Verified live: same request with a
+> live session → search_results (next page); with a dead session → text.
+>
+> Smallest fix (no search/business-logic/prompt changes): every chat message
+> now echoes the last search response's own backend-produced
+> `current_query_state` as an optional `last_query_state` request field, and
+> the thin API layer re-seeds `session_state["last_search_filters"]` /
+> `["last_search_weights"]` from it ONLY when the session lacks them — the
+> exact keys the existing follow-up logic already reads, mirroring Streamlit's
+> persistent st.session_state. Live sessions, new chats and all other response
+> types are untouched (regression-verified over /chat and /chat/stream).
+
+- [x] Root cause traced end-to-end (chip → sendMessage → /chat/stream → parse_intent_and_execute)
+- [x] src/api/chat_api.py: optional `last_query_state` + guarded session re-hydration (API layer only)
+- [x] types/dashboard.ts: `current_query_state` on search_results, `last_query_state` on ChatRequest
+- [x] workspace-provider: echo last search context with each message
+- [x] Verified: dead-session follow-up → search_results (real next page, no fabrication)
+- [x] Regression: search / comparison / live-session follow-up / new-chat fallback unchanged
+- [x] TypeScript · ESLint · production build pass
+
+---
+
+## Phase 18.11 — Reports Layout Refinement & Saved Properties Density Polish
+
+> Presentation-only phase: no backend, API, report-generation, PDF, WhatsApp,
+> routing, history-storage or evaluation-tray logic changed — UI moved and
+> resized only.
+
+- [x] Share Report moved into the Report Preview toolbar beside Export PDF
+      (toggles the existing ShareReportForm as a collapsible panel; the
+      always-visible share section below the report removed)
+- [x] Reports page two-column layout: report area (~72%) left, sidebar (~28%)
+      right with Recent Reports stacked above the Evaluation Tray (same
+      ReportHistoryList component; global-search filtering unchanged)
+- [x] Compact Saved Properties cards tightened another ~20–25% (shorter 2:1
+      image, smaller padding/gaps/badges/price/name/metadata) — no
+      information removed, hover animation kept, 3 cards per row desktop
+- [x] TypeScript · ESLint · production build pass
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be

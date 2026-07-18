@@ -170,7 +170,7 @@ export function MatrixTable({
           <thead className="sticky top-0 z-20">
             <tr className="border-b">
               {/* Sticky corner cell — above both scroll directions. */}
-              <th className="sticky left-0 z-10 w-44 min-w-44 border-r bg-secondary px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <th className="sticky left-0 z-10 w-28 min-w-28 border-r bg-secondary px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:w-44 sm:min-w-44">
                 Attribute
               </th>
               {columns.map((column) => (

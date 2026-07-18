@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -20,6 +20,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EstateMind Copilot",
   description: "AI-powered real estate search, analysis, and comparison.",
+};
+
+// Phase 20 (responsive): `interactive-widget=resizes-content` makes the mobile
+// on-screen keyboard SHRINK the layout viewport (and therefore every `dvh`
+// height, like the Copilot workspace), so the chat composer always stays
+// visible above the keyboard instead of being covered by it.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
 };
 
 // Applies the persisted theme as `data-theme` on <html> before hydration, so

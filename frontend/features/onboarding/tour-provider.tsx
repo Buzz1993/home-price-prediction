@@ -164,8 +164,12 @@ function getCardPosition(rect: DOMRect, vw: number, vh: number): CardPos {
   const CARD_H_EST = 220;
   const GAP = 16;
   const edge = 8;
+  // The card is capped to the viewport on small phones (see TourCard's
+  // `min(CARD_W, 100vw - 16px)`), so position maths must use the SAME effective
+  // width — otherwise a 340px card would be pushed off a 320px screen.
+  const cardW = Math.min(CARD_W, vw - 2 * edge);
 
-  const leftClamp = Math.max(edge, Math.min(rect.left, vw - CARD_W - edge));
+  const leftClamp = Math.max(edge, Math.min(rect.left, vw - cardW - edge));
 
   // Prefer below
   if (rect.bottom + CARD_H_EST + GAP < vh) {
@@ -176,15 +180,15 @@ function getCardPosition(rect: DOMRect, vw: number, vh: number): CardPos {
     return { bottom: vh - rect.top + GAP, left: leftClamp };
   }
   // Right (sidebar elements)
-  if (rect.right + CARD_W + GAP < vw) {
+  if (rect.right + cardW + GAP < vw) {
     return { top: Math.max(edge, Math.min(rect.top, vh - CARD_H_EST - edge)), left: rect.right + GAP };
   }
   // Left
-  if (rect.left - CARD_W - GAP > 0) {
+  if (rect.left - cardW - GAP > 0) {
     return { top: Math.max(edge, Math.min(rect.top, vh - CARD_H_EST - edge)), right: vw - rect.left + GAP };
   }
   // Center fallback
-  return { top: vh / 2 - CARD_H_EST / 2, left: vw / 2 - CARD_W / 2 };
+  return { top: vh / 2 - CARD_H_EST / 2, left: Math.max(edge, vw / 2 - cardW / 2) };
 }
 
 // ─── Welcome modal ────────────────────────────────────────────────────────────

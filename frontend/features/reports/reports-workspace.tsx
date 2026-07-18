@@ -116,12 +116,12 @@ export function ReportsWorkspace() {
     <div className="space-y-5">
       {/* Premium page hero (Phase 18.7) */}
       <header className="space-y-3">
-        <div className="flex items-center gap-4">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 via-accent to-transparent ring-1 ring-primary/10">
-            <FileText className="size-7 text-primary" />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 via-accent to-transparent ring-1 ring-primary/10 sm:size-14">
+            <FileText className="size-6 text-primary sm:size-7" />
           </div>
           <div className="space-y-1">
-            <h1 className="font-heading text-3xl font-semibold tracking-tight">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
               AI Reports
             </h1>
             <p className="text-sm text-muted-foreground">

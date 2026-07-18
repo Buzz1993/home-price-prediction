@@ -62,19 +62,21 @@ export function ProfileWorkspace() {
   return (
     <div className="space-y-6">
       {/* Premium profile hero (Phase 18.7) */}
-      <header className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-accent/5 to-transparent p-8 shadow-float">
-        <div className="relative z-10 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-5">
+      <header className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-accent/5 to-transparent p-5 shadow-float sm:p-8">
+        <div className="relative z-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="flex min-w-0 items-center gap-4 sm:gap-5">
             {/* Large gradient avatar */}
-            <div className="flex size-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-primary/60 text-2xl font-bold text-primary-foreground shadow-lg ring-4 ring-background">
+            <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-primary/60 text-xl font-bold text-primary-foreground shadow-lg ring-4 ring-background sm:size-20 sm:text-2xl">
               {initials}
             </div>
-            <div className="space-y-2">
-              <h1 className="font-heading text-3xl font-semibold tracking-tight">
+            <div className="min-w-0 space-y-2">
+              <h1 className="truncate font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
                 {user?.name || "Profile"}
               </h1>
               {user?.email && (
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  {user.email}
+                </p>
               )}
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">

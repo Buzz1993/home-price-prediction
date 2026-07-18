@@ -2192,6 +2192,23 @@ Examples:
 
 ---
 
+## Phase 20 — Complete Responsive & Mobile Experience
+
+> Responsive/adaptive UI polish only — no backend, API, business logic, routing
+> or functionality changes. Desktop experience unchanged.
+
+- [x] Global overflow-x guard on `<html>` + responsive media (no sideways scroll)
+- [x] Mobile keyboard: `interactiveWidget: resizes-content` keeps chat input above the keyboard
+- [x] ≥44px touch targets on coarse-pointer (touch) devices only — desktop density untouched
+- [x] Navbar search full-width on mobile, capped on larger screens
+- [x] Responsive page heroes (Reports, Saved, Profile): scaled icon/avatar/title on small screens
+- [x] Profile: email + name truncate; header padding adapts on mobile
+- [x] Comparison matrix: narrower sticky attribute column on mobile (sticky headers preserved)
+- [x] Onboarding tour: card positioning uses clamped width so it never runs off small phones
+- [x] TypeScript · ESLint · production build pass
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be

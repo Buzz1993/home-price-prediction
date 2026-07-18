@@ -46,10 +46,11 @@ export function Navbar() {
     <header className="glass sticky top-3 z-30 flex h-14 items-center gap-3 rounded-2xl border px-3 shadow-float lg:top-4 lg:px-4">
       <MobileNav />
 
-      {/* Functional search — only on routes with searchable content. */}
+      {/* Functional search — only on routes with searchable content. Full
+          width on mobile (Phase 20), capped on larger screens. */}
       {placeholder && (
-        <div className="hidden flex-1 sm:block">
-          <label className="flex h-9 max-w-md items-center gap-2 rounded-full border bg-background/70 px-4 text-sm transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/20 hover:bg-accent/40">
+        <div className="min-w-0 flex-1">
+          <label className="flex h-9 items-center gap-2 rounded-full border bg-background/70 px-4 text-sm transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/20 hover:bg-accent/40 sm:max-w-md">
             <Search className="size-4 shrink-0 text-muted-foreground" />
             <input
               type="search"

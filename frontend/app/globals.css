@@ -267,6 +267,16 @@
   }
   html {
     @apply font-sans;
+    /* Phase 20 (responsive): never let a stray wide child scroll the whole
+       page sideways on small screens — individual scroll containers (tables,
+       comparison matrix, workspace columns) still scroll internally. */
+    overflow-x: hidden;
+  }
+  /* Media never overflows its container on narrow viewports. */
+  img,
+  svg,
+  video {
+    max-width: 100%;
   }
   /* Consistent, premium heading rhythm across the app. */
   h1, h2, h3, h4, h5, h6 {
@@ -276,6 +286,28 @@
   p {
     text-wrap: pretty;
   }
+  /* Phase 20 (responsive): guarantee a comfortable ≥44px touch target for every
+     button and icon control on TOUCH devices only. `@media (pointer: coarse)`
+     scopes this to phones/tablets, so the denser desktop sizing (mouse) is
+     completely unchanged. The visual box may stay small; only the interactive
+     hit area grows to meet the accessibility minimum. */
+  @media (pointer: coarse) {
+    button[data-slot="button"],
+    a[data-slot="button"],
+    [role="radio"],
+    [data-slot="checkbox"] {
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+    }
+    /* Checkbox visual stays small — only its tappable area expands via padding
+       so the row layout does not jump. */
+    [data-slot="checkbox"] {
+      min-height: 1.15rem;
+      min-width: 1.15rem;
+      outline-offset: 0.5rem;
+    }
+  }
+
   /* Honor the user's reduced-motion preference globally: every transition and
      animation collapses to (near) zero duration, so hover lifts, fades and
      shimmers become instant state changes instead of movement. */

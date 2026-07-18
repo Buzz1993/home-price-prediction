@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { THEME_STORAGE_KEY, THEMES } from "@/lib/themes";
 
 const geistSans = Geist({
@@ -46,7 +47,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <ThemeProvider>
           <QueryProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <TooltipProvider delayDuration={400}>
+                {children}
+              </TooltipProvider>
+            </AuthProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

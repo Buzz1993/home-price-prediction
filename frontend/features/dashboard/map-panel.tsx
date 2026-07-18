@@ -24,11 +24,14 @@ export function MapPanel() {
   const mappable = properties.filter((p) => getMapCoords(p) !== null).length;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col" data-tour="property-map">
       {/* Fixed header (Phase 18.3 polish) — small purple icon chip beside the
           title; the map body fills the rest of the column and never scrolls
           away. */}
-      <div className="flex shrink-0 items-center gap-3 border-b px-4 py-3.5">
+      <div
+        className="flex shrink-0 items-center gap-3 border-b px-4 py-3.5"
+        title="View property locations on an interactive map."
+      >
         <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <MapPin className="size-4" />
         </div>

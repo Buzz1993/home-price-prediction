@@ -97,9 +97,14 @@ export function SignupForm() {
               aria-invalid={Boolean(errors.password)}
               {...register("password")}
             />
-            {errors.password && (
+            {errors.password ? (
               <p className="text-xs text-destructive">
                 {errors.password.message}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Min 8 characters with a letter, a number and a special
+                character.
               </p>
             )}
           </div>

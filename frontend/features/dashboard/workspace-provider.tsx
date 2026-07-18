@@ -97,6 +97,14 @@ type WorkspaceContextValue = {
   togglePin: (id: string) => void;
   deleteConversation: (id: string) => void;
 
+  // --- Chat search (Phase 19.1) -------------------------------------------
+  // Ephemeral "open this conversation and scroll to this message" request set
+  // by a sidebar search result click. ChatWorkspace consumes it (smooth scroll
+  // + brief highlight); the monotonic `token` lets it handle each request
+  // exactly once and distinguishes repeated clicks. Never persisted.
+  scrollTarget: { convId: string; messageIndex: number; token: number } | null;
+  requestScrollToMessage: (convId: string, messageIndex: number) => void;
+
   // --- Chat ---------------------------------------------------------------
   // True while a response is in flight for the ACTIVE conversation.
   isSending: boolean;
@@ -126,6 +134,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
     null
   );
+  // Pending "scroll to this message" request from a chat-search result click
+  // (Phase 19.1). Ephemeral UI state — consumed and cleared by ChatWorkspace.
+  const [scrollTarget, setScrollTarget] = useState<{
+    convId: string;
+    messageIndex: number;
+    token: number;
+  } | null>(null);
   // Which conversation the in-flight stream belongs to, so the thinking /
   // streaming indicator only shows on that conversation (switching away hides
   // it) while the stream keeps updating its own conversation.
@@ -386,6 +401,25 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     [activeId]
   );
 
+  // Open a conversation and ask the chat column to scroll to a message
+  // (chat-search result click, Phase 19.1). A monotonic token lets repeated
+  // clicks on the same result re-trigger the scroll/highlight.
+  const requestScrollToMessage = useCallback(
+    (convId: string, messageIndex: number) => {
+      if (convId !== activeId) {
+        setError(null);
+        setSelectedPropertyId(null);
+        setActiveId(convId);
+      }
+      setScrollTarget((prev) => ({
+        convId,
+        messageIndex,
+        token: (prev?.token ?? 0) + 1,
+      }));
+    },
+    [activeId]
+  );
+
   const renameConversation = useCallback(
     (id: string, title: string) => {
       const next = title.trim();
@@ -491,6 +525,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       renameConversation,
       togglePin,
       deleteConversation,
+      scrollTarget,
+      requestScrollToMessage,
       isSending: activePhase !== "idle",
       phase: activePhase,
       isStreaming: activePhase === "streaming",
@@ -513,6 +549,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       renameConversation,
       togglePin,
       deleteConversation,
+      scrollTarget,
+      requestScrollToMessage,
       activePhase,
       error,
       sendMessage,

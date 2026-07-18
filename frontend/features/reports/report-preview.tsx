@@ -24,6 +24,11 @@ import { FileDown, Info, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { downloadReportPdf } from "@/services/report-service";
 import { ReportDocument } from "./report-document";
 import type { ReportType } from "./report-history";
@@ -115,28 +120,42 @@ export function ReportPreview({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="default"
-            onClick={handleExportPdf}
-            disabled={exporting}
-            className="gap-2"
-          >
-            {exporting ? <Spinner /> : <FileDown />}
-            {exporting ? "Exporting…" : "Export PDF"}
-          </Button>
-          {sharePropertyIds && (
-            <div ref={shareWrapRef} className="relative">
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
-                variant={shareOpen ? "secondary" : "default"}
+                variant="outline"
                 size="default"
-                onClick={() => setShareOpen((open) => !open)}
-                aria-expanded={shareOpen}
-                aria-haspopup="dialog"
+                onClick={handleExportPdf}
+                disabled={exporting}
                 className="gap-2"
               >
-                <Send /> Share Report
+                {exporting ? <Spinner /> : <FileDown />}
+                {exporting ? "Exporting…" : "Export PDF"}
               </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[220px]">
+              Download this report as a PDF.
+            </TooltipContent>
+          </Tooltip>
+          {sharePropertyIds && (
+            <div ref={shareWrapRef} className="relative">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={shareOpen ? "secondary" : "default"}
+                    size="default"
+                    onClick={() => setShareOpen((open) => !open)}
+                    aria-expanded={shareOpen}
+                    aria-haspopup="dialog"
+                    className="gap-2"
+                  >
+                    <Send /> Share Report
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[220px]">
+                  Send this report to WhatsApp.
+                </TooltipContent>
+              </Tooltip>
 
               {/* Compact floating share widget (Phase 18.12) — anchored to the
                   button, right-aligned, with a fade + scale entrance. Holds the
@@ -151,6 +170,7 @@ export function ReportPreview({
                     propertyIds={sharePropertyIds}
                     report={report}
                     type={shareType}
+                    compact
                   />
                 </div>
               )}

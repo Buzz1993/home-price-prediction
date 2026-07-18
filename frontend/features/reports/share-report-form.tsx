@@ -26,6 +26,7 @@ export function ShareReportForm({
   propertyIds,
   report,
   type = "property",
+  compact = false,
 }: {
   propertyIds: string[];
   // The previewed report text (Phase 16.1) — sent as-is, never regenerated.
@@ -33,6 +34,10 @@ export function ShareReportForm({
   // Which existing share endpoint to use (Phase 18.9 report history):
   // "property" → POST /report/share, "comparison" → POST /report/comparison/share.
   type?: ReportType;
+  // Phase 18.13: compact popover density — drops the heading/description and
+  // tightens padding so the floating Share popover stays small. The share flow
+  // (validation, endpoint, states) is unchanged; only spacing/labels differ.
+  compact?: boolean;
 }) {
   const [phone, setPhone] = useState("");
   const shareProperty = useShareReport();
@@ -68,43 +73,85 @@ export function ShareReportForm({
   const sentPhone = share.variables?.phone_number ?? trimmed;
 
   return (
-    <div className="space-y-4 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-5 shadow-float">
-      <div className="space-y-1.5">
-        <h2 className="text-base font-semibold">Share Report</h2>
-        <p className="text-sm text-muted-foreground">
-          Send this comprehensive report as a PDF to WhatsApp
-        </p>
-      </div>
+    <div
+      className={
+        compact
+          ? "space-y-3 rounded-xl border bg-card p-3.5 shadow-float"
+          : "space-y-4 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-5 shadow-float"
+      }
+    >
+      {!compact && (
+        <div className="space-y-1.5">
+          <h2 className="text-base font-semibold">Share Report</h2>
+          <p className="text-sm text-muted-foreground">
+            Send this comprehensive report as a PDF to WhatsApp
+          </p>
+        </div>
+      )}
 
-      <div className="space-y-3">
+      <div className={compact ? "space-y-2" : "space-y-3"}>
         <Label htmlFor="report-phone" className="text-sm font-medium">
           WhatsApp Number
         </Label>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Input
-            id="report-phone"
-            type="tel"
-            inputMode="tel"
-            placeholder="e.g. +91 98765 43210"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            disabled={share.isPending}
-            className="sm:flex-1"
-          />
-          <Button onClick={handleShare} disabled={!canShare} className="gap-2">
-            {share.isPending ? (
-              <>
-                <Spinner /> Sending…
-              </>
-            ) : (
-              <>
-                <Send /> Share Report
-              </>
-            )}
-          </Button>
-        </div>
+        {compact ? (
+          // Stacked layout keeps the popover narrow: full-width input above a
+          // right-aligned Send button.
+          <div className="space-y-2">
+            <Input
+              id="report-phone"
+              type="tel"
+              inputMode="tel"
+              placeholder="e.g. +91 98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={share.isPending}
+            />
+            <div className="flex justify-end">
+              <Button
+                onClick={handleShare}
+                disabled={!canShare}
+                size="sm"
+                className="gap-2"
+              >
+                {share.isPending ? (
+                  <>
+                    <Spinner /> Sending…
+                  </>
+                ) : (
+                  <>
+                    <Send /> Send
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              id="report-phone"
+              type="tel"
+              inputMode="tel"
+              placeholder="e.g. +91 98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={share.isPending}
+              className="sm:flex-1"
+            />
+            <Button onClick={handleShare} disabled={!canShare} className="gap-2">
+              {share.isPending ? (
+                <>
+                  <Spinner /> Sending…
+                </>
+              ) : (
+                <>
+                  <Send /> Share Report
+                </>
+              )}
+            </Button>
+          </div>
+        )}
         {share.isPending && (
-          <p className="text-sm text-muted-foreground">
+          <p className={compact ? "text-xs text-muted-foreground" : "text-sm text-muted-foreground"}>
             Sending property report to WhatsApp…
           </p>
         )}

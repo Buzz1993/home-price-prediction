@@ -158,7 +158,10 @@ export function WorkspaceRightPanel({ className }: { className?: string }) {
 
       {/* Evaluation Tray — fills the remaining height; scrolls internally.
           Floating rounded card (Phase 18.1). */}
-      <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border bg-card shadow-float">
+      <div
+        data-tour="evaluation-tray"
+        className="min-h-0 flex-1 overflow-hidden rounded-2xl border bg-card shadow-float"
+      >
         <EvaluationTray />
       </div>
     </div>

@@ -20,6 +20,12 @@
 // The phone input and share toggle are disabled while sending, a grey helper
 // line narrates the send, and success/failure banners restate the delivery
 // number. Presentation only — the same endpoints are called in the same order.
+//
+// Phase 18.15: the report source moved to the shared useComparisonReport
+// hook owned by the workspace, which starts generating (and records the
+// report in the Report History) as soon as the comparison succeeds. Export
+// and Share await that SAME promise — usually already resolved — so nothing
+// is generated or stored twice. Endpoints and order are unchanged.
 
 import Link from "next/link";
 import { useState } from "react";
@@ -39,39 +45,24 @@ import { Spinner } from "@/components/ui/spinner";
 import { ApiError } from "@/lib/api-client";
 import {
   downloadReportPdf,
-  generateComparisonReport,
   shareComparisonReport,
 } from "@/services/report-service";
-import { addReport } from "@/features/reports/report-history";
 
-export function CompareExport({ ids }: { ids: string[] }) {
-  // The comparison report text, generated lazily on the first export/share and
-  // reused afterwards (Phase 16.1 rule: share exactly what was generated).
-  const [report, setReport] = useState<string | null>(null);
+export function CompareExport({
+  ids,
+  ensureReport,
+}: {
+  ids: string[];
+  // Shared once-per-comparison report source (use-comparison-report.ts) —
+  // already generating in the background since the comparison succeeded.
+  ensureReport: (ids: string[]) => Promise<string>;
+}) {
   const [shareOpen, setShareOpen] = useState(false);
   const [phone, setPhone] = useState("");
 
-  // Generate the backend comparison report once, preferring the
-  // Claude-presented text — mirroring the choice the Reports page makes.
-  // Phase 18.9: the finished report is also recorded in the local Report
-  // History so it can be reopened later without regenerating.
-  const ensureReport = async (): Promise<string> => {
-    if (report) return report;
-    const generated = await generateComparisonReport(ids);
-    const text = generated.ai_enhanced ?? generated.content;
-    setReport(text);
-    addReport({
-      type: "comparison",
-      propertyIds: ids,
-      content: text,
-      aiEnhanced: Boolean(generated.ai_enhanced),
-    });
-    return text;
-  };
-
   const exportPdf = useMutation({
     mutationFn: async () => {
-      const text = await ensureReport();
+      const text = await ensureReport(ids);
       const blob = await downloadReportPdf(text);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -87,7 +78,7 @@ export function CompareExport({ ids }: { ids: string[] }) {
   const share = useMutation({
     mutationFn: async (phoneNumber: string) => {
       // Generate first so the delivered PDF matches a later Export PDF exactly.
-      const text = await ensureReport().catch(() => undefined);
+      const text = await ensureReport(ids).catch(() => undefined);
       return shareComparisonReport({
         property_ids: ids,
         phone_number: phoneNumber,

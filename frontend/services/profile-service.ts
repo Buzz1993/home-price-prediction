@@ -2,19 +2,15 @@
 // (GET /profile, GET /chat-history, GET /reports — see project_docs/03_API.md).
 // The backend owns the user account, conversation history and report list; the
 // frontend only reads and renders them.
-//
-// Backend limitation: the EstateMind Copilot API (src/api) currently exposes only
-// the /analysis/* endpoints — none of these profile endpoints are wired yet. These
-// wrappers target the documented contract so live data flows once the endpoints
-// are exposed, matching the Phase 4–10 pattern. No API is invented and no business
-// logic lives in the frontend.
 
 import { apiRequest } from "@/lib/api-client";
 import type { ChatHistoryEntry, ReportSummary, User } from "@/types/profile";
 
-// GET /profile — retrieve the current user's profile.
-export function getProfile(): Promise<User> {
-  return apiRequest<User>("/profile");
+// GET /profile — retrieve the authenticated user's profile. The backend
+// resolves the Bearer token to the account (Phase 18.18), so the token is
+// required.
+export function getProfile(token: string | null): Promise<User> {
+  return apiRequest<User>("/profile", { token });
 }
 
 // GET /chat-history — retrieve previous AI conversations.

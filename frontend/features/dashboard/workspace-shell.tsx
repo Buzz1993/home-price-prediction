@@ -174,7 +174,10 @@ export function WorkspaceShell() {
             flex column: fixed header + scrolling body + fixed input. min-h-0
             lets the inner list shrink so IT scrolls instead of the column
             growing. flex-1 absorbs whatever the right panel does not take. */}
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card shadow-float">
+        <section
+          data-tour="dashboard-chat"
+          className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card shadow-float"
+        >
           {/* Fixed chat header — panel toggles on smaller screens, a clean title
               bar on xl where every column is already visible. Never scrolls. */}
           <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">

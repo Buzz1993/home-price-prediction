@@ -4,16 +4,24 @@
 // account stats, account information and appearance settings, plus a logout
 // action. The placeholder "Generated Reports" cards were removed — the Reports
 // page (/reports) is the single source of truth for report history, reached
-// via the View Report History button. AI Chat History moved to its own
-// dedicated page (/history); the stats below read the SAME local stores those
-// pages use, so the numbers always match what the user finds there.
+// via the View Report History button. AI conversation history lives in the
+// Dashboard Recent section (Phase 18.17); the stats below read the SAME local
+// stores those pages use, so the numbers always match what the user finds there.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FileText, LogOut, MessageSquare, TrendingUp, UserRound } from "lucide-react";
+import {
+  Compass,
+  FileText,
+  LogOut,
+  MessageSquare,
+  TrendingUp,
+  UserRound,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
+import { useTour } from "@/features/onboarding/tour-provider";
 import { loadReportHistory } from "@/features/reports/report-history";
 import { AppearanceSection } from "./appearance-section";
 import { ProfileSection } from "./profile-section";
@@ -24,6 +32,10 @@ export function ProfileWorkspace() {
   const profile = useProfile();
   const logout = useLogout();
   const { conversations } = useWorkspace();
+  // startTour navigates to the Dashboard itself when needed — the
+  // TourProvider lives in the shared (dashboard) layout, so its context
+  // survives the navigation.
+  const { startTour } = useTour();
 
   // Local report count — read after mount (localStorage is client-only).
   const [reportCount, setReportCount] = useState(0);
@@ -81,7 +93,7 @@ export function ProfileWorkspace() {
       </header>
 
       {/* Account stats cards (Phase 18.7) — counts come from the same local
-          stores the Reports and Chat History pages read. */}
+          stores the Reports page and Dashboard Recent read. */}
       {!profile.isLoading && user && (
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="group rounded-xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 shadow-float transition-all duration-200 hover:-translate-y-0.5 hover:shadow-float-lg">
@@ -155,6 +167,25 @@ export function ProfileWorkspace() {
             <Link href="/reports">
               <FileText /> View Report History
             </Link>
+          </Button>
+        </div>
+
+        {/* Product tour restart (Phase 19) — replays the first-time onboarding
+            tour on demand. Purely a UI walkthrough; nothing else changes. */}
+        <div className="flex flex-col items-start justify-between gap-4 rounded-xl border bg-gradient-to-br from-muted/30 to-transparent p-6 shadow-float sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Compass className="size-6" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="font-semibold">Product Tour</p>
+              <p className="text-sm text-muted-foreground">
+                Take the guided tour of EstateMind&apos;s main features again.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" className="gap-2" onClick={startTour}>
+            <Compass /> Restart Product Tour
           </Button>
         </div>
       </div>

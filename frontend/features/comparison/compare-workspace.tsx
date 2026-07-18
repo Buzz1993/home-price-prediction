@@ -7,8 +7,15 @@
 // presentation and orchestration: the backend comparison, analysis rows and
 // property records are fetched from the EXISTING documented endpoints
 // (use-compare-data) and rendered unchanged — no analysis logic lives here.
+//
+// Phase 18.15: as soon as a comparison succeeds, the Comparison Report starts
+// generating in the background through the shared useComparisonReport source,
+// which records it in the local Report History (Recent Reports on /reports).
+// The export/share toolbar awaits the SAME promise, so the report is still
+// generated exactly once per comparison — the toolbar just no longer waits
+// for a click to start it.
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PackageOpen, Scale, Search, Sparkles } from "lucide-react";
 
@@ -35,6 +42,7 @@ import type { MatrixColumn } from "./matrix-table";
 import { OverallScoreboard } from "./overall-scoreboard";
 import { PropertyMatrix } from "./property-matrix";
 import { useCompareData } from "./use-compare-data";
+import { useComparisonReport } from "./use-comparison-report";
 import { WinnerStrip } from "./winner-strip";
 
 // Premium loading placeholder shaped like the page (Phase 18.6): an
@@ -94,6 +102,7 @@ export function CompareWorkspace() {
   const [chosen, setChosen] = useState<string[]>([]);
   const [onlyDifferences, setOnlyDifferences] = useState(loadOnlyDifferences);
   const compare = useCompareData();
+  const ensureReport = useComparisonReport();
   // Anchor for the floating winner card: it appears once the Executive
   // Summary has scrolled out of view.
   const summaryRef = useRef<HTMLDivElement | null>(null);
@@ -101,6 +110,14 @@ export function CompareWorkspace() {
   // Drop selections that were removed from the tray since they were picked.
   const selection = chosen.filter((id) => tray.includes(id));
   const bundle = compare.data;
+
+  // Phase 18.15: kick off the Comparison Report as soon as the comparison
+  // result is in, so it lands in the Report History without waiting for an
+  // export/share click. Errors are swallowed here — the toolbar retries and
+  // surfaces them on explicit user action, exactly as before.
+  useEffect(() => {
+    if (bundle) ensureReport(bundle.ids).catch(() => undefined);
+  }, [bundle, ensureReport]);
 
   const runComparison = () => {
     if (selection.length >= 2) compare.mutate(selection);
@@ -222,7 +239,7 @@ export function CompareWorkspace() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <SectionLabel>Comparison Result</SectionLabel>
-                  <CompareExport ids={bundle.ids} />
+                  <CompareExport ids={bundle.ids} ensureReport={ensureReport} />
                 </div>
 
                 <div ref={summaryRef}>

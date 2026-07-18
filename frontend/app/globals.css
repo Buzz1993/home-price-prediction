@@ -382,6 +382,29 @@
       translate: 100% 0;
     }
   }
+
+  /* One-time attention glow for the chat composer (Phase 18.16): a single
+     soft brand-colored pulse shortly after page load draws the eye to the
+     input, then settles back to its resting shadow. Runs exactly once (no
+     loop) and collapses to nothing under prefers-reduced-motion via the
+     global rule above. */
+  .composer-attention {
+    animation: composer-attention-glow 1.4s ease-in-out 0.5s 1;
+  }
+  @keyframes composer-attention-glow {
+    0%,
+    100% {
+      box-shadow:
+        0 1px 2px 0 oklch(0.3 0.06 290 / 0.04),
+        0 4px 12px -2px oklch(0.3 0.06 290 / 0.06);
+    }
+    50% {
+      box-shadow:
+        0 2px 4px 0 oklch(0.3 0.06 290 / 0.05),
+        0 12px 32px -8px oklch(0.3 0.06 290 / 0.14),
+        0 0 0 4px color-mix(in oklch, var(--ring) 22%, transparent);
+    }
+  }
 }
 
 /* Theme switching (Phase 18.4): while the ThemeProvider swaps `data-theme` it

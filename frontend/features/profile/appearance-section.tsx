@@ -12,6 +12,11 @@
 import { Check, Palette } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTheme } from "@/components/providers/theme-provider";
 import { THEMES, type Theme } from "@/lib/themes";
 import { cn } from "@/lib/utils";
@@ -23,9 +28,16 @@ export function AppearanceSection() {
     <Card className="shadow-float">
       <CardHeader className="space-y-2 pb-4">
         <CardTitle className="flex items-center gap-2.5 text-lg">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Palette className="size-5" />
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Palette className="size-5" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[220px]">
+              Change the EstateMind appearance.
+            </TooltipContent>
+          </Tooltip>
           Appearance
         </CardTitle>
         <p className="text-sm text-muted-foreground">

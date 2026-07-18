@@ -26,3 +26,8 @@ export function signup(payload: SignupPayload): Promise<AuthResponse> {
 export function getProfile(token: string): Promise<User> {
   return apiRequest<User>("/profile", { token });
 }
+
+// POST /logout — invalidates the session token on the backend (Phase 18.18).
+export function logout(token: string): Promise<void> {
+  return apiRequest<void>("/logout", { method: "POST", token });
+}

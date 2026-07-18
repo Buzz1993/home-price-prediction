@@ -25,8 +25,11 @@ export function SuggestedActions({ suggestions }: { suggestions?: string[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="space-y-2 pt-1">
-      <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+    <div className="space-y-2 pt-1" data-tour="suggested-actions">
+      <p
+        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+        title="AI-recommended actions based on your current analysis."
+      >
         <Sparkles className="size-3.5 text-primary" />
         Suggested next steps
       </p>

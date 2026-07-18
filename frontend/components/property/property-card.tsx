@@ -35,6 +35,11 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { OriginalListingButton } from "@/components/property/original-listing-button";
 import { cn } from "@/lib/utils";
 import {
@@ -130,7 +135,9 @@ export function PropertyCard({
       <div
         className={cn(
           "relative aspect-[16/13] w-full overflow-hidden",
-          compact && "aspect-[5/2]",
+          // Phase 18.13: shorter still (~37% less height than 18.12's 5/2) so
+          // three saved cards sit comfortably per row with generous whitespace.
+          compact && "aspect-[4/1]",
           horizontal &&
             "md:aspect-auto md:w-56 md:shrink-0 md:self-stretch lg:w-72"
         )}
@@ -193,20 +200,26 @@ export function PropertyCard({
 
         {/* Bookmark toggle — reuses the existing saved-property workflow. */}
         {onToggleSave && (
-          <Button
-            variant="secondary"
-            size="icon-sm"
-            aria-pressed={saved}
-            aria-label={
-              saved ? `Remove ${property.id} from saved` : `Save ${property.id}`
-            }
-            title={saved ? "Remove from saved" : "Save property"}
-            disabled={savePending}
-            onClick={() => onToggleSave(property.id)}
-            className="absolute right-2.5 top-2.5 bg-background/80 shadow-sm backdrop-blur transition-transform duration-200 hover:scale-105 hover:bg-background"
-          >
-            <Bookmark className={cn(saved && "fill-primary text-primary")} />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon-sm"
+                aria-pressed={saved}
+                aria-label={
+                  saved ? `Remove ${property.id} from saved` : `Save ${property.id}`
+                }
+                disabled={savePending}
+                onClick={() => onToggleSave(property.id)}
+                className="absolute right-2.5 top-2.5 bg-background/80 shadow-sm backdrop-blur transition-transform duration-200 hover:scale-105 hover:bg-background"
+              >
+                <Bookmark className={cn(saved && "fill-primary text-primary")} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[220px]">
+              {saved ? "Remove this bookmark." : "Bookmark this property."}
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 
@@ -219,7 +232,7 @@ export function PropertyCard({
           horizontal && "md:flex-1"
         )}
       >
-      <CardContent className={cn("space-y-3.5 p-5", compact && "space-y-1.5 p-3")}>
+      <CardContent className={cn("space-y-3.5 p-5", compact && "space-y-1 p-2.5")}>
         {/* Price — the dominant element. The property id sits top-right as a
             low-emphasis monospace reference (Phase 18.9 hierarchy: price >
             name > ₹/sq.ft > location > specs); it still links to details. */}
@@ -364,7 +377,7 @@ export function PropertyCard({
       <CardFooter
         className={cn(
           "mt-auto flex-wrap gap-3 border-t p-5 pt-4",
-          compact && "gap-1.5 p-3 pt-2"
+          compact && "gap-1.5 p-2.5 pt-2"
         )}
       >
         <div
@@ -382,33 +395,47 @@ export function PropertyCard({
             variant="default"
             size="sm"
           />
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="border-primary/30 bg-card text-primary hover:border-primary/50 hover:bg-accent hover:text-accent-foreground"
-          >
-            <Link href={`/property/${property.id}`}>
-              Read More <ArrowUpRight />
-            </Link>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-primary/30 bg-card text-primary hover:border-primary/50 hover:bg-accent hover:text-accent-foreground"
+              >
+                <Link href={`/property/${property.id}`}>
+                  Read More <ArrowUpRight />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[220px]">
+              View complete property details.
+            </TooltipContent>
+          </Tooltip>
         </div>
         {onToggleStage && (
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <Checkbox
-              checked={staged}
-              onCheckedChange={() => onToggleStage(property.id)}
-              aria-label={`Stage property ${property.id}`}
-            />
-            {staged ? (
-              // Staged badge — soft green rounded pill.
-              <Badge variant="success" className="px-3 py-1">
-                Staged
-              </Badge>
-            ) : (
-              "Stage to tray"
-            )}
-          </label>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={staged}
+                  onCheckedChange={() => onToggleStage(property.id)}
+                  aria-label={`Stage property ${property.id}`}
+                />
+                {staged ? (
+                  // Staged badge — soft green rounded pill.
+                  <Badge variant="success" className="px-3 py-1">
+                    Staged
+                  </Badge>
+                ) : (
+                  "Stage to tray"
+                )}
+              </label>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[220px]">
+              Add this property to your evaluation tray.
+            </TooltipContent>
+          </Tooltip>
         )}
       </CardFooter>
       </div>

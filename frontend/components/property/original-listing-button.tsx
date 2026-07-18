@@ -6,6 +6,11 @@
 import { ExternalLink } from "lucide-react";
 
 import { Button, type buttonVariants } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { VariantProps } from "class-variance-authority";
 
 type OriginalListingButtonProps = {
@@ -43,10 +48,17 @@ export function OriginalListingButton({
   if (!href) return null;
 
   return (
-    <Button asChild variant={variant} size={size} className={className}>
-      <a href={href} target="_blank" rel="noopener noreferrer">
-        {label} <ExternalLink />
-      </a>
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button asChild variant={variant} size={size} className={className}>
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            {label} <ExternalLink />
+          </a>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[220px]">
+        Open the original property listing.
+      </TooltipContent>
+    </Tooltip>
   );
 }

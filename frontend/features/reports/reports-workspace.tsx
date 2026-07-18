@@ -26,6 +26,11 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useGlobalSearch } from "@/components/providers/search-provider";
 import { EvaluationTray } from "@/features/dashboard/evaluation-tray";
 import { useWorkspace } from "@/features/dashboard/workspace-provider";
@@ -143,23 +148,30 @@ export function ReportsWorkspace() {
                 Your tray is empty. Stage properties from AI Chat to begin.
               </p>
             )}
-            <Button
-              onClick={handleGenerate}
-              disabled={!canGenerate}
-              size="default"
-              className="gap-2"
-            >
-              {generate.isPending ? (
-                <>
-                  <Spinner /> Generating Report…
-                </>
-              ) : (
-                <>
-                  <Sparkles className="size-4" />
-                  Generate AI Report
-                </>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!canGenerate}
+                  size="default"
+                  className="gap-2"
+                >
+                  {generate.isPending ? (
+                    <>
+                      <Spinner /> Generating Report…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="size-4" />
+                      Generate AI Report
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[220px]">
+                Create a comprehensive investment report.
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="flex-1 space-y-5 overflow-y-auto p-6">

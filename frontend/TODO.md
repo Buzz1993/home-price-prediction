@@ -2064,6 +2064,134 @@ Examples:
 
 ---
 
+## Phase 18.17 — Remove Separate Chat History Page (Use Dashboard Recent Only)
+
+> UI simplification only: the dedicated /history page duplicated the Dashboard
+> Recent section (both listed and resumed the same stored conversations). The
+> page, its route and its sidebar entry were removed; Dashboard Recent is now
+> the single conversation-history UI. No chat logic, persistence, provider or
+> backend change.
+
+- [x] Deleted app/(dashboard)/history/page.tsx (route removed)
+- [x] Deleted features/history/chat-history-workspace.tsx
+- [x] Removed "Chat History" sidebar entry + unused History icon import
+- [x] Dashboard Recent unchanged (resume / delete / pin / persistence intact)
+- [x] TypeScript · ESLint · production build pass
+
+---
+
+## Phase 18.18 — Complete Authentication & User Profile Integration
+
+> Replaced the demo-stub internals of the existing auth endpoints with a real
+> user store and wired the frontend to it. Root cause of the "Demo User" bug:
+> GET /profile always returned a hardcoded DEMO_USER and the frontend called it
+> without the session token. Same four endpoints and response shapes
+> (POST /signup, POST /login, GET /profile, POST /logout) — no new APIs, no new
+> business logic in the API layer. Accounts persist in cache/users.json
+> (gitignored) with salted PBKDF2 password hashes; sessions are opaque Bearer
+> tokens resolved server-side. Chat, reports, search, comparison,
+> recommendation and streaming untouched.
+
+- [x] src/api/auth_api.py: file-backed user store, duplicate email → 409
+      "This email is already registered.", password policy (8+ chars, letter,
+      number, special) → 400, /profile resolves the Bearer token, /logout
+      invalidates the session
+- [x] Signup now also returns a token + user, so the app is signed in as the
+      real account immediately (previously the UI kept no usable session)
+- [x] features/auth/schemas.ts: signup password rules mirror the backend and
+      list exactly the missing requirements; signup form shows the policy hint
+- [x] services/profile-service.ts + use-profile: GET /profile sends the stored
+      token and only runs when a session exists — no Demo User possible
+- [x] use-profile logout: calls POST /logout (existing endpoint) then clears
+      the client session and cached queries
+- [x] components/providers/auth-guard.tsx + (dashboard)/layout.tsx:
+      unauthenticated visitors are redirected to /login after the stored
+      session hydrates; refresh/reopen keeps the user logged in (localStorage
+      session, unchanged mechanism)
+- [x] Verified live: signup ✓ · duplicate email 409 ✓ · weak password 400 ✓ ·
+      login ✓ · wrong password 401 ✓ · /profile with token ✓ · without token
+      401 ✓ · after logout 401 ✓ · case-insensitive email uniqueness ✓
+- [x] TypeScript · ESLint · production build pass
+
+---
+
+## Phase 19 — First-Time User Onboarding Tour & Contextual Tooltips
+
+> Frontend UX enhancement only — no backend, API, auth, chat, search,
+> recommendation, report, comparison or business logic changed. A custom
+> spotlight tour (no external library) welcomes first-time users: the
+> TourProvider (features/onboarding/tour-provider.tsx, mounted in the
+> (dashboard) layout) shows a Welcome modal on the first visit after
+> signup/login (localStorage key estatemind:tour-seen absent), then an
+> 11-step guided tour — Sidebar Navigation, Dashboard, Search Box (with
+> example prompts), Property Cards, Evaluation Tray, Property Map, Suggested
+> Next Steps, Reports, Saved Properties, Property Comparison, Profile —
+> ending with a "You're Ready!" finish card. Each step spotlights its target
+> (data-tour attributes; box-shadow cutout, smooth transitions), scrolls it
+> into view, and positions the step card automatically (below/above/side,
+> centered fallback when the target is hidden, e.g. on mobile). Skip Tour /
+> Finish both persist estatemind:tour-seen so the tour never reappears
+> automatically; ESC closes at any point; Next/Previous/Skip/Finish controls
+> plus a progress bar. The Profile page gains a "Restart Product Tour" card
+> (startTour navigates to /dashboard first when needed). Tooltips: the shared
+> radix Tooltip (dark, rounded, ≤220px, fade/zoom animation, 400ms delay via
+> one global TooltipProvider in the root layout) now covers all sidebar
+> navigation items (Dashboard / AI Analysis / Property Comparison / Saved
+> Properties / Reports / Profile), New Chat, the chat Search Input, Stage to
+> Tray, Read More, View Listing, Save Property bookmark, Generate AI Report,
+> Export PDF, Share Report, the Theme Selector, and native titles on the
+> Property Map and Suggested Next Steps headers. Keyboard focus triggers the
+> radix tooltips; touch devices keep full functionality.
+
+- [x] Custom spotlight onboarding tour (no external library)
+- [x] Welcome modal (Start Tour / Skip Tour) shown only to first-time users
+- [x] 11 tour steps + "You're Ready!" finish card
+- [x] Skip/Finish persisted (estatemind:tour-seen) — never auto-reappears
+- [x] Restart Product Tour button on the Profile page
+- [x] ESC closes · Next / Previous / Skip / Finish controls · progress bar
+- [x] Spotlight scrolls targets into view; responsive with centered fallback
+- [x] Global TooltipProvider + tooltips on nav and all key actions
+- [x] TypeScript · ESLint · production build pass
+
+---
+
+## Phase 19.1 — AI Analysis Onboarding + Chat Search
+
+> Frontend UX enhancement only — no backend, API, auth, routing, chat,
+> search, recommendation, report, comparison or business logic changed. Two
+> new onboarding steps were added to the existing custom spotlight tour
+> (features/onboarding/tour-provider.tsx): "AI Analysis" (spotlights the
+> sidebar AI Analysis nav item, data-tour="nav-analysis", listing the eight
+> analyses it runs) and "Recent Chats" as the final step (spotlights the
+> conversation list, data-tour="recent-chats") — both reuse the same
+> Previous/Next/Skip/Finish controls, progress bar and responsive positioning;
+> the step card now scrolls when long and renders an optional closing footer
+> line below the bullet examples. The dormant "Search chats..." input in the
+> conversation sidebar is now a fully functional ChatGPT-style search:
+> client-side only over the already-loaded conversations (features/dashboard/
+> chat-search.ts) across titles, user prompts and AI responses — including
+> the readable strings inside structured payloads (so "gym" matches an
+> amenity inside a search result). Case-insensitive, partial-word, debounced
+> ~200ms, results update while typing, matching text highlighted. Clicking a
+> result opens that conversation and smooth-scrolls to the matched message
+> with a brief fade highlight (workspace-provider scrollTarget plumbing +
+> ChatWorkspace consumer). Empty query restores the normal Pinned/Recent
+> lists; no matches shows a "No matching conversations found." empty state.
+> All existing sidebar behavior (New Chat, Pinned/Recent, opening, persistence,
+> session restoration, streaming) is unchanged.
+
+- [x] AI Analysis step added to the onboarding tour (spotlights nav-analysis)
+- [x] Recent Chats step added as the final tour step (Previous/Finish/Skip)
+- [x] Tour card scrolls when tall + optional footer line under examples
+- [x] ChatGPT-style client-side chat search (title + user + AI responses)
+- [x] Case-insensitive · partial-word · debounced ~200ms · live results
+- [x] Matching text highlighted; No-results empty state
+- [x] Click result → open conversation, scroll to + flash-highlight message
+- [x] Existing sidebar behavior unchanged; mobile/tablet/desktop responsive
+- [x] TypeScript · ESLint · production build pass
+
+---
+
 ## Future Enhancements
 
 > These enhancements are outside the current project scope and can be

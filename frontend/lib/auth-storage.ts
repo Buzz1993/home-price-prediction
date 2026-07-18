@@ -8,7 +8,11 @@ const USER_KEY = "estatemind.user";
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(TOKEN_KEY);
+  const token = window.localStorage.getItem(TOKEN_KEY);
+  // The pre-18.18 demo signup stored an undefined token as the literal string
+  // "undefined"; treat any such legacy value as logged out.
+  if (!token || token === "undefined") return null;
+  return token;
 }
 
 export function getStoredUser(): User | null {

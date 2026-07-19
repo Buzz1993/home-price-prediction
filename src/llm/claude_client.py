@@ -6,9 +6,9 @@
 #
 # The public interface (ClaudeResponse, ClaudeStreamEvent, ClaudeClient,
 # get_claude_client, ask_claude, stream_claude) is preserved so existing
-# callers keep working unchanged. Internally the Anthropic SDK has been
-# replaced by the project's existing DeepSeek/Ollama client
-# (src/llm/deepseek_client.py: ask_deepseek / ask_deepseek_stream).
+# callers keep working unchanged. Internally all transport goes through the
+# provider router (src/llm/provider_router.py: ask_llm / ask_llm_stream),
+# which selects Ollama or the Claude API based on LLM_PROVIDER (Phase 24).
 #
 # This service knows nothing about property search, recommendation,
 # prediction, reports, MCP or FastAPI. It only turns a prompt into a text
@@ -20,7 +20,7 @@ import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from src.llm.deepseek_client import ask_deepseek, ask_deepseek_stream
+from src.llm.provider_router import ask_llm, ask_llm_stream, get_llm_provider
 
 logger = logging.getLogger(__name__)
 
@@ -74,32 +74,37 @@ class ClaudeStreamEvent:
 
 
 # =====================================================
-# DEEPSEEK RESULT ADAPTER
+# TRANSPORT RESULT ADAPTER
 # =====================================================
 #
-# ask_deepseek / ask_deepseek_stream never raise: they return (or yield) an
-# error STRING with a known prefix instead. These helpers map those strings to
+# ask_llm / ask_llm_stream never raise: they return (or yield) an error
+# STRING with a known prefix instead. These helpers map those strings to
 # the structured error categories used by ClaudeResponse / ClaudeStreamEvent.
 
 def _compose_prompt(prompt: str, system: str | None) -> str:
     """
     Merge an optional system instruction and the user prompt into a single
-    prompt string, since the DeepSeek/Ollama client accepts one prompt only.
+    prompt string, since the transport clients accept one prompt only.
     """
     if system:
         return f"{system}\n\n{prompt}"
     return prompt
 
 
-def _classify_deepseek_error(text: str) -> str | None:
+def _classify_transport_error(text: str) -> str | None:
     """
-    Return the error_type for a DeepSeek/Ollama sentinel error string, or None
+    Return the error_type for a transport sentinel error string, or None
     when the text is a normal (successful) response.
     """
     if text.startswith("REQUEST EXCEPTION:") or text.startswith("STREAM EXCEPTION:"):
         return "connection_error"
     if text.startswith("OLLAMA ERROR") or text.startswith("OLLAMA STREAM ERROR"):
         return "api_error"
+    if text.startswith("CLAUDE ERROR") or text.startswith("CLAUDE STREAM ERROR"):
+        # The Claude transport embeds the category in the sentinel itself,
+        # e.g. "CLAUDE ERROR (missing_api_key)\n...".
+        match = re.match(r"CLAUDE (?:STREAM )?ERROR \(([a-z_]+)\)", text)
+        return match.group(1) if match else "api_error"
     return None
 
 
@@ -111,10 +116,11 @@ class ClaudeClient:
     """
     Thin, reusable wrapper around the LLM backend.
 
-    Backed by the existing DeepSeek/Ollama client. The constructor keeps its
-    previous signature for backward compatibility, but model / temperature /
-    max_tokens / timeout are managed by the DeepSeek/Ollama backend and are
-    accepted here only so existing construction and call sites keep working.
+    Backed by the provider router (Ollama locally, Claude API in production).
+    The constructor keeps its previous signature for backward compatibility,
+    but model / temperature / max_tokens / timeout are managed by the active
+    transport (via environment variables) and are accepted here only so
+    existing construction and call sites keep working.
     """
 
     def __init__(
@@ -135,8 +141,10 @@ class ClaudeClient:
     @property
     def is_configured(self) -> bool:
         """
-        The DeepSeek/Ollama backend needs no API key, so the client is always
-        considered configured.
+        Whether the active provider can serve requests. Ollama needs no API
+        key; a missing ANTHROPIC_API_KEY on the claude provider surfaces as a
+        structured 'missing_api_key' error from generate()/stream() rather
+        than a crash, so this stays permissive.
         """
         return True
 
@@ -169,24 +177,27 @@ class ClaudeClient:
 
         full_prompt = _compose_prompt(prompt, system)
 
-        logger.info("LLM request start (backend=deepseek)")
+        provider = get_llm_provider()
+        logger.info("LLM request start (provider=%s)", provider)
 
         try:
-            raw = ask_deepseek(full_prompt)
+            raw = ask_llm(full_prompt)
         except Exception as exc:  # noqa: BLE001 - never crash the backend
-            logger.exception("Unexpected DeepSeek request failure.")
+            logger.exception("Unexpected LLM request failure.")
             return ClaudeResponse(
                 success=False,
-                error=f"Unexpected DeepSeek error: {exc}",
+                error=f"Unexpected LLM error: {exc}",
                 error_type="unknown_error",
             )
 
         text = (raw or "").strip()
 
-        # -- Sentinel error string returned by the DeepSeek client -----
-        error_type = _classify_deepseek_error(text)
+        # -- Sentinel error string returned by the transport ------------
+        error_type = _classify_transport_error(text)
         if error_type:
-            logger.error("DeepSeek request failed (error_type=%s).", error_type)
+            logger.error(
+                "LLM request failed (provider=%s, error_type=%s).", provider, error_type
+            )
             return ClaudeResponse(
                 success=False,
                 error=text,
@@ -195,14 +206,14 @@ class ClaudeClient:
 
         # -- Empty response --------------------------------------------
         if not text:
-            logger.warning("DeepSeek request returned an empty response.")
+            logger.warning("LLM request returned an empty response.")
             return ClaudeResponse(
                 success=False,
-                error="DeepSeek returned an empty response.",
+                error="The LLM returned an empty response.",
                 error_type="empty_response",
             )
 
-        logger.info("LLM request success (backend=deepseek)")
+        logger.info("LLM request success (provider=%s)", provider)
         return ClaudeResponse(success=True, text=text)
 
     def stream(
@@ -216,9 +227,9 @@ class ClaudeClient:
         """
         Stream a prompt to the LLM, yielding text as it is generated (Phase 15.9).
 
-        Streaming counterpart of `generate()`, backed by the existing
-        `ask_deepseek_stream`. Incremental `delta` events arrive as the model
-        produces them, followed by a single terminal `done` (success) or
+        Streaming counterpart of `generate()`, backed by the provider
+        router's `ask_llm_stream`. Incremental `delta` events arrive as the
+        model produces them, followed by a single terminal `done` (success) or
         `error` (failure) event. The full accumulated text is always available
         on the terminal event.
 
@@ -228,21 +239,26 @@ class ClaudeClient:
 
         full_prompt = _compose_prompt(prompt, system)
 
-        logger.info("LLM stream start (backend=deepseek)")
+        provider = get_llm_provider()
+        logger.info("LLM stream start (provider=%s)", provider)
 
         # Collect text so the terminal event (and any interrupted stream) can
         # return the partial response.
         collected: list[str] = []
 
         try:
-            for chunk in ask_deepseek_stream(full_prompt):
+            for chunk in ask_llm_stream(full_prompt):
                 if not chunk:
                     continue
 
                 # The stream yields a single sentinel error string on failure.
-                error_type = _classify_deepseek_error(chunk)
+                error_type = _classify_transport_error(chunk)
                 if error_type:
-                    logger.error("DeepSeek stream failed (error_type=%s).", error_type)
+                    logger.error(
+                        "LLM stream failed (provider=%s, error_type=%s).",
+                        provider,
+                        error_type,
+                    )
                     yield ClaudeStreamEvent(
                         type="error",
                         text="".join(collected),
@@ -255,11 +271,11 @@ class ClaudeClient:
                 yield ClaudeStreamEvent(type="delta", text=chunk)
 
         except Exception as exc:  # noqa: BLE001 - never crash the backend
-            logger.exception("Unexpected DeepSeek stream failure.")
+            logger.exception("Unexpected LLM stream failure.")
             yield ClaudeStreamEvent(
                 type="error",
                 text="".join(collected),
-                error=f"Unexpected DeepSeek error: {exc}",
+                error=f"Unexpected LLM error: {exc}",
                 error_type="unknown_error",
             )
             return
@@ -268,15 +284,15 @@ class ClaudeClient:
 
         # -- Empty response --------------------------------------------
         if not text:
-            logger.warning("DeepSeek stream returned an empty response.")
+            logger.warning("LLM stream returned an empty response.")
             yield ClaudeStreamEvent(
                 type="error",
-                error="DeepSeek returned an empty response.",
+                error="The LLM returned an empty response.",
                 error_type="empty_response",
             )
             return
 
-        logger.info("LLM stream success (backend=deepseek)")
+        logger.info("LLM stream success (provider=%s)", provider)
         yield ClaudeStreamEvent(type="done", text=text)
 
 

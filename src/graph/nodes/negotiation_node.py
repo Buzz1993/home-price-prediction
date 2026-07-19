@@ -3,7 +3,7 @@
 # ===============================
 
 from src.agents.negotiation_agent import run_negotiation_agent
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 
 
 def negotiation_node(state):
@@ -155,7 +155,7 @@ def negotiation_node(state):
     # ---------------------------------
     # GENERATE RESPONSE
     # ---------------------------------
-    response = ask_deepseek(prompt)
+    response = ask_llm(prompt)
 
     state["response"] = response
 

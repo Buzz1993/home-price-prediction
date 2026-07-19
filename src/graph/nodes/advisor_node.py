@@ -3,7 +3,7 @@
 # ===============================
 
 from src.agents.advisor_agent import run_advisor_agent
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 
 
 # =========================================
@@ -406,7 +406,7 @@ Reason:
 * concise explanation using only provided data
   """
 
-    state["response"] = ask_deepseek(
+    state["response"] = ask_llm(
         prompt
     )
 

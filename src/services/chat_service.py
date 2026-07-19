@@ -9,7 +9,7 @@
 
 # import src.mcp.tools.property_tools as tools
 # from src.core.search_registry import GLOBAL_MASTER_DF, CACHED_SEARCH_METADATA
-# from src.llm.deepseek_client import ask_deepseek
+# from src.llm.provider_router import ask_llm
 # from src.recommender.hybrid_recommender import apply_hybrid_ranking
 
 
@@ -285,7 +285,7 @@
 #     #     "source": "llm_unified_parser"
 #     # }
 #     try:
-#         llm_raw_response = ask_deepseek(
+#         llm_raw_response = ask_llm(
 #             llm_payload_prompt
 #         ).strip()
 
@@ -867,7 +867,7 @@
 #     USER REQUEST INPUTS: {user_prompt}
 #     Provide structured clear insights utilizing Indian Rupee (₹) denominations.
 #     """
-#     return {"type": "text", "content": ask_deepseek(chat_prompt)}
+#     return {"type": "text", "content": ask_llm(chat_prompt)}
 #     # so it return something like 
 #     # response = {
 #     #     "type": "search_results",
@@ -908,7 +908,7 @@
 # #
 # # "Show me affordable 3 BHK flats in Thane with gym and swimming pool."
 # # Code responsible:
-# # ask_deepseek(llm_payload_prompt)
+# # ask_llm(llm_payload_prompt)
 # #
 # # The LLM extracts:
 # #
@@ -1556,7 +1556,7 @@ import streamlit as st
 
 import src.mcp.tools.property_tools as tools
 from src.core.search_registry import GLOBAL_MASTER_DF, CACHED_SEARCH_METADATA
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm, is_llm_error_string
 from src.recommender.hybrid_recommender import apply_hybrid_ranking
 
 
@@ -1832,17 +1832,15 @@ Set preferences.location_importance to 'high' or 'very_high' ONLY if they are ex
     #     "source": "llm_unified_parser"
     # }
     try:
-        llm_raw_response = ask_deepseek(
+        llm_raw_response = ask_llm(
             llm_payload_prompt
         ).strip()
 
-        # ask_deepseek reports failures as sentinel STRINGS instead of raising
+        # ask_llm reports failures as sentinel STRINGS instead of raising
         # (e.g. 'OLLAMA ERROR (401)\n{"error":"Unauthorized"}'). An error body
         # like {"error": ...} would otherwise parse as valid JSON below and
         # silently skip the Layer 2 regex fallback with empty filters.
-        if llm_raw_response.startswith(
-            ("REQUEST EXCEPTION", "OLLAMA ERROR", "STREAM EXCEPTION", "OLLAMA STREAM ERROR")
-        ):
+        if is_llm_error_string(llm_raw_response):
             raise ValueError(f"LLM backend unavailable: {llm_raw_response[:120]}")
 
         # Clean potential markdown formatting
@@ -2497,13 +2495,10 @@ def parse_intent_and_execute(
     USER REQUEST INPUTS: {user_prompt}
     Provide structured clear insights utilizing Indian Rupee (₹) denominations.
     """
-    chat_reply = ask_deepseek(chat_prompt)
-    # ask_deepseek returns sentinel error STRINGS instead of raising. Never
+    chat_reply = ask_llm(chat_prompt)
+    # ask_llm returns sentinel error STRINGS instead of raising. Never
     # surface the raw HTTP traceback to the user — show a clean message.
-    if chat_reply and (
-        chat_reply.startswith("REQUEST EXCEPTION")
-        or chat_reply.startswith("OLLAMA ERROR")
-    ):
+    if is_llm_error_string(chat_reply):
         chat_reply = (
             "The AI assistant is temporarily unavailable. "
             "Property search, analysis and comparison still work — "
@@ -2550,7 +2545,7 @@ def parse_intent_and_execute(
 #
 # "Show me affordable 3 BHK flats in Thane with gym and swimming pool."
 # Code responsible:
-# ask_deepseek(llm_payload_prompt)
+# ask_llm(llm_payload_prompt)
 #
 # The LLM extracts:
 #

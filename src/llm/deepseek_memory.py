@@ -2,7 +2,7 @@
 # src/llm/deepseek_memory.py
 # ===============================
 
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 
 SYSTEM_PROMPT = """
 You are a smart real estate assistant with memory.
@@ -47,7 +47,7 @@ def extract_memory(user_msg):
     {user_msg}
     """
 
-    res = ask_deepseek(prompt).strip() # Get the response from ask_deepseek and remove any leading/trailing whitespace
+    res = ask_llm(prompt).strip() # Get the response from ask_llm and remove any leading/trailing whitespace
 
     if res.lower() == "none":
         return None

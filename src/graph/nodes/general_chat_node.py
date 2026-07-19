@@ -2,7 +2,7 @@
 # general_chat_node.py
 # ===============================
 
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 from src.services.chat_service_legacy import build_context
 
 
@@ -84,7 +84,7 @@ USER QUESTION:
 ANSWER:
 """
 
-    response = ask_deepseek(prompt)
+    response = ask_llm(prompt)
 
     state["response"] = response
 

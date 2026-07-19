@@ -3,7 +3,7 @@
 # ===============================
 
 from ddgs import DDGS
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 import re
 
 # -----------------------------
@@ -152,7 +152,7 @@ def get_development_summary(location, city):
     - Mention key development types only
     """
 
-    summary = ask_deepseek(prompt)
+    summary = ask_llm(prompt)
 
     # -----------------------------
     # CLEAN OUTPUT

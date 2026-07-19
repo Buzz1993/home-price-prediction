@@ -2,7 +2,7 @@
 # system_chat_node.py
 # ===============================
 
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 
 
 APPLICATION_OVERVIEW = """
@@ -136,7 +136,7 @@ Keep answers concise and accurate.
 ANSWER:
 """
 
-    response = ask_deepseek(prompt)
+    response = ask_llm(prompt)
 
     state["response"] = response
 

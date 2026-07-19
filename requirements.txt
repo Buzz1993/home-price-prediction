@@ -60,6 +60,8 @@ plotly
 wordcloud
 requests
 httpx
+# Resend HTTPS email API (Phase 28.2, password reset on Railway)
+resend
 
 # ===============================
 # LLM + LangChain (CHATBOT)

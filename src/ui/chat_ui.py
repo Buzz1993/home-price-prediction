@@ -14,7 +14,7 @@ import streamlit as st
 from src.graph.workflow import chat_graph
 
 from src.agents.explanation_agent import generate_comparison_explanation
-from src.llm.deepseek_client import ask_deepseek_stream
+from src.llm.provider_router import ask_llm_stream
 
 # =============================
 # MAIN CHAT UI

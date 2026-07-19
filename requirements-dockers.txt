@@ -23,6 +23,11 @@ ddgs
 
 # EstateMind Copilot API (src.api.main) runtime dependencies
 python-dotenv
+# Resend HTTPS email API (Phase 28.2, password reset on Railway —
+# outbound SMTP ports are blocked there)
+resend
+# Claude API transport (src/llm/anthropic_client.py) when LLM_PROVIDER=claude
+anthropic>=0.40.0
 rank-bm25
 fastmcp
 # Report PDF export + WhatsApp document delivery (Phase 16.2) —

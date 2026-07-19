@@ -1,5 +1,6 @@
 // Shared authentication types. Mirrors the contract documented in
 // project_docs/03_API.md (POST /signup, POST /login, GET /profile).
+// Phase 27: Added ForgotPasswordPayload and ResetPasswordPayload.
 
 export type User = {
   id?: string;
@@ -15,6 +16,15 @@ export type LoginPayload = {
 export type SignupPayload = {
   name: string;
   email: string;
+  password: string;
+};
+
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
+export type ResetPasswordPayload = {
+  token: string;
   password: string;
 };
 

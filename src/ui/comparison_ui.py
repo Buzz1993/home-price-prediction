@@ -12,7 +12,7 @@ from src.services.comparison_service import (
 )
 
 from src.agents.explanation_agent import generate_comparison_explanation
-from src.llm.deepseek_client import ask_deepseek_stream
+from src.llm.provider_router import ask_llm_stream
 
 from src.graph.workflow import comparison_graph
 

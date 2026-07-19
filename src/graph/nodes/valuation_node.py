@@ -2,7 +2,7 @@
 # valuation_node.py
 # ===============================
 
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 
 
 def format_price(price):
@@ -195,7 +195,7 @@ def valuation_node(state):
     -----------------------------
     """
 
-    response = ask_deepseek(prompt)
+    response = ask_llm(prompt)
 
     state["response"] = response
 

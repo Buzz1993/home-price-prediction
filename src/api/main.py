@@ -25,6 +25,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+# =====================================================
+# APPLICATION LOGGING (Phase 28)
+# =====================================================
+# Uvicorn only configures its own loggers, so application loggers
+# (estatemind.*) would otherwise drop INFO records. Configure a simple
+# stdout handler once at import time.
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
 from src.api.chat_api import router as chat_router
 from src.api.property_api import router as property_router
 from src.api.analysis_api import router as analysis_router

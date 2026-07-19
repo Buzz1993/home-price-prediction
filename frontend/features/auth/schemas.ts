@@ -38,5 +38,39 @@ export const signupSchema = z
     path: ["confirmPassword"],
   });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+});
+
+// Reset password policy (Phase 27) — stricter than signup: additionally
+// requires one uppercase and one lowercase letter. Mirrors the backend rule
+// in src/api/auth_api.py (_validate_reset_password).
+const resetNewPasswordSchema = z.string().superRefine((password, ctx) => {
+  const missing: string[] = [];
+  if (password.length < 8) missing.push("minimum 8 characters");
+  if (!/[A-Z]/.test(password)) missing.push("one uppercase letter");
+  if (!/[a-z]/.test(password)) missing.push("one lowercase letter");
+  if (!/\d/.test(password)) missing.push("one number");
+  if (!/[^A-Za-z0-9]/.test(password)) missing.push("one special character");
+  if (missing.length > 0) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Password must contain: ${missing.join(", ")}.`,
+    });
+  }
+});
+
+export const resetPasswordSchema = z
+  .object({
+    password: resetNewPasswordSchema,
+    confirmPassword: z.string().min(1, "Confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 export type LoginValues = z.infer<typeof loginSchema>;
 export type SignupValues = z.infer<typeof signupSchema>;
+export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;

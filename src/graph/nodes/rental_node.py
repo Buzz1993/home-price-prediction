@@ -3,7 +3,7 @@
 # ===============================
 
 from src.agents.rental_agent import run_rental_agent
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 
 
 def rental_node(state):
@@ -223,7 +223,7 @@ def rental_node(state):
     # ---------------------------------
     # GENERATE RESPONSE
     # ---------------------------------
-    response = ask_deepseek(prompt)
+    response = ask_llm(prompt)
 
     state["response"] = response
 

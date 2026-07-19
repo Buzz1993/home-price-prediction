@@ -23,7 +23,7 @@
 #     clear_enrichment_cache
 # )
 
-# from src.llm.deepseek_client import ask_deepseek
+# from src.llm.provider_router import ask_llm
 
 # # Tight field filters to optimize context window storage
 # SEARCH_RESULTS_WHITELIST = [
@@ -418,7 +418,7 @@
 #     # Generate report
 #     # -------------------------------------------------
 
-#     report = ask_deepseek(prompt)
+#     report = ask_llm(prompt)
 
 #     if not report:
 #         raise ValueError("Failed to generate report.")
@@ -479,7 +479,7 @@ from src.services.mcp_real_estate_service import (
     clear_enrichment_cache
 )
 
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm, is_llm_error_string
 
 # Tight field filters to optimize context window storage
 SEARCH_RESULTS_WHITELIST = [
@@ -942,15 +942,12 @@ Return Markdown only.
     # Generate report
     # -------------------------------------------------
 
-    report = ask_deepseek(prompt)
+    report = ask_llm(prompt)
 
     # The LLM client returns sentinel error STRINGS instead of raising
     # (e.g. "REQUEST EXCEPTION: HTTPConnectionPool(...)"). Never ship those
     # to the user as report content — surface a clean, actionable message.
-    if report and (
-        report.startswith("REQUEST EXCEPTION")
-        or report.startswith("OLLAMA ERROR")
-    ):
+    if is_llm_error_string(report):
         raise ValueError(
             "AI report generation is temporarily unavailable. "
             "Please try again in a few minutes."

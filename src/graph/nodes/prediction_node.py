@@ -3,7 +3,7 @@
 # ===============================
 
 from src.services.prediction_service import predict_property_price
-from src.llm.deepseek_client import ask_deepseek
+from src.llm.provider_router import ask_llm
 
 
 # =========================================
@@ -295,7 +295,7 @@ def generate_prediction_explanation(
     Maximum 5 bullet points.
     """
 
-    return ask_deepseek(prompt)
+    return ask_llm(prompt)
 
 
 # =========================================
